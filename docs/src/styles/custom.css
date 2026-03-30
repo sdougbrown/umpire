@@ -73,6 +73,11 @@ a:hover {
   text-decoration-color: var(--umpire-yellow);
 }
 
+.hero .actions a,
+.sl-link-button {
+  font-weight: 600;
+}
+
 .hero {
   position: relative;
 }
