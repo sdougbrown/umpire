@@ -14,7 +14,7 @@ function getFailureReasons(result: RuleEvaluation): string[] {
   return []
 }
 
-function evaluateRuleForField<
+export function evaluateRuleForField<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
 >(

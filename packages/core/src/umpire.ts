@@ -1,11 +1,13 @@
-import { evaluate } from './evaluator.js'
+import { evaluate, evaluateRuleForField } from './evaluator.js'
 import { buildGraph, detectCycles, exportGraph, topologicalSort } from './graph.js'
-import { getInternalRuleMetadata } from './rules.js'
+import { getInternalRuleMetadata, resolveOneOfState } from './rules.js'
 import { isSatisfied } from './satisfaction.js'
 import type {
+  AvailabilityMap,
   ChallengeTrace,
   FieldDef,
   FieldValues,
+  RuleEvaluation,
   ResetRecommendation,
   Rule,
   Umpire,
@@ -13,6 +15,238 @@ import type {
 
 function createEmptyContext<C extends Record<string, unknown>>(context: C | undefined): C {
   return (context ?? ({} as C)) as C
+}
+
+function describeRuleForField<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(
+  rule: Rule<F, C>,
+  field: keyof F & string,
+  fields: F,
+  values: FieldValues<F>,
+  context: C,
+  prev: FieldValues<F> | undefined,
+  availability: AvailabilityMap<F>,
+  baseRuleCache: Map<Rule<F, C>, Map<string, RuleEvaluation>>,
+): ChallengeTrace['directReasons'][number] {
+  const metadata = getInternalRuleMetadata(rule)
+  const evaluation = evaluateRuleForField(
+    rule,
+    field,
+    fields,
+    values,
+    context,
+    prev,
+    availability,
+    baseRuleCache,
+  )
+
+  if (metadata?.kind === 'enabledWhen') {
+    return {
+      rule: 'enabledWhen',
+      passed: evaluation.enabled,
+      reason: evaluation.reason,
+      predicate: metadata.predicate.toString(),
+    }
+  }
+
+  if (metadata?.kind === 'disables') {
+    const source =
+      typeof metadata.source === 'string' ? metadata.source : metadata.source.toString()
+
+    return {
+      rule: 'disables',
+      passed: evaluation.enabled,
+      reason: evaluation.reason,
+      source,
+      sourceValue:
+        typeof metadata.source === 'string' ? values[metadata.source] : metadata.source(values, context),
+    }
+  }
+
+  if (metadata?.kind === 'requires') {
+    const dependencies = metadata.dependencies.map((dependency) => {
+      if (typeof dependency !== 'string') {
+        return {
+          dependency: dependency.toString(),
+          satisfied: dependency(values, context),
+        }
+      }
+
+      return {
+        dependency,
+        satisfied: isSatisfied(values[dependency], fields[dependency]),
+        dependencyEnabled: availability[dependency].enabled,
+      }
+    })
+
+    return {
+      rule: 'requires',
+      passed: evaluation.enabled,
+      reason: evaluation.reason,
+      dependency: dependencies[0]?.dependency,
+      satisfied: dependencies[0]?.satisfied,
+      dependencyEnabled: dependencies[0]?.dependencyEnabled,
+      dependencies,
+    }
+  }
+
+  if (metadata?.kind === 'oneOf') {
+    const resolution = resolveOneOfState(
+      metadata.groupName,
+      metadata.branches,
+      values,
+      prev,
+      metadata.options?.activeBranch,
+      fields,
+    )
+    const thisBranch =
+      Object.entries(metadata.branches).find(([, branchFields]) => branchFields.includes(field))?.[0] ?? null
+
+    return {
+      rule: 'oneOf',
+      passed: evaluation.enabled,
+      reason: evaluation.reason,
+      group: metadata.groupName,
+      activeBranch: resolution.activeBranch,
+      thisBranch,
+    }
+  }
+
+  if (metadata?.kind === 'anyOf') {
+    const inner: ChallengeTrace['directReasons'] = metadata.rules.map((innerRule) =>
+      describeRuleForField(
+        innerRule,
+        field,
+        fields,
+        values,
+        context,
+        prev,
+        availability,
+        baseRuleCache,
+      ),
+    )
+
+    return {
+      rule: 'anyOf',
+      passed: evaluation.enabled,
+      reason: evaluation.reason,
+      inner,
+    }
+  }
+
+  return {
+    rule: rule.type,
+    passed: evaluation.enabled,
+    reason: evaluation.reason,
+  }
+}
+
+function describeCausedBy<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(
+  field: keyof F & string,
+  fields: F,
+  rules: Rule<F, C>[],
+  values: FieldValues<F>,
+  context: C,
+  prev: FieldValues<F> | undefined,
+  availability: AvailabilityMap<F>,
+  baseRuleCache: Map<Rule<F, C>, Map<string, RuleEvaluation>>,
+): ChallengeTrace['transitiveDeps'][number]['causedBy'] {
+  return rules
+    .filter((rule) => rule.targets.includes(field))
+    .map((rule) =>
+      describeRuleForField(
+        rule,
+        field,
+        fields,
+        values,
+        context,
+        prev,
+        availability,
+        baseRuleCache,
+      ),
+    )
+    .filter((entry) => entry.passed === false)
+    .map(({ rule, ...details }) => ({
+      rule,
+      ...details,
+    }))
+}
+
+function buildTransitiveDeps<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(
+  startField: keyof F & string,
+  fields: F,
+  rules: Rule<F, C>[],
+  values: FieldValues<F>,
+  context: C,
+  prev: FieldValues<F> | undefined,
+  availability: AvailabilityMap<F>,
+  baseRuleCache: Map<Rule<F, C>, Map<string, RuleEvaluation>>,
+) {
+  const visited = new Set<string>()
+  const result: ChallengeTrace['transitiveDeps'] = []
+
+  const visit = (field: keyof F & string) => {
+    for (const rule of rules) {
+      if (!rule.targets.includes(field)) {
+        continue
+      }
+
+      const metadata = getInternalRuleMetadata(rule)
+      if (metadata?.kind !== 'requires') {
+        continue
+      }
+
+      for (const dependency of metadata.dependencies) {
+        if (typeof dependency !== 'string') {
+          continue
+        }
+
+        const dependencySatisfied = isSatisfied(values[dependency], fields[dependency])
+        const dependencyAvailability = availability[dependency]
+
+        if (dependencySatisfied && dependencyAvailability.enabled) {
+          continue
+        }
+
+        if (visited.has(dependency)) {
+          continue
+        }
+
+        visited.add(dependency)
+        result.push({
+          field: dependency,
+          enabled: dependencyAvailability.enabled,
+          reason: dependencyAvailability.reason,
+          causedBy: describeCausedBy(
+            dependency,
+            fields,
+            rules,
+            values,
+            context,
+            prev,
+            availability,
+            baseRuleCache,
+          ),
+        })
+
+        if (!dependencyAvailability.enabled) {
+          visit(dependency)
+        }
+      }
+    }
+  }
+
+  visit(startField)
+
+  return result
 }
 
 function validateRules<
@@ -127,12 +361,64 @@ export function umpire<
     },
 
     challenge(field, values, context, prev) {
-      void field
-      void values
-      void context
-      void prev
+      if (!(field in fields)) {
+        throw new Error(`Unknown field "${field}"`)
+      }
 
-      throw new Error('challenge() not implemented yet')
+      const resolvedContext = createEmptyContext(context)
+      const availability = evaluate(fields, rules, topoOrder, values, resolvedContext, prev)
+      const baseRuleCache = new Map<Rule<F, C>, Map<string, RuleEvaluation>>()
+      const directReasons = rules
+        .filter((rule) => rule.targets.includes(field))
+        .map((rule) =>
+          describeRuleForField(
+            rule,
+            field,
+            fields,
+            values,
+            resolvedContext,
+            prev,
+            availability,
+            baseRuleCache,
+          ),
+        )
+
+      const oneOfRule = rules.find((rule) => {
+        const metadata = getInternalRuleMetadata(rule)
+        return metadata?.kind === 'oneOf' && rule.targets.includes(field)
+      })
+      const oneOfMetadata = oneOfRule ? getInternalRuleMetadata(oneOfRule) : undefined
+      const oneOfResolution =
+        oneOfMetadata?.kind === 'oneOf'
+          ? {
+              group: oneOfMetadata.groupName,
+              ...resolveOneOfState(
+                oneOfMetadata.groupName,
+                oneOfMetadata.branches,
+                values,
+                prev,
+                oneOfMetadata.options?.activeBranch,
+                fields,
+              ),
+            }
+          : null
+
+      return {
+        field,
+        enabled: availability[field].enabled,
+        directReasons,
+        transitiveDeps: buildTransitiveDeps(
+          field,
+          fields,
+          rules,
+          values,
+          resolvedContext,
+          prev,
+          availability,
+          baseRuleCache,
+        ),
+        oneOfResolution,
+      }
     },
 
     graph() {
