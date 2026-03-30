@@ -256,15 +256,21 @@ td {
 .umpire-columns {
   display: grid;
   grid-template-columns: 1fr;
+  align-items: start;
   gap: 1rem;
 }
 
-.umpire-columns > div > .expressive-code {
-  height: 100%;
+.umpire-columns > div {
+  margin: 0;
+  padding: 0;
 }
 
-.umpire-columns > div > .expressive-code > figure {
-  height: 100%;
+.umpire-columns > div > *:first-child {
+  margin-top: 0;
+}
+
+.umpire-columns > div > .expressive-code {
+  margin-top: 0;
 }
 
 @media (min-width: 60rem) {
