@@ -11,6 +11,8 @@
   ],
   "scripts": {
     "build": "turbo run build",
+    "docs": "cd docs && npx astro dev",
+    "docs:build": "cd docs && npx astro build",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck"
   },
