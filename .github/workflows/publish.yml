@@ -1,0 +1,168 @@
+name: Build, Test & Publish
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build
+        run: yarn turbo run build
+
+      - name: Test
+        run: yarn turbo run test
+        env:
+          NODE_OPTIONS: '--experimental-vm-modules'
+
+  detect-version-changes:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      any_changed: ${{ steps.versions.outputs.any_changed }}
+      core_changed: ${{ steps.versions.outputs.core_changed }}
+      signals_changed: ${{ steps.versions.outputs.signals_changed }}
+      react_changed: ${{ steps.versions.outputs.react_changed }}
+      zustand_changed: ${{ steps.versions.outputs.zustand_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Detect package version changes
+        id: versions
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          node <<'NODE' >> "$GITHUB_OUTPUT"
+          const { execFileSync } = require('node:child_process');
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          const before = process.env.BEFORE_SHA;
+          const isZeroSha = !before || /^0+$/.test(before);
+          const packages = ['core', 'signals', 'react', 'zustand'];
+
+          const readCurrentVersion = (pkg) => {
+            const packageJson = path.join('packages', pkg, 'package.json');
+            return JSON.parse(fs.readFileSync(packageJson, 'utf8')).version;
+          };
+
+          const readPreviousVersion = (pkg) => {
+            if (isZeroSha) {
+              return null;
+            }
+
+            try {
+              const packageJson = execFileSync(
+                'git',
+                ['show', `${before}:packages/${pkg}/package.json`],
+                { encoding: 'utf8' }
+              );
+              return JSON.parse(packageJson).version;
+            } catch {
+              return null;
+            }
+          };
+
+          let anyChanged = false;
+
+          for (const pkg of packages) {
+            const current = readCurrentVersion(pkg);
+            const previous = readPreviousVersion(pkg);
+            const changed = previous === null || current !== previous;
+
+            if (changed) {
+              anyChanged = true;
+            }
+
+            console.log(`${pkg}_changed=${changed}`);
+          }
+
+          console.log(`any_changed=${anyChanged}`);
+          NODE
+
+  publish:
+    needs: [build-and-test, detect-version-changes]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.detect-version-changes.outputs.any_changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment: npm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build
+        run: yarn turbo run build
+
+      - name: Publish @umpire/core
+        if: needs.detect-version-changes.outputs.core_changed == 'true'
+        working-directory: packages/core
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="latest"
+          if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
+          yarn pack -o package.tgz
+          npm publish package.tgz --provenance --access public --tag "$TAG"
+
+      - name: Publish @umpire/signals
+        if: needs.detect-version-changes.outputs.signals_changed == 'true'
+        working-directory: packages/signals
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="latest"
+          if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
+          yarn pack -o package.tgz
+          npm publish package.tgz --provenance --access public --tag "$TAG"
+
+      - name: Publish @umpire/react
+        if: needs.detect-version-changes.outputs.react_changed == 'true'
+        working-directory: packages/react
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="latest"
+          if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
+          yarn pack -o package.tgz
+          npm publish package.tgz --provenance --access public --tag "$TAG"
+
+      - name: Publish @umpire/zustand
+        if: needs.detect-version-changes.outputs.zustand_changed == 'true'
+        working-directory: packages/zustand
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="latest"
+          if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
+          yarn pack -o package.tgz
+          npm publish package.tgz --provenance --access public --tag "$TAG"
