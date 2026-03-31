@@ -24,7 +24,7 @@ const roster: Record<string, Player> = {
   russo:     { name: 'Tony Russo',       positions: ['2B'],       bats: 'L', throws: 'R', role: 'position' },
   williams:  { name: 'Andre Williams',   positions: ['RF', 'CF'], bats: 'R', throws: 'R', role: 'position' },
   silva:     { name: 'Marco Silva',      positions: ['DH', 'LF'], bats: 'L', throws: 'L', role: 'position' },
-  hartley:   { name: 'Chris Hartley',   positions: ['1B', 'DH'], bats: 'S', throws: 'R', role: 'position' },
+  hartley:   { name: 'Chris Hartley',    positions: ['1B', 'DH'], bats: 'S', throws: 'R', role: 'position' },
   morrison:  { name: 'Jake Morrison',    positions: ['SP'],       bats: 'R', throws: 'R', role: 'starter' },
   flores:    { name: 'Eddie Flores',     positions: ['SP'],       bats: 'L', throws: 'L', role: 'starter' },
   whitfield: { name: 'Sam Whitfield',    positions: ['RP', 'CL'], bats: 'R', throws: 'R', role: 'reliever' },
@@ -32,30 +32,25 @@ const roster: Record<string, Player> = {
 
 // --- Lineup positions ---
 
-type LineupSlot = {
-  label: string
-  position: string
-}
+type LineupSlot = { label: string; position: string }
 
 const lineupSlots: LineupSlot[] = [
-  { label: 'SP',  position: 'SP' },
-  { label: '1',   position: 'C' },
-  { label: '2',   position: '2B' },
-  { label: '3',   position: 'SS' },
-  { label: '4',   position: '1B' },
-  { label: '5',   position: '3B' },
-  { label: '6',   position: 'LF' },
-  { label: '7',   position: 'CF' },
-  { label: '8',   position: 'RF' },
-  { label: '9',   position: 'DH' },
+  { label: 'SP', position: 'SP' },
+  { label: '1',  position: 'C' },
+  { label: '2',  position: '2B' },
+  { label: '3',  position: 'SS' },
+  { label: '4',  position: '1B' },
+  { label: '5',  position: '3B' },
+  { label: '6',  position: 'LF' },
+  { label: '7',  position: 'CF' },
+  { label: '8',  position: 'RF' },
+  { label: '9',  position: 'DH' },
 ]
 
 // --- Umpire setup ---
 
 const fields: Record<string, FieldDef> = {}
-for (const id of Object.keys(roster)) {
-  fields[id] = {}
-}
+for (const id of Object.keys(roster)) fields[id] = {}
 fields.morrisonRested = {}
 
 type Ctx = { opposingPitcher: 'L' | 'R' }
@@ -63,7 +58,6 @@ type Ctx = { opposingPitcher: 'L' | 'R' }
 const lineupUmp = umpire<typeof fields, Ctx>({
   fields,
   rules: [
-    // Platoon: 1B — Delgado (L) vs righty pitchers, Vega (R) vs lefty pitchers
     oneOf('firstBasePlatoon', {
       vsRighty: ['delgado'],
       vsLefty:  ['vega'],
@@ -71,8 +65,6 @@ const lineupUmp = umpire<typeof fields, Ctx>({
       activeBranch: (_v, ctx) => ctx.opposingPitcher === 'L' ? 'vsLefty' : 'vsRighty',
       reason: 'platoon matchup',
     }),
-
-    // Platoon: LF — Reyes (L) vs righty, Patterson (R) vs lefty
     oneOf('leftFieldPlatoon', {
       vsRighty: ['reyes'],
       vsLefty:  ['patterson'],
@@ -80,16 +72,10 @@ const lineupUmp = umpire<typeof fields, Ctx>({
       activeBranch: (_v, ctx) => ctx.opposingPitcher === 'L' ? 'vsLefty' : 'vsRighty',
       reason: 'platoon matchup',
     }),
-
-    // Platoon: Silva (L) sits vs lefties
     enabledWhen('silva', (_v, ctx) => ctx.opposingPitcher !== 'L', {
       reason: 'platoon — lefty sits vs LHP',
     }),
-
-    // Morrison can't start without rest
     requires('morrison', 'morrisonRested'),
-
-    // Injuries disable players
     ...Object.keys(roster).map(id =>
       enabledWhen(id, (values) => !values[`${id}_injured`], {
         reason: 'on the injured list',
@@ -98,18 +84,10 @@ const lineupUmp = umpire<typeof fields, Ctx>({
   ],
 })
 
-// --- Styles ---
+// --- Helpers ---
 
-const mono = "'JetBrains Mono', monospace"
-const colors = {
-  green: '#6bfe9c',
-  yellow: '#fed023',
-  red: '#ff716c',
-  dim: '#a0a0a0',
-  bg: 'rgba(18,18,18,0.96)',
-  surface: 'rgba(26,26,26,0.96)',
-  white: '#f9f9f9',
-  faint: 'rgba(255,255,255,0.04)',
+function cls(...parts: (string | false | null | undefined)[]) {
+  return parts.filter(Boolean).join(' ')
 }
 
 // --- Component ---
@@ -137,24 +115,16 @@ export default function LineupCard() {
   }, [injuries, morrisonRested])
 
   const context: Ctx = useMemo(() => ({ opposingPitcher }), [opposingPitcher])
-
-  const availability = useMemo(
-    () => lineupUmp.check(values, context),
-    [values, context],
-  )
+  const availability = useMemo(() => lineupUmp.check(values, context), [values, context])
 
   const penalties = useMemo(() => {
     if (!prevValues) return []
-    return lineupUmp.flag(
-      { values: prevValues, context },
-      { values, context },
-    )
+    return lineupUmp.flag({ values: prevValues, context }, { values, context })
   }, [values, context, prevValues])
 
-  // Players currently assigned to a slot
   const assignedPlayers = new Set(Object.values(lineup).filter(Boolean) as string[])
 
-  // When availability changes, remove ineligible players from lineup
+  // Auto-remove ineligible players from lineup
   useMemo(() => {
     let changed = false
     const next = { ...lineup }
@@ -167,25 +137,27 @@ export default function LineupCard() {
     if (changed) setLineup(next)
   }, [availability])
 
+  const savePrev = useCallback(() => setPrevValues(values), [values])
+
   const toggleInjury = useCallback((id: string) => {
-    setPrevValues(values)
+    savePrev()
     setInjuries(prev => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
       else next.add(id)
       return next
     })
-  }, [values])
+  }, [savePrev])
 
   const togglePitcher = useCallback(() => {
-    setPrevValues(values)
+    savePrev()
     setOpposingPitcher(p => p === 'L' ? 'R' : 'L')
-  }, [values])
+  }, [savePrev])
 
   const toggleRest = useCallback(() => {
-    setPrevValues(values)
+    savePrev()
     setMorrisonRested(r => !r)
-  }, [values])
+  }, [savePrev])
 
   const assignPlayer = useCallback((slot: string, playerId: string) => {
     setLineup(prev => ({ ...prev, [slot]: playerId }))
@@ -196,149 +168,101 @@ export default function LineupCard() {
     setLineup(prev => ({ ...prev, [slot]: null }))
   }, [])
 
-  // Get eligible players for a lineup slot
-  const getEligibleForSlot = (slot: LineupSlot) => {
-    return Object.entries(roster).filter(([id, player]) => {
+  const getEligibleForSlot = (slot: LineupSlot) =>
+    Object.entries(roster).filter(([id, player]) => {
       if (!availability[id]?.enabled) return false
       if (assignedPlayers.has(id) && lineup[slot.label] !== id) return false
       if (slot.position === 'DH') return player.role === 'position'
       return player.positions.includes(slot.position)
     })
+
+  // --- Render helpers ---
+
+  const pitcherVariant = opposingPitcher === 'L' ? 'green' : 'yellow'
+  const restVariant = morrisonRested ? 'green' : 'red'
+
+  function playerState(id: string) {
+    const enabled = availability[id]?.enabled ?? true
+    if (!enabled) return 'disabled'
+    if (assignedPlayers.has(id)) return 'assigned'
+    return 'available'
+  }
+
+  function dotVariant(id: string) {
+    const state = playerState(id)
+    if (state === 'disabled') return 'red'
+    if (state === 'assigned') return 'dim'
+    return 'green'
   }
 
   return (
-    <div style={{ fontFamily: "'Work Sans', sans-serif", color: colors.white }}>
+    <div className="lineup">
       {/* Controls */}
-      <div style={{
-        display: 'flex', gap: '0.75rem', flexWrap: 'wrap',
-        marginBottom: '1rem', alignItems: 'stretch',
-      }}>
-        <button onClick={togglePitcher} style={{
-          background: opposingPitcher === 'L' ? 'rgba(107,254,156,0.15)' : 'rgba(254,208,35,0.15)',
-          border: `1px solid ${opposingPitcher === 'L' ? 'rgba(107,254,156,0.4)' : 'rgba(254,208,35,0.4)'}`,
-          color: opposingPitcher === 'L' ? colors.green : colors.yellow,
-          margin: 0, padding: '0.4rem 1rem', borderRadius: '6px', cursor: 'pointer',
-          fontFamily: mono, fontSize: '0.8rem', fontWeight: 600,
-          letterSpacing: '0.05em', lineHeight: 1.4,
-        }}>
+      <div className="lineup__controls">
+        <button
+          className={cls('lineup__toggle', `lineup__toggle--${pitcherVariant}`)}
+          onClick={togglePitcher}
+        >
           Opposing: {opposingPitcher === 'L' ? 'LHP' : 'RHP'}
         </button>
-        <button onClick={toggleRest} style={{
-          background: morrisonRested ? 'rgba(107,254,156,0.15)' : 'rgba(255,113,108,0.12)',
-          border: `1px solid ${morrisonRested ? 'rgba(107,254,156,0.4)' : 'rgba(255,113,108,0.3)'}`,
-          color: morrisonRested ? colors.green : colors.red,
-          margin: 0, padding: '0.4rem 1rem', borderRadius: '6px', cursor: 'pointer',
-          fontFamily: mono, fontSize: '0.8rem', fontWeight: 600,
-          letterSpacing: '0.05em', lineHeight: 1.4,
-        }}>
+        <button
+          className={cls('lineup__toggle', `lineup__toggle--${restVariant}`)}
+          onClick={toggleRest}
+        >
           Morrison: {morrisonRested ? 'rested' : 'fatigued'}
         </button>
       </div>
 
       {/* Penalties */}
       {penalties.length > 0 && (
-        <div style={{
-          border: '1px solid rgba(254,208,35,0.3)', borderRadius: '10px',
-          padding: '0.6rem 1rem', marginBottom: '1rem',
-          background: 'linear-gradient(135deg, rgba(254,208,35,0.08), transparent 45%), rgba(18,18,18,0.96)',
-        }}>
-          <div style={{
-            fontFamily: mono, fontSize: '0.65rem', letterSpacing: '0.12em',
-            textTransform: 'uppercase', color: colors.yellow, marginBottom: '0.4rem',
-          }}>
-            🚩 Flag on the play
-          </div>
+        <div className="lineup__penalties">
+          <div className="lineup__penalties-title">🚩 Flag on the play</div>
           {penalties.map((p, i) => (
-            <div key={i} style={{ fontSize: '0.8rem', color: colors.white, marginBottom: '0.15rem' }}>
+            <div key={i} className="lineup__penalty">
               <strong>{roster[p.field]?.name ?? p.field}</strong>
-              <span style={{ color: colors.dim }}> — {p.reason}</span>
+              <span className="lineup__penalty-reason"> — {p.reason}</span>
             </div>
           ))}
         </div>
       )}
 
-      {/* Two-panel layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'start' }}>
-
-        {/* Left: Roster/Bench */}
-        <div style={{
-          border: '1px solid rgba(107,254,156,0.12)', borderRadius: '10px',
-          overflow: 'hidden', background: colors.bg,
-        }}>
-          <div style={{
-            padding: '0.5rem 0.75rem', background: 'rgba(107,254,156,0.06)',
-            fontFamily: mono, fontSize: '0.65rem', letterSpacing: '0.12em',
-            textTransform: 'uppercase', color: colors.dim,
-            display: 'flex', justifyContent: 'space-between',
-          }}>
+      {/* Panels */}
+      <div className="lineup__panels">
+        {/* Roster */}
+        <div className="lineup__panel lineup__panel--roster">
+          <div className="lineup__panel-header lineup__panel-header--roster">
             <span>Roster</span>
-            <span style={{ color: colors.green }}>Boston Crabs</span>
+            <span className="lineup__panel-accent--green">Boston Crabs</span>
           </div>
-          <div style={{ padding: '0.25rem 0' }}>
+          <div className="lineup__panel-body">
             {Object.entries(roster).map(([id, player]) => {
+              const state = playerState(id)
               const av = availability[id]
-              const inLineup = assignedPlayers.has(id)
-              const enabled = av?.enabled ?? true
               return (
-                <div key={id} style={{
-                  display: 'flex', alignItems: 'center', gap: '0.5rem',
-                  padding: '0.35rem 0.75rem',
-                  opacity: enabled ? (inLineup ? 0.4 : 1) : 0.35,
-                  borderBottom: `1px solid ${colors.faint}`,
-                  transition: 'opacity 0.2s',
-                }}>
-                  <span style={{
-                    width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0,
-                    background: !enabled ? colors.red : inLineup ? colors.dim : colors.green,
-                    boxShadow: `0 0 5px ${!enabled ? colors.red : inLineup ? 'transparent' : colors.green}`,
-                  }} />
-                  <span style={{
-                    flex: 1, fontSize: '0.8rem', fontWeight: enabled ? 600 : 400,
-                    color: enabled ? colors.white : '#666',
-                    textDecoration: inLineup ? 'line-through' : 'none',
-                  }}>
+                <div key={id} className={cls('lineup__player', `lineup__player--${state}`)}>
+                  <span className={cls('lineup__dot', `lineup__dot--${dotVariant(id)}`)} />
+                  <span className={cls(
+                    'lineup__player-name',
+                    state === 'disabled' ? 'lineup__player-name--inactive' : 'lineup__player-name--active',
+                    state === 'assigned' && 'lineup__player-name--struck',
+                  )}>
                     {player.name}
                   </span>
-                  <span style={{
-                    fontFamily: mono, fontSize: '0.65rem', color: colors.dim,
-                    minWidth: '2.5rem',
-                  }}>
-                    {player.positions.join('/')}
-                  </span>
-                  <span style={{
-                    fontFamily: mono, fontSize: '0.65rem', color: colors.dim,
-                    width: '2rem', textAlign: 'center',
-                  }}>
-                    {player.bats}/{player.throws}
-                  </span>
-                  {enabled && !inLineup ? null : !enabled ? (
-                    <span style={{
-                      fontFamily: mono, fontSize: '0.6rem', color: colors.red,
-                      padding: '0.1rem 0.35rem', borderRadius: '4px',
-                      background: 'rgba(255,113,108,0.1)', whiteSpace: 'nowrap',
-                    }}>
-                      {av?.reason ?? 'out'}
-                    </span>
-                  ) : inLineup ? (
-                    <span style={{
-                      fontFamily: mono, fontSize: '0.6rem', color: colors.green,
-                      padding: '0.1rem 0.35rem', borderRadius: '4px',
-                      background: 'rgba(107,254,156,0.1)',
-                    }}>
-                      in lineup
-                    </span>
-                  ) : null}
+                  <span className="lineup__player-pos">{player.positions.join('/')}</span>
+                  <span className="lineup__player-bt">{player.bats}/{player.throws}</span>
+                  {state === 'disabled' && (
+                    <span className="lineup__badge lineup__badge--out">{av?.reason ?? 'out'}</span>
+                  )}
+                  {state === 'assigned' && (
+                    <span className="lineup__badge lineup__badge--in">in lineup</span>
+                  )}
                   <button
+                    className={cls(
+                      'lineup__injury-btn',
+                      injuries.has(id) ? 'lineup__injury-btn--injured' : 'lineup__injury-btn--clear',
+                    )}
                     onClick={() => toggleInjury(id)}
                     title={injuries.has(id) ? 'Clear injury' : 'Add to IL'}
-                    style={{
-                      background: injuries.has(id) ? 'rgba(255,113,108,0.2)' : 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      borderRadius: '4px', padding: '0.15rem 0.3rem',
-                      cursor: 'pointer', fontSize: '0.7rem', lineHeight: 1,
-                      color: injuries.has(id) ? colors.red : '#666',
-                      margin: 0,
-                    }}
                   >
                     {injuries.has(id) ? '✕' : '🤕'}
                   </button>
@@ -348,21 +272,15 @@ export default function LineupCard() {
           </div>
         </div>
 
-        {/* Right: Lineup Card */}
-        <div style={{
-          border: '1px solid rgba(254,208,35,0.12)', borderRadius: '10px',
-          overflow: 'hidden', background: colors.bg,
-        }}>
-          <div style={{
-            padding: '0.5rem 0.75rem', background: 'rgba(254,208,35,0.06)',
-            fontFamily: mono, fontSize: '0.65rem', letterSpacing: '0.12em',
-            textTransform: 'uppercase', color: colors.dim,
-            display: 'flex', justifyContent: 'space-between',
-          }}>
+        {/* Lineup Card */}
+        <div className="lineup__panel lineup__panel--card">
+          <div className="lineup__panel-header lineup__panel-header--card">
             <span>Tonight's Lineup</span>
-            <span style={{ color: colors.yellow }}>vs {opposingPitcher === 'L' ? 'LHP' : 'RHP'}</span>
+            <span className="lineup__panel-accent--yellow">
+              vs {opposingPitcher === 'L' ? 'LHP' : 'RHP'}
+            </span>
           </div>
-          <div style={{ padding: '0.25rem 0' }}>
+          <div className="lineup__panel-body">
             {lineupSlots.map((slot) => {
               const playerId = lineup[slot.label]
               const player = playerId ? roster[playerId] : null
@@ -371,103 +289,42 @@ export default function LineupCard() {
               const isSP = slot.position === 'SP'
 
               return (
-                <div key={slot.label} style={{
-                  borderBottom: `1px solid ${colors.faint}`,
-                  ...(isSP ? { borderBottom: `1px solid rgba(254,208,35,0.15)` } : {}),
-                }}>
+                <div key={slot.label} className={cls('lineup__slot', isSP && 'lineup__slot--sp')}>
                   <div
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '0.5rem',
-                      padding: '0.35rem 0.75rem', cursor: 'pointer',
-                      background: isSelecting ? 'rgba(107,254,156,0.06)' : 'transparent',
-                      transition: 'background 0.15s',
-                    }}
-                    onClick={() => {
-                      if (playerId) {
-                        clearSlot(slot.label)
-                      } else {
-                        setSelectingSlot(isSelecting ? null : slot.label)
-                      }
-                    }}
+                    className={cls('lineup__slot-row', isSelecting && 'lineup__slot-row--selecting')}
+                    onClick={() => playerId ? clearSlot(slot.label) : setSelectingSlot(isSelecting ? null : slot.label)}
                   >
-                    <span style={{
-                      fontFamily: mono, fontSize: '0.7rem', fontWeight: 700,
-                      color: isSP ? colors.yellow : colors.dim,
-                      width: '1.5rem', textAlign: 'center',
-                    }}>
+                    <span className={cls('lineup__slot-order', isSP && 'lineup__slot-order--sp')}>
                       {slot.label}
                     </span>
-                    <span style={{
-                      fontFamily: mono, fontSize: '0.6rem', color: colors.dim,
-                      width: '1.8rem', textAlign: 'center',
-                      padding: '0.1rem 0', borderRadius: '3px',
-                      background: 'rgba(255,255,255,0.04)',
-                    }}>
-                      {slot.position}
-                    </span>
+                    <span className="lineup__slot-pos">{slot.position}</span>
                     {player ? (
                       <>
-                        <span style={{
-                          flex: 1, fontSize: '0.8rem', fontWeight: 600,
-                          color: colors.white,
-                        }}>
-                          {player.name}
-                        </span>
-                        <span style={{
-                          fontFamily: mono, fontSize: '0.6rem', color: colors.dim,
-                        }}>
-                          {player.bats}/{player.throws}
-                        </span>
-                        <span style={{
-                          fontSize: '0.65rem', color: colors.dim, cursor: 'pointer',
-                        }} title="Remove from lineup">
-                          ✕
-                        </span>
+                        <span className="lineup__slot-name">{player.name}</span>
+                        <span className="lineup__slot-bt">{player.bats}/{player.throws}</span>
+                        <span className="lineup__slot-remove" title="Remove from lineup">✕</span>
                       </>
                     ) : (
-                      <span style={{
-                        flex: 1, fontSize: '0.75rem', fontStyle: 'italic',
-                        color: eligible.length > 0 ? '#555' : colors.red,
-                      }}>
-                        {eligible.length > 0
-                          ? `${eligible.length} eligible`
-                          : 'no eligible players'}
+                      <span className={cls(
+                        'lineup__slot-empty',
+                        eligible.length === 0 && 'lineup__slot-empty--none',
+                      )}>
+                        {eligible.length > 0 ? `${eligible.length} eligible` : 'no eligible players'}
                       </span>
                     )}
                   </div>
 
-                  {/* Dropdown: eligible players */}
                   {isSelecting && eligible.length > 0 && (
-                    <div style={{
-                      padding: '0.15rem 0', marginLeft: '2.75rem', marginRight: '0.75rem',
-                      marginBottom: '0.35rem',
-                      borderRadius: '6px', overflow: 'hidden',
-                      border: '1px solid rgba(107,254,156,0.15)',
-                      background: colors.surface,
-                    }}>
+                    <div className="lineup__eligible">
                       {eligible.map(([id, p]) => (
                         <div
                           key={id}
+                          className="lineup__eligible-option"
                           onClick={(e) => { e.stopPropagation(); assignPlayer(slot.label, id) }}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: '0.5rem',
-                            padding: '0.3rem 0.6rem', cursor: 'pointer',
-                            fontSize: '0.75rem',
-                            transition: 'background 0.1s',
-                          }}
-                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(107,254,156,0.08)')}
-                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                         >
-                          <span style={{
-                            width: '6px', height: '6px', borderRadius: '50%',
-                            background: colors.green, flexShrink: 0,
-                          }} />
-                          <span style={{ fontWeight: 500, color: colors.white }}>{p.name}</span>
-                          <span style={{
-                            fontFamily: mono, fontSize: '0.6rem', color: colors.dim,
-                          }}>
-                            {p.bats}/{p.throws}
-                          </span>
+                          <span className="lineup__eligible-dot" />
+                          <span className="lineup__eligible-name">{p.name}</span>
+                          <span className="lineup__eligible-bt">{p.bats}/{p.throws}</span>
                         </div>
                       ))}
                     </div>

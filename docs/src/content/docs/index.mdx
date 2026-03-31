@@ -139,6 +139,51 @@ import LineupCard from '../../components/LineupCard.tsx'
 
 Three rule types in action: **`enabledWhen`** (injuries scratch players from the roster), **`oneOf`** (platoon matchups swap batters when the opposing pitcher changes), and **`requires`** (Morrison needs rest days before he can start). Fill the lineup, then flip the opposing pitcher or injure a starter — the lineup card shows which slots just lost their player and which bench players are now eligible. Same library, same `check()` call, same result shape — just a different set of fields.
 
+## How the Demo Works
+
+The lineup card above is a React component backed by a real `@umpire/core` instance. Here's how the state flows:
+
+```ts title="Rules — declared once"
+const lineupUmp = umpire({
+  fields,
+  rules: [
+    // Platoon: lefty/righty splits at 1B and LF
+    oneOf('firstBasePlatoon', {
+      vsRighty: ['delgado'],
+      vsLefty:  ['vega'],
+    }, {
+      activeBranch: (_v, ctx) => ctx.opposingPitcher === 'L' ? 'vsLefty' : 'vsRighty',
+    }),
+
+    // Morrison can't pitch without rest
+    requires('morrison', 'morrisonRested'),
+
+    // Injuries scratch players
+    ...playerIds.map(id =>
+      enabledWhen(id, (values) => !values[`${id}_injured`])
+    ),
+  ],
+})
+```
+
+```ts title="Check — called on every state change"
+const availability = lineupUmp.check(values, { opposingPitcher })
+// availability.delgado.enabled → false when opposing pitcher is LHP
+// availability.morrison.reason → 'requires morrisonRested'
+```
+
+```ts title="Flag — called on transitions"
+const penalties = lineupUmp.flag(
+  { values: prevValues, context: prevContext },
+  { values, context },
+)
+// When the pitcher flips from RHP to LHP:
+// → [{ field: 'delgado', reason: 'platoon matchup' }]
+// The UI auto-removes Delgado from the lineup and flags it.
+```
+
+The component uses `availability` to filter which players are eligible for each slot, and `penalties` to show the yellow flag banner. Umpire handles the rules — React handles the rendering.
+
 ## What It Does Not Do
 
 - It does not own form state.
