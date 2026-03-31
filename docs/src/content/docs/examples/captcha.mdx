@@ -3,9 +3,15 @@ title: Login With Captcha Gate
 description: A context-driven example where submit availability depends on both field state and external captcha state.
 ---
 
+import CaptchaDemo from '../../../components/CaptchaDemo.tsx'
+
 # Login With Captcha Gate
 
 A login form where the submit button depends on both field values *and* an external captcha token. Shows how context-driven rules and reasons aggregation work together.
+
+<div class="umpire-lineup-demo">
+  <CaptchaDemo client:load />
+</div>
 
 ## The Rules
 
