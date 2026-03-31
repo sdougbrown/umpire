@@ -1,48 +1,107 @@
-# Umpire
+# 🛂 Umpire
 
-> Reactive field availability for forms with interdependent options.
-> *Check the play. Flag the field.*
+> Rule the form. Flag the field.
 
-Umpire is a pure-logic library that models field interdependencies declaratively. It answers one question: **given the current field values, what should be available?**
+Umpire is a reactive field availability library for forms with interdependent options. It answers a structural question, not a validation question: given the current values and context, which fields should be in play right now, and which stale values should be flagged for cleanup?
 
-## Packages
-
-| Package | Purpose |
-|---------|---------|
-| `@umpire/core` | Pure logic, zero dependencies |
-| `@umpire/signals` | Signal adapters (alien-signals, Preact signals, TC39 polyfill) |
-| `@umpire/react` | React hook (`useUmpire`) |
-| `@umpire/zustand` | Zustand store adapter (`fromStore`) |
+[Docs](https://sdougbrown.github.io/umpire/) • [GitHub](https://github.com/sdougbrown/umpire)
 
 ## Quick Example
 
 ```ts
-import { umpire, enabledWhen, requires } from '@umpire/core'
+import { enabledWhen, requires, umpire } from '@umpire/core'
 
-const ump = umpire({
+const signupUmp = umpire({
   fields: {
-    email:           { required: true },
-    password:        { required: true },
-    confirmPassword: { required: true },
+    email:           { required: true, isEmpty: (v) => !v },
+    password:        { required: true, isEmpty: (v) => !v },
+    confirmPassword: { required: true, isEmpty: (v) => !v },
+    referralCode:    {},
     companyName:     {},
     companySize:     {},
   },
   rules: [
     requires('confirmPassword', 'password'),
-    enabledWhen('companyName', (_v, ctx) => ctx.plan === 'business'),
-    enabledWhen('companySize', (_v, ctx) => ctx.plan === 'business'),
+    enabledWhen('companyName', (_values, ctx) => ctx.plan === 'business', {
+      reason: 'business plan required',
+    }),
+    enabledWhen('companySize', (_values, ctx) => ctx.plan === 'business', {
+      reason: 'business plan required',
+    }),
     requires('companySize', 'companyName'),
   ],
 })
 
-const result = ump.check(
+const availability = signupUmp.check(
   { email: 'alex@example.com', password: 'hunter2' },
   { plan: 'personal' },
 )
-// → companyName: { enabled: false, reason: 'business plan required' }
-// → companySize: { enabled: false, reason: 'business plan required' }
+
+availability.companyName
+// { enabled: false, required: false, reason: 'business plan required', reasons: ['business plan required'] }
+
+const penalties = signupUmp.flag(
+  {
+    values: {
+      email: 'alex@example.com',
+      password: 'hunter2',
+      companyName: 'Acme',
+      companySize: '50',
+    },
+    context: { plan: 'business' },
+  },
+  {
+    values: {
+      email: 'alex@example.com',
+      password: 'hunter2',
+      companyName: 'Acme',
+      companySize: '50',
+    },
+    context: { plan: 'personal' },
+  },
+)
+
+// [
+//   { field: 'companyName', reason: 'business plan required', suggestedValue: undefined },
+//   { field: 'companySize', reason: 'business plan required', suggestedValue: undefined },
+// ]
 ```
+
+## Packages
+
+| Package | Purpose |
+| --- | --- |
+| [`@umpire/core`](./packages/core/README.md) | Pure logic engine with zero runtime dependencies |
+| [`@umpire/react`](./packages/react/README.md) | `useUmpire()` hook for React |
+| [`@umpire/signals`](./packages/signals/README.md) | Signal adapter via `SignalProtocol` |
+| [`@umpire/zustand`](./packages/zustand/README.md) | Zustand store adapter with native prev-state tracking |
+
+## Why Umpire?
+
+- Pure logic, zero dependencies.
+- Declarative rules: `requires`, `disables`, `enabledWhen`, `oneOf`.
+- Recommendations, not mutations: `flag()` suggests resets, you decide when to apply them.
+- Framework adapters for React, signals, and Zustand.
+- Debuggable: `challenge()` traces why any field was ruled out.
+
+## Install
+
+```bash
+npm install @umpire/core
+```
+
+## Docs
+
+Full docs, concepts, and examples live at https://sdougbrown.github.io/umpire/
+
+## Droid-Friendly
+
+Per-package `.claude/rules/` directories ship in the published npm packages, so AI assistants can pick up package-specific usage patterns automatically. For repo contributors, `CLAUDE.md`, `AGENTS.md`, and `.cursor/rules/` are kept in sync for local tooling.
 
 ## Status
 
-Early development. Not yet published to npm.
+Alpha.
+
+## License
+
+MIT
