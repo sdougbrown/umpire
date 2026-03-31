@@ -9,10 +9,16 @@
     "preview": "astro preview"
   },
   "dependencies": {
+    "@astrojs/react": "^5.0.2",
     "@astrojs/starlight": "^0.37.7",
-    "astro": "^5.18.1"
+    "@umpire/core": "portal:../packages/core",
+    "astro": "^5.18.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "typescript": "^5.8.3"
   }
 }

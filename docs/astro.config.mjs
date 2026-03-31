@@ -1,10 +1,12 @@
 import { defineConfig } from 'astro/config'
 import starlight from '@astrojs/starlight'
+import react from '@astrojs/react'
 
 export default defineConfig({
   site: 'https://sdougbrown.github.io',
   base: '/umpire',
   integrations: [
+    react(),
     starlight({
       title: '🛂 Umpire',
       description: 'Rule the form. Flag the field.',

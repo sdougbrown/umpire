@@ -127,6 +127,18 @@ ump.flag(
 
 This example is intentionally about availability, not validation. `confirmPassword` depends on `password` being present, but Umpire does not check whether the two values match. That belongs in your validation layer.
 
+## Try It Live — Tonight's Lineup
+
+Same concept, different domain. A baseball manager filling out a lineup card faces the same structural problem: player eligibility depends on injuries, rest days, and matchup strategy. Toggle the controls and watch availability update in real time.
+
+import LineupCard from '../../components/LineupCard.tsx'
+
+<div class="umpire-scoreboard" style="padding: 1rem;">
+  <LineupCard client:load />
+</div>
+
+Three rule types in action: **`disables`** (injuries scratch players), **`oneOf`** (platoon matchups swap batters based on opposing pitcher), and **`requires`** (Morrison needs rest days before he's eligible to start). The same library, the same `check()` call, the same result shape — just a different set of fields.
+
 ## What It Does Not Do
 
 - It does not own form state.
