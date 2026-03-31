@@ -3,14 +3,20 @@ title: '@umpire/react'
 description: A thin React hook that memoizes availability and penalties without effects.
 ---
 
+import ReactAdapterDemo from '../../../components/ReactAdapterDemo.tsx'
+
 # `@umpire/react`
 
 `@umpire/react` is intentionally small. It does not add a subscription layer or side-effect system. It just derives `check()` and `flag()` results during render.
 
+<div class="umpire-lineup-demo">
+  <ReactAdapterDemo client:load />
+</div>
+
 ## Install
 
 ```bash
-npm install @umpire/core @umpire/react
+yarn add @umpire/core @umpire/react
 ```
 
 ## `useUmpire()`
