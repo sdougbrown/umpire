@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { umpire, enabledWhen, requires, oneOf } from '@umpire/core'
 import type { FieldDef, FieldValues } from '@umpire/core'
 
-// --- Roster data ---
+// --- Roster ---
 
 type Player = {
   name: string
@@ -20,10 +20,34 @@ const roster: Record<string, Player> = {
   kowalski:  { name: 'Dave Kowalski',    positions: ['3B'],       bats: 'R', throws: 'R', role: 'position' },
   reyes:     { name: 'Carlos Reyes',     positions: ['LF'],       bats: 'L', throws: 'L', role: 'position' },
   patterson: { name: 'Mike Patterson',   positions: ['LF', 'RF'], bats: 'R', throws: 'R', role: 'position' },
+  chen:      { name: 'Billy Chen',       positions: ['C'],        bats: 'R', throws: 'R', role: 'position' },
+  russo:     { name: 'Tony Russo',       positions: ['2B'],       bats: 'L', throws: 'R', role: 'position' },
+  williams:  { name: 'Andre Williams',   positions: ['RF', 'CF'], bats: 'R', throws: 'R', role: 'position' },
+  silva:     { name: 'Marco Silva',      positions: ['DH', 'LF'], bats: 'L', throws: 'L', role: 'position' },
   morrison:  { name: 'Jake Morrison',    positions: ['SP'],       bats: 'R', throws: 'R', role: 'starter' },
   flores:    { name: 'Eddie Flores',     positions: ['SP'],       bats: 'L', throws: 'L', role: 'starter' },
   whitfield: { name: 'Sam Whitfield',    positions: ['RP', 'CL'], bats: 'R', throws: 'R', role: 'reliever' },
 }
+
+// --- Lineup positions ---
+
+type LineupSlot = {
+  label: string
+  position: string
+}
+
+const lineupSlots: LineupSlot[] = [
+  { label: 'SP',  position: 'SP' },
+  { label: '1',   position: 'C' },
+  { label: '2',   position: '2B' },
+  { label: '3',   position: 'SS' },
+  { label: '4',   position: '1B' },
+  { label: '5',   position: '3B' },
+  { label: '6',   position: 'LF' },
+  { label: '7',   position: 'CF' },
+  { label: '8',   position: 'RF' },
+  { label: '9',   position: 'DH' },
+]
 
 // --- Umpire setup ---
 
@@ -47,13 +71,18 @@ const lineupUmp = umpire<typeof fields, Ctx>({
       reason: 'platoon matchup',
     }),
 
-    // Platoon: LF — Reyes (L) vs righty pitchers, Patterson (R) vs lefty pitchers
+    // Platoon: LF — Reyes (L) vs righty, Patterson (R) vs lefty
     oneOf('leftFieldPlatoon', {
       vsRighty: ['reyes'],
       vsLefty:  ['patterson'],
     }, {
       activeBranch: (_v, ctx) => ctx.opposingPitcher === 'L' ? 'vsLefty' : 'vsRighty',
       reason: 'platoon matchup',
+    }),
+
+    // Platoon: Silva (L) sits vs lefties
+    enabledWhen('silva', (_v, ctx) => ctx.opposingPitcher !== 'L', {
+      reason: 'platoon — lefty sits vs LHP',
     }),
 
     // Morrison can't start without rest
@@ -68,18 +97,32 @@ const lineupUmp = umpire<typeof fields, Ctx>({
   ],
 })
 
-// --- Component ---
+// --- Styles ---
 
-const statusDot = (enabled: boolean, hasFlag: boolean) => {
-  if (hasFlag) return { bg: '#fed023', label: 'flagged' }
-  if (enabled) return { bg: '#6bfe9c', label: 'eligible' }
-  return { bg: '#ff716c', label: 'out' }
+const mono = "'JetBrains Mono', monospace"
+const colors = {
+  green: '#6bfe9c',
+  yellow: '#fed023',
+  red: '#ff716c',
+  dim: '#a0a0a0',
+  bg: 'rgba(18,18,18,0.96)',
+  surface: 'rgba(26,26,26,0.96)',
+  white: '#f9f9f9',
+  faint: 'rgba(255,255,255,0.04)',
 }
+
+// --- Component ---
 
 export default function LineupCard() {
   const [opposingPitcher, setOpposingPitcher] = useState<'L' | 'R'>('R')
   const [injuries, setInjuries] = useState<Set<string>>(new Set())
   const [morrisonRested, setMorrisonRested] = useState(false)
+  const [lineup, setLineup] = useState<Record<string, string | null>>(() => {
+    const slots: Record<string, string | null> = {}
+    for (const slot of lineupSlots) slots[slot.label] = null
+    return slots
+  })
+  const [selectingSlot, setSelectingSlot] = useState<string | null>(null)
   const [prevValues, setPrevValues] = useState<FieldValues<typeof fields> | null>(null)
 
   const values: FieldValues<typeof fields> = useMemo(() => {
@@ -107,9 +150,23 @@ export default function LineupCard() {
     )
   }, [values, context, prevValues])
 
-  const penaltyFields = new Set(penalties.map(p => p.field))
+  // Players currently assigned to a slot
+  const assignedPlayers = new Set(Object.values(lineup).filter(Boolean) as string[])
 
-  const toggleInjury = (id: string) => {
+  // When availability changes, remove ineligible players from lineup
+  useMemo(() => {
+    let changed = false
+    const next = { ...lineup }
+    for (const [slot, playerId] of Object.entries(next)) {
+      if (playerId && availability[playerId] && !availability[playerId].enabled) {
+        next[slot] = null
+        changed = true
+      }
+    }
+    if (changed) setLineup(next)
+  }, [availability])
+
+  const toggleInjury = useCallback((id: string) => {
     setPrevValues(values)
     setInjuries(prev => {
       const next = new Set(prev)
@@ -117,300 +174,309 @@ export default function LineupCard() {
       else next.add(id)
       return next
     })
-  }
+  }, [values])
 
-  const togglePitcher = () => {
+  const togglePitcher = useCallback(() => {
     setPrevValues(values)
     setOpposingPitcher(p => p === 'L' ? 'R' : 'L')
-  }
+  }, [values])
 
-  const toggleRest = () => {
+  const toggleRest = useCallback(() => {
     setPrevValues(values)
     setMorrisonRested(r => !r)
+  }, [values])
+
+  const assignPlayer = useCallback((slot: string, playerId: string) => {
+    setLineup(prev => ({ ...prev, [slot]: playerId }))
+    setSelectingSlot(null)
+  }, [])
+
+  const clearSlot = useCallback((slot: string) => {
+    setLineup(prev => ({ ...prev, [slot]: null }))
+  }, [])
+
+  // Get eligible players for a lineup slot
+  const getEligibleForSlot = (slot: LineupSlot) => {
+    return Object.entries(roster).filter(([id, player]) => {
+      if (!availability[id]?.enabled) return false
+      if (assignedPlayers.has(id) && lineup[slot.label] !== id) return false
+      if (slot.position === 'DH') return player.role === 'position'
+      return player.positions.includes(slot.position)
+    })
   }
 
-  const playerRows = Object.entries(roster).filter(([, p]) => p.role === 'position')
-  const pitcherRows = Object.entries(roster).filter(([, p]) => p.role !== 'position')
-
   return (
-    <div style={{ fontFamily: "'Work Sans', sans-serif", color: '#e0e0e0' }}>
+    <div style={{ fontFamily: "'Work Sans', sans-serif", color: colors.white }}>
       {/* Controls */}
       <div style={{
-        display: 'flex', gap: '1rem', flexWrap: 'wrap',
-        marginBottom: '1.25rem', alignItems: 'stretch',
+        display: 'flex', gap: '0.75rem', flexWrap: 'wrap',
+        marginBottom: '1rem', alignItems: 'stretch',
       }}>
-        <button
-          onClick={togglePitcher}
-          style={{
-            background: opposingPitcher === 'L' ? 'rgba(107,254,156,0.15)' : 'rgba(254,208,35,0.15)',
-            border: `1px solid ${opposingPitcher === 'L' ? 'rgba(107,254,156,0.4)' : 'rgba(254,208,35,0.4)'}`,
-            color: opposingPitcher === 'L' ? '#6bfe9c' : '#fed023',
-            margin: 0, padding: '0.4rem 1rem', borderRadius: '6px', cursor: 'pointer',
-            fontFamily: "'JetBrains Mono', monospace", fontSize: '0.8rem',
-            fontWeight: 600, letterSpacing: '0.05em', lineHeight: 1.4,
-          }}
-        >
-          Opposing pitcher: {opposingPitcher === 'L' ? 'LHP' : 'RHP'}
+        <button onClick={togglePitcher} style={{
+          background: opposingPitcher === 'L' ? 'rgba(107,254,156,0.15)' : 'rgba(254,208,35,0.15)',
+          border: `1px solid ${opposingPitcher === 'L' ? 'rgba(107,254,156,0.4)' : 'rgba(254,208,35,0.4)'}`,
+          color: opposingPitcher === 'L' ? colors.green : colors.yellow,
+          margin: 0, padding: '0.4rem 1rem', borderRadius: '6px', cursor: 'pointer',
+          fontFamily: mono, fontSize: '0.8rem', fontWeight: 600,
+          letterSpacing: '0.05em', lineHeight: 1.4,
+        }}>
+          Opposing: {opposingPitcher === 'L' ? 'LHP' : 'RHP'}
         </button>
-
-        <button
-          onClick={toggleRest}
-          style={{
-            background: morrisonRested ? 'rgba(107,254,156,0.15)' : 'rgba(255,113,108,0.12)',
-            border: `1px solid ${morrisonRested ? 'rgba(107,254,156,0.4)' : 'rgba(255,113,108,0.3)'}`,
-            color: morrisonRested ? '#6bfe9c' : '#ff716c',
-            margin: 0, padding: '0.4rem 1rem', borderRadius: '6px', cursor: 'pointer',
-            fontFamily: "'JetBrains Mono', monospace", fontSize: '0.8rem',
-            fontWeight: 600, letterSpacing: '0.05em', lineHeight: 1.4,
-          }}
-        >
-          Morrison rest: {morrisonRested ? 'rested' : 'fatigued'}
+        <button onClick={toggleRest} style={{
+          background: morrisonRested ? 'rgba(107,254,156,0.15)' : 'rgba(255,113,108,0.12)',
+          border: `1px solid ${morrisonRested ? 'rgba(107,254,156,0.4)' : 'rgba(255,113,108,0.3)'}`,
+          color: morrisonRested ? colors.green : colors.red,
+          margin: 0, padding: '0.4rem 1rem', borderRadius: '6px', cursor: 'pointer',
+          fontFamily: mono, fontSize: '0.8rem', fontWeight: 600,
+          letterSpacing: '0.05em', lineHeight: 1.4,
+        }}>
+          Morrison: {morrisonRested ? 'rested' : 'fatigued'}
         </button>
       </div>
 
       {/* Penalties */}
       {penalties.length > 0 && (
         <div style={{
-          border: '1px solid rgba(254,208,35,0.3)', borderRadius: '12px',
-          padding: '0.75rem 1rem', marginBottom: '1rem',
+          border: '1px solid rgba(254,208,35,0.3)', borderRadius: '10px',
+          padding: '0.6rem 1rem', marginBottom: '1rem',
           background: 'linear-gradient(135deg, rgba(254,208,35,0.08), transparent 45%), rgba(18,18,18,0.96)',
         }}>
           <div style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase',
-            color: '#fed023', marginBottom: '0.5rem',
+            fontFamily: mono, fontSize: '0.65rem', letterSpacing: '0.12em',
+            textTransform: 'uppercase', color: colors.yellow, marginBottom: '0.4rem',
           }}>
             🚩 Flag on the play
           </div>
           {penalties.map((p, i) => (
-            <div key={i} style={{ fontSize: '0.85rem', color: '#e0e0e0', marginBottom: '0.25rem' }}>
+            <div key={i} style={{ fontSize: '0.8rem', color: colors.white, marginBottom: '0.15rem' }}>
               <strong>{roster[p.field]?.name ?? p.field}</strong>
-              <span style={{ color: '#a0a0a0' }}> — {p.reason}</span>
+              <span style={{ color: colors.dim }}> — {p.reason}</span>
             </div>
           ))}
         </div>
       )}
 
-      {/* Position Players */}
-      <div style={{
-        border: '1px solid rgba(107,254,156,0.16)', borderRadius: '12px',
-        overflow: 'hidden', marginBottom: '1rem',
-        background: 'linear-gradient(135deg, rgba(107,254,156,0.04), transparent 45%), rgba(18,18,18,0.96)',
-        boxShadow: '0 0 60px -15px rgba(107,254,156,0.1)',
-      }}>
-        <div style={{
-          padding: '0.6rem 1rem',
-          background: 'rgba(107,254,156,0.06)',
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase',
-          color: '#a0a0a0', display: 'flex', justifyContent: 'space-between',
-        }}>
-          <span>Position Players</span>
-          <span style={{ color: '#6bfe9c' }}>Boston Crabs</span>
-        </div>
+      {/* Two-panel layout */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid rgba(107,254,156,0.1)' }}>
-              {['', 'Player', 'Pos', 'B/T', 'Status', 'Reason', ''].map((h, i) => (
-                <th key={i} style={{
-                  padding: '0.5rem 0.75rem', textAlign: 'left',
-                  fontSize: '0.7rem', letterSpacing: '0.08em', textTransform: 'uppercase',
-                  color: '#a0a0a0', fontWeight: 500,
-                  fontFamily: "'JetBrains Mono', monospace",
-                }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {playerRows.map(([id, player]) => {
+        {/* Left: Roster/Bench */}
+        <div style={{
+          border: '1px solid rgba(107,254,156,0.12)', borderRadius: '10px',
+          overflow: 'hidden', background: colors.bg,
+        }}>
+          <div style={{
+            padding: '0.5rem 0.75rem', background: 'rgba(107,254,156,0.06)',
+            fontFamily: mono, fontSize: '0.65rem', letterSpacing: '0.12em',
+            textTransform: 'uppercase', color: colors.dim,
+            display: 'flex', justifyContent: 'space-between',
+          }}>
+            <span>Roster</span>
+            <span style={{ color: colors.green }}>Boston Crabs</span>
+          </div>
+          <div style={{ padding: '0.25rem 0' }}>
+            {Object.entries(roster).map(([id, player]) => {
               const av = availability[id]
-              const flagged = penaltyFields.has(id)
-              const dot = statusDot(av?.enabled ?? true, flagged)
+              const inLineup = assignedPlayers.has(id)
+              const enabled = av?.enabled ?? true
               return (
-                <tr key={id} style={{
-                  borderBottom: '1px solid rgba(255,255,255,0.04)',
-                  opacity: av?.enabled ? 1 : 0.5,
+                <div key={id} style={{
+                  display: 'flex', alignItems: 'center', gap: '0.5rem',
+                  padding: '0.35rem 0.75rem',
+                  opacity: enabled ? (inLineup ? 0.4 : 1) : 0.35,
+                  borderBottom: `1px solid ${colors.faint}`,
                   transition: 'opacity 0.2s',
                 }}>
-                  <td style={{ padding: '0.5rem 0.75rem', width: '2rem' }}>
-                    <span style={{
-                      display: 'inline-block', width: '8px', height: '8px',
-                      borderRadius: '50%', background: dot.bg,
-                      boxShadow: `0 0 6px ${dot.bg}`,
-                    }} />
-                  </td>
-                  <td style={{
-                    padding: '0.5rem 0.75rem', fontWeight: 600,
-                    color: av?.enabled ? '#f9f9f9' : '#808080',
+                  <span style={{
+                    width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0,
+                    background: !enabled ? colors.red : inLineup ? colors.dim : colors.green,
+                    boxShadow: `0 0 5px ${!enabled ? colors.red : inLineup ? 'transparent' : colors.green}`,
+                  }} />
+                  <span style={{
+                    flex: 1, fontSize: '0.8rem', fontWeight: enabled ? 600 : 400,
+                    color: enabled ? colors.white : '#666',
+                    textDecoration: inLineup ? 'line-through' : 'none',
                   }}>
                     {player.name}
-                  </td>
-                  <td style={{
-                    padding: '0.5rem 0.75rem',
-                    fontFamily: "'JetBrains Mono', monospace", fontSize: '0.8rem',
+                  </span>
+                  <span style={{
+                    fontFamily: mono, fontSize: '0.65rem', color: colors.dim,
+                    minWidth: '2.5rem',
                   }}>
                     {player.positions.join('/')}
-                  </td>
-                  <td style={{
-                    padding: '0.5rem 0.75rem',
-                    fontFamily: "'JetBrains Mono', monospace", fontSize: '0.8rem',
-                    color: '#a0a0a0',
+                  </span>
+                  <span style={{
+                    fontFamily: mono, fontSize: '0.65rem', color: colors.dim,
+                    width: '2rem', textAlign: 'center',
                   }}>
                     {player.bats}/{player.throws}
-                  </td>
-                  <td style={{ padding: '0.5rem 0.75rem' }}>
+                  </span>
+                  {enabled && !inLineup ? null : !enabled ? (
                     <span style={{
-                      display: 'inline-block', padding: '0.15rem 0.5rem',
-                      borderRadius: '999px', fontSize: '0.7rem',
-                      fontFamily: "'JetBrains Mono', monospace",
-                      letterSpacing: '0.06em', textTransform: 'uppercase',
-                      fontWeight: 600,
-                      background: av?.enabled
-                        ? 'rgba(107,254,156,0.12)' : 'rgba(255,113,108,0.12)',
-                      color: av?.enabled ? '#6bfe9c' : '#ff716c',
+                      fontFamily: mono, fontSize: '0.6rem', color: colors.red,
+                      padding: '0.1rem 0.35rem', borderRadius: '4px',
+                      background: 'rgba(255,113,108,0.1)', whiteSpace: 'nowrap',
                     }}>
-                      {av?.enabled ? 'eligible' : 'out'}
+                      {av?.reason ?? 'out'}
                     </span>
-                  </td>
-                  <td style={{
-                    padding: '0.5rem 0.75rem', fontSize: '0.8rem',
-                    fontStyle: 'italic', color: '#a0a0a0',
-                  }}>
-                    {av?.reason ?? '—'}
-                  </td>
-                  <td style={{ padding: '0.5rem 0.75rem', width: '2rem' }}>
-                    <button
-                      onClick={() => toggleInjury(id)}
-                      title={injuries.has(id) ? 'Clear injury' : 'Add to IL'}
-                      style={{
-                        background: injuries.has(id) ? 'rgba(255,113,108,0.2)' : 'rgba(255,255,255,0.05)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '4px', padding: '0.2rem 0.4rem',
-                        cursor: 'pointer', fontSize: '0.75rem',
-                        color: injuries.has(id) ? '#ff716c' : '#808080',
-                      }}
-                    >
-                      {injuries.has(id) ? 'IL' : '🤕'}
-                    </button>
-                  </td>
-                </tr>
+                  ) : inLineup ? (
+                    <span style={{
+                      fontFamily: mono, fontSize: '0.6rem', color: colors.green,
+                      padding: '0.1rem 0.35rem', borderRadius: '4px',
+                      background: 'rgba(107,254,156,0.1)',
+                    }}>
+                      in lineup
+                    </span>
+                  ) : null}
+                  <button
+                    onClick={() => toggleInjury(id)}
+                    title={injuries.has(id) ? 'Clear injury' : 'Add to IL'}
+                    style={{
+                      background: injuries.has(id) ? 'rgba(255,113,108,0.2)' : 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: '4px', padding: '0.15rem 0.3rem',
+                      cursor: 'pointer', fontSize: '0.7rem', lineHeight: 1,
+                      color: injuries.has(id) ? colors.red : '#666',
+                      margin: 0,
+                    }}
+                  >
+                    {injuries.has(id) ? '✕' : '🤕'}
+                  </button>
+                </div>
               )
             })}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pitchers */}
-      <div style={{
-        border: '1px solid rgba(107,254,156,0.16)', borderRadius: '12px',
-        overflow: 'hidden', marginBottom: '1rem',
-        background: 'linear-gradient(135deg, rgba(254,208,35,0.04), transparent 45%), rgba(18,18,18,0.96)',
-        boxShadow: '0 0 60px -15px rgba(107,254,156,0.1)',
-      }}>
-        <div style={{
-          padding: '0.6rem 1rem',
-          background: 'rgba(254,208,35,0.06)',
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase',
-          color: '#a0a0a0', display: 'flex', justifyContent: 'space-between',
-        }}>
-          <span>Pitching Staff</span>
-          <span style={{ color: '#fed023' }}>Tonight's Game</span>
+          </div>
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid rgba(254,208,35,0.1)' }}>
-              {['', 'Pitcher', 'Role', 'Throws', 'Status', 'Reason', ''].map((h, i) => (
-                <th key={i} style={{
-                  padding: '0.5rem 0.75rem', textAlign: 'left',
-                  fontSize: '0.7rem', letterSpacing: '0.08em', textTransform: 'uppercase',
-                  color: '#a0a0a0', fontWeight: 500,
-                  fontFamily: "'JetBrains Mono', monospace",
-                }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {pitcherRows.map(([id, player]) => {
-              const av = availability[id]
-              const flagged = penaltyFields.has(id)
-              const dot = statusDot(av?.enabled ?? true, flagged)
+        {/* Right: Lineup Card */}
+        <div style={{
+          border: '1px solid rgba(254,208,35,0.12)', borderRadius: '10px',
+          overflow: 'hidden', background: colors.bg,
+        }}>
+          <div style={{
+            padding: '0.5rem 0.75rem', background: 'rgba(254,208,35,0.06)',
+            fontFamily: mono, fontSize: '0.65rem', letterSpacing: '0.12em',
+            textTransform: 'uppercase', color: colors.dim,
+            display: 'flex', justifyContent: 'space-between',
+          }}>
+            <span>Tonight's Lineup</span>
+            <span style={{ color: colors.yellow }}>vs {opposingPitcher === 'L' ? 'LHP' : 'RHP'}</span>
+          </div>
+          <div style={{ padding: '0.25rem 0' }}>
+            {lineupSlots.map((slot) => {
+              const playerId = lineup[slot.label]
+              const player = playerId ? roster[playerId] : null
+              const eligible = getEligibleForSlot(slot)
+              const isSelecting = selectingSlot === slot.label
+              const isSP = slot.position === 'SP'
+
               return (
-                <tr key={id} style={{
-                  borderBottom: '1px solid rgba(255,255,255,0.04)',
-                  opacity: av?.enabled ? 1 : 0.5,
-                  transition: 'opacity 0.2s',
+                <div key={slot.label} style={{
+                  borderBottom: `1px solid ${colors.faint}`,
+                  ...(isSP ? { borderBottom: `1px solid rgba(254,208,35,0.15)` } : {}),
                 }}>
-                  <td style={{ padding: '0.5rem 0.75rem', width: '2rem' }}>
+                  <div
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
+                      padding: '0.35rem 0.75rem', cursor: 'pointer',
+                      background: isSelecting ? 'rgba(107,254,156,0.06)' : 'transparent',
+                      transition: 'background 0.15s',
+                    }}
+                    onClick={() => {
+                      if (playerId) {
+                        clearSlot(slot.label)
+                      } else {
+                        setSelectingSlot(isSelecting ? null : slot.label)
+                      }
+                    }}
+                  >
                     <span style={{
-                      display: 'inline-block', width: '8px', height: '8px',
-                      borderRadius: '50%', background: dot.bg,
-                      boxShadow: `0 0 6px ${dot.bg}`,
-                    }} />
-                  </td>
-                  <td style={{
-                    padding: '0.5rem 0.75rem', fontWeight: 600,
-                    color: av?.enabled ? '#f9f9f9' : '#808080',
-                  }}>
-                    {player.name}
-                  </td>
-                  <td style={{
-                    padding: '0.5rem 0.75rem',
-                    fontFamily: "'JetBrains Mono', monospace", fontSize: '0.8rem',
-                  }}>
-                    {player.positions.join('/')}
-                  </td>
-                  <td style={{
-                    padding: '0.5rem 0.75rem',
-                    fontFamily: "'JetBrains Mono', monospace", fontSize: '0.8rem',
-                    color: '#a0a0a0',
-                  }}>
-                    {player.throws}HP
-                  </td>
-                  <td style={{ padding: '0.5rem 0.75rem' }}>
-                    <span style={{
-                      display: 'inline-block', padding: '0.15rem 0.5rem',
-                      borderRadius: '999px', fontSize: '0.7rem',
-                      fontFamily: "'JetBrains Mono', monospace",
-                      letterSpacing: '0.06em', textTransform: 'uppercase',
-                      fontWeight: 600,
-                      background: av?.enabled
-                        ? 'rgba(107,254,156,0.12)' : 'rgba(255,113,108,0.12)',
-                      color: av?.enabled ? '#6bfe9c' : '#ff716c',
+                      fontFamily: mono, fontSize: '0.7rem', fontWeight: 700,
+                      color: isSP ? colors.yellow : colors.dim,
+                      width: '1.5rem', textAlign: 'center',
                     }}>
-                      {av?.enabled ? 'eligible' : 'out'}
+                      {slot.label}
                     </span>
-                  </td>
-                  <td style={{
-                    padding: '0.5rem 0.75rem', fontSize: '0.8rem',
-                    fontStyle: 'italic', color: '#a0a0a0',
-                  }}>
-                    {av?.reason ?? '—'}
-                  </td>
-                  <td style={{ padding: '0.5rem 0.75rem', width: '2rem' }}>
-                    <button
-                      onClick={() => toggleInjury(id)}
-                      title={injuries.has(id) ? 'Clear injury' : 'Add to IL'}
-                      style={{
-                        background: injuries.has(id) ? 'rgba(255,113,108,0.2)' : 'rgba(255,255,255,0.05)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '4px', padding: '0.2rem 0.4rem',
-                        cursor: 'pointer', fontSize: '0.75rem',
-                        color: injuries.has(id) ? '#ff716c' : '#808080',
-                      }}
-                    >
-                      {injuries.has(id) ? 'IL' : '🤕'}
-                    </button>
-                  </td>
-                </tr>
+                    <span style={{
+                      fontFamily: mono, fontSize: '0.6rem', color: colors.dim,
+                      width: '1.8rem', textAlign: 'center',
+                      padding: '0.1rem 0', borderRadius: '3px',
+                      background: 'rgba(255,255,255,0.04)',
+                    }}>
+                      {slot.position}
+                    </span>
+                    {player ? (
+                      <>
+                        <span style={{
+                          flex: 1, fontSize: '0.8rem', fontWeight: 600,
+                          color: colors.white,
+                        }}>
+                          {player.name}
+                        </span>
+                        <span style={{
+                          fontFamily: mono, fontSize: '0.6rem', color: colors.dim,
+                        }}>
+                          {player.bats}/{player.throws}
+                        </span>
+                        <span style={{
+                          fontSize: '0.65rem', color: colors.dim, cursor: 'pointer',
+                        }} title="Remove from lineup">
+                          ✕
+                        </span>
+                      </>
+                    ) : (
+                      <span style={{
+                        flex: 1, fontSize: '0.75rem', fontStyle: 'italic',
+                        color: eligible.length > 0 ? '#555' : colors.red,
+                      }}>
+                        {eligible.length > 0
+                          ? `${eligible.length} eligible`
+                          : 'no eligible players'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Dropdown: eligible players */}
+                  {isSelecting && eligible.length > 0 && (
+                    <div style={{
+                      padding: '0.15rem 0', marginLeft: '2.75rem', marginRight: '0.75rem',
+                      marginBottom: '0.35rem',
+                      borderRadius: '6px', overflow: 'hidden',
+                      border: '1px solid rgba(107,254,156,0.15)',
+                      background: colors.surface,
+                    }}>
+                      {eligible.map(([id, p]) => (
+                        <div
+                          key={id}
+                          onClick={(e) => { e.stopPropagation(); assignPlayer(slot.label, id) }}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '0.5rem',
+                            padding: '0.3rem 0.6rem', cursor: 'pointer',
+                            fontSize: '0.75rem',
+                            transition: 'background 0.1s',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(107,254,156,0.08)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          <span style={{
+                            width: '6px', height: '6px', borderRadius: '50%',
+                            background: colors.green, flexShrink: 0,
+                          }} />
+                          <span style={{ fontWeight: 500, color: colors.white }}>{p.name}</span>
+                          <span style={{
+                            fontFamily: mono, fontSize: '0.6rem', color: colors.dim,
+                          }}>
+                            {p.bats}/{p.throws}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )
             })}
-          </tbody>
-        </table>
+          </div>
+        </div>
       </div>
-
     </div>
   )
 }
