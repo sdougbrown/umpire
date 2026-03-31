@@ -172,17 +172,20 @@ const availability = lineupUmp.check(values, { opposingPitcher })
 // availability.morrison.reason → 'requires morrisonRested'
 ```
 
-```ts title="Flag — called on transitions"
-const penalties = lineupUmp.flag(
-  { values: prevValues, context: prevContext },
-  { values, context },
-)
-// When the pitcher flips from RHP to LHP:
-// → [{ field: 'delgado', reason: 'platoon matchup' }]
-// The UI auto-removes Delgado from the lineup and flags it.
+```ts title="Flag — compare two snapshots to find stale values"
+// After any state change, compare the previous snapshot to the current one.
+// flag() finds fields that just became disabled but still hold non-empty values.
+const prevSnapshot = { values: prevValues, context: prevContext }
+const currentSnapshot = { values, context }
+
+const penalties = lineupUmp.flag(prevSnapshot, currentSnapshot)
+// User flips the opposing pitcher from RHP → LHP:
+// → [{ field: 'delgado', reason: 'platoon matchup', suggestedValue: undefined }]
+// Delgado was in the lineup, but the platoon rule just disabled him.
+// The penalty recommends clearing his slot — the UI shows the yellow flag.
 ```
 
-The component uses `availability` to filter which players are eligible for each slot, and `penalties` to show the yellow flag banner. Umpire handles the rules — React handles the rendering.
+`check()` tells you what's available *right now*. `flag()` tells you what *just broke* — fields that were enabled in the previous state but disabled in the current state, and still hold values that should be cleaned up. You call both on every state change: `check()` to derive the UI, `flag()` to surface reset recommendations.
 
 ## What It Does Not Do
 
