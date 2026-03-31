@@ -8,5 +8,5 @@ dist/
 !.yarn/sdks
 !.yarn/versions
 .turbo/
-docs/.astro/
+.astro/
 docs/.yarn/
