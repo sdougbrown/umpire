@@ -1,46 +1,45 @@
 ---
 title: Signup Form Walkthrough
-description: A complete signup form example showing availability checks and reset recommendations.
+description: Step-by-step walkthrough of a signup form with availability checks and reset recommendations.
 ---
 
-# Signup Form Walkthrough
+A signup form with business/personal plans. Small enough to follow in one sitting, complex enough to show how `check()`, `flag()`, and rule layering work together.
 
-This example stays deliberately small, but it shows the core shape of Umpire: presence-based dependencies, context-driven availability, and reset recommendations when context changes.
-
-## Full Setup
+## The Rules
 
 ```ts
 import { enabledWhen, requires, umpire } from '@umpire/core'
 
-const signupFields = {
-  email: { required: true, isEmpty: (value) => !value },
-  password: { required: true, isEmpty: (value) => !value },
-  confirmPassword: { required: true, isEmpty: (value) => !value },
-  referralCode: {},
-  companyName: {},
-  companySize: {},
-}
-
-type SignupContext = {
-  plan: 'personal' | 'business'
-}
-
-const signupUmp = umpire<typeof signupFields, SignupContext>({
-  fields: signupFields,
+const signupUmp = umpire({
+  fields: {
+    email:           { required: true, isEmpty: (v) => !v },
+    password:        { required: true, isEmpty: (v) => !v },
+    confirmPassword: { required: true, isEmpty: (v) => !v },
+    referralCode:    {},
+    companyName:     {},
+    companySize:     {},
+  },
   rules: [
+    // Can't confirm what doesn't exist yet
     requires('confirmPassword', 'password'),
-    enabledWhen('companyName', (_values, context) => context.plan === 'business', {
-      reason: 'business plan required',
-    }),
-    enabledWhen('companySize', (_values, context) => context.plan === 'business', {
-      reason: 'business plan required',
-    }),
+
+    // Company fields only on business plan
+    enabledWhen('companyName',
+      (_v, ctx) => ctx.plan === 'business',
+      { reason: 'business plan required' }),
+    enabledWhen('companySize',
+      (_v, ctx) => ctx.plan === 'business',
+      { reason: 'business plan required' }),
+
+    // Company size needs a company name first
     requires('companySize', 'companyName'),
   ],
 })
 ```
 
-## Step 1: Personal Plan
+Six fields, four rules. The rules read top-to-bottom as English: "confirmPassword requires password. Company fields are enabled when the plan is business. Company size requires company name."
+
+## Step 1 — Personal Plan, Password Entered
 
 ```ts
 const result = signupUmp.check(
@@ -49,13 +48,20 @@ const result = signupUmp.check(
 )
 ```
 
-Key results:
+| Field | enabled | required | reason |
+| --- | --- | --- | --- |
+| email | `true` | `true` | `null` |
+| password | `true` | `true` | `null` |
+| confirmPassword | `true` | `true` | `null` |
+| referralCode | `true` | `false` | `null` |
+| companyName | `false` | `false` | `'business plan required'` |
+| companySize | `false` | `false` | `'business plan required'` |
 
-- `confirmPassword` is enabled because `password` is present.
-- `companyName` is disabled with reason `"business plan required"`.
-- `companySize` is also disabled for the same reason.
+Company fields are off the field — personal plan, no business fields. `confirmPassword` is available because `password` is present. Notice `required` is suppressed to `false` on disabled fields. You can't require something that isn't available.
 
-## Step 2: Business Plan Without Company Name
+## Step 2 — Switch to Business Plan
+
+Same values, different context:
 
 ```ts
 const result = signupUmp.check(
@@ -64,88 +70,77 @@ const result = signupUmp.check(
 )
 ```
 
-Key results:
+Now `companyName` is enabled — but `companySize` is still off:
 
-- `companyName` is now enabled.
-- `companySize` is still disabled with reason `"requires companyName"`.
+```ts
+result.companyName
+// { enabled: true, required: false, reason: null, reasons: [] }
 
-That is the important layering:
+result.companySize
+// { enabled: false, required: false,
+//   reason: 'requires companyName', reasons: ['requires companyName'] }
+```
 
-- `enabledWhen()` opens the company fields for the business plan.
-- `requires()` then keeps `companySize` gated on actual company name presence.
+Two rules layer here. `enabledWhen` opens the gate (business plan), then `requires` keeps `companySize` waiting until `companyName` has a value. The rules compose — you don't have to think about ordering.
 
-## Step 3: Confirm Password Gate
+## Step 3 — No Password Yet
 
 ```ts
 const result = signupUmp.check(
   { email: 'alex@example.com' },
   { plan: 'personal' },
 )
-```
 
-Now `confirmPassword` becomes unavailable:
-
-```ts
 result.confirmPassword
-// {
-//   enabled: false,
-//   required: false,
-//   reason: 'requires password',
-//   reasons: ['requires password'],
-// }
+// { enabled: false, required: false,
+//   reason: 'requires password', reasons: ['requires password'] }
 ```
 
-Because the field is disabled, `required` is suppressed to `false`.
+`password` is absent (undefined = not satisfied), so `confirmPassword` is disabled. The `required: false` suppression matters here — a validation library checking required fields won't flag `confirmPassword` as missing when it isn't even available.
 
-## Step 4: Switching Plans And Calling `flag()`
+## Step 4 — Switching Plans, Flagging Resets
+
+The user filled out business fields, then switched back to personal. The values are still there, but the fields are no longer available. What should be cleaned up?
 
 ```ts
 const penalties = signupUmp.flag(
-  {
-    values: {
-      email: 'alex@example.com',
-      password: 'hunter2',
-      companyName: 'Acme',
-      companySize: '50',
-    },
-    context: { plan: 'business' },
-  },
-  {
-    values: {
-      email: 'alex@example.com',
-      password: 'hunter2',
-      companyName: 'Acme',
-      companySize: '50',
-    },
-    context: { plan: 'personal' },
-  },
+  { values: { email: 'alex@example.com', password: 'hunter2',
+              companyName: 'Acme', companySize: '50' },
+    context: { plan: 'business' } },
+  { values: { email: 'alex@example.com', password: 'hunter2',
+              companyName: 'Acme', companySize: '50' },
+    context: { plan: 'personal' } },
 )
-```
 
-```ts
-penalties
 // [
-//   {
-//     field: 'companyName',
-//     reason: 'business plan required',
-//     suggestedValue: undefined,
-//   },
-//   {
-//     field: 'companySize',
-//     reason: 'business plan required',
-//     suggestedValue: undefined,
-//   },
+//   { field: 'companyName', reason: 'business plan required',
+//     suggestedValue: undefined },
+//   { field: 'companySize', reason: 'business plan required',
+//     suggestedValue: undefined },
 // ]
 ```
 
-Only context changed. That is enough for `flag()` because it evaluates before and after snapshots, not just value diffs.
+Only context changed — the values are identical. `flag()` compares two full snapshots (values + context), so context-only transitions work naturally.
 
-## What This Example Does Not Cover
+Three conditions had to be true for each recommendation:
+1. The field was enabled in the "before" snapshot but disabled in "after"
+2. The field's current value is not empty (per `isEmpty`)
+3. The current value differs from `suggestedValue` (the field's `default`, or `undefined`)
 
-Umpire does not validate:
+Apply the recommendations to converge:
 
-- that the email is well-formed
-- that the password is strong enough
-- that `confirmPassword` matches `password`
+```ts
+// After clearing the flagged fields:
+signupUmp.flag(
+  { values: { email: 'alex@example.com', password: 'hunter2',
+              companyName: 'Acme', companySize: '50' },
+    context: { plan: 'personal' } },
+  { values: { email: 'alex@example.com', password: 'hunter2' },
+    context: { plan: 'personal' } },
+)
+// → [] (nothing left to clean up)
+```
 
-Those are value-correctness concerns, not availability concerns.
+## What This Doesn't Cover
+
+Umpire doesn't validate that the email is well-formed, the password meets policy, or `confirmPassword` matches `password`. Those are correctness concerns. Umpire handles availability — whether fields should be on the field at all.

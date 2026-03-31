@@ -3,65 +3,61 @@ title: Availability vs Validation
 description: Umpire decides whether a field is available, not whether a value is correct.
 ---
 
-# Availability vs Validation
+Umpire answers one question per field: **should this be on the field right now?**
 
-Umpire is about field availability: whether a field should be enabled, whether it still counts as required, and why it is off the field.
+Not "is this value correct?" Not "does this pass validation?" Just: given everything else in the form, is this field in play?
 
-Validation answers a different question: whether the current value is correct. Those concerns overlap in the UI, but the library keeps them separate on purpose.
+## The Baseball Lineup
 
-## The Core Distinction
+Picture a baseball manager filling out a lineup card. A player might be out of the lineup for structural reasons that have nothing to do with talent:
 
-Availability is structural.
+- **Starting pitcher threw yesterday** — he *requires* rest days before he's eligible again. Like `requires('startingPitcher', 'restDays')`.
+- **Outfielder pulled a hamstring** — the injury report *disables* him. Like `disables('injuryReport', ['outfielder'])`.
+- **Lefty pitcher on the mound** — you platoon: start the righty batter, bench the lefty. Like `oneOf('platoonMatchup', { lefty: ['batter_L'], righty: ['batter_R'] })`.
 
-- Should `confirmPassword` be available before `password` exists?
-- Should `companySize` stay enabled when the user leaves the business plan?
-- Should `submit` stay gated until an external captcha token exists?
+None of these are about whether a player is *good*. They're about whether a player is *eligible* given the current situation. The manager doesn't evaluate swing mechanics — that's a different job.
 
-Validation is correctness.
+Umpire works the same way. It doesn't care if your email is well-formed or your password meets policy. It cares whether `confirmPassword` should even appear before `password` has a value, and whether `companySize` should disappear when the user switches from a business plan to personal.
 
-- Is the email address well-formed?
-- Does the password meet policy?
-- Do `startTime` and `endTime` form a valid interval?
+## Availability Is Structural
 
-Umpire handles the first set. Your validation library handles the second.
+Good Umpire rules describe field relationships:
+
+- `requires('repeatEvery', 'startTime')` — can't set a repeat interval without a start time
+- `enabledWhen('companyName', (_v, ctx) => ctx.plan === 'business')` — company fields only appear for business accounts
+- `oneOf('subDayStrategy', { hourList: ['everyHour'], interval: ['startTime', 'endTime'] })` — pick one scheduling approach
+
+Not Umpire's job:
+
+- Syncing `endTime` after `startTime` changes (value coercion)
+- Auto-filling a fallback calendar ID (defaulting logic)
+- Checking that an email address has an `@` (validation)
+- Submitting the form
+
+If the logic decides whether a field is *available*, Umpire is the right layer. If it transforms values or proves they're correct, keep it elsewhere.
 
 ## Recommendations, Not Mutations
 
-When a field becomes disabled, Umpire does not clear it. It returns a reset recommendation through `flag()`.
+When the manager scratches a player from the lineup, the player still exists. He's in the dugout. His stats are still on the board.
 
-That distinction matters because stale state is still real state. A disabled field with a lingering value can still affect `disables()` and `oneOf()` resolution until the consumer clears it.
+Umpire works the same way. When a field becomes disabled, Umpire doesn't clear it. The value is still there — and it should be, because `disables` and `oneOf` intentionally check stale values. A disabled field with a lingering value still affects its dependents until the consumer clears it.
+
+`flag()` returns reset *recommendations*. The consumer decides when and how to apply them — immediately, after a confirmation prompt, or not at all.
 
 ## Pure Core, Reactive Adapters
 
-`@umpire/core` is a pure function engine. It knows about field definitions, rules, values, context, and previous values for `oneOf()` resolution. It does not know about React, signals, Zustand, or the DOM.
+`@umpire/core` is a pure function engine. Hand it values and context, get availability back. No framework, no DOM, no subscriptions.
 
 The adapter packages layer reactivity on top:
 
-- `@umpire/react` exposes a hook.
-- `@umpire/signals` exposes signal-backed availability and penalties.
-- `@umpire/zustand` subscribes to a store slice.
+- `@umpire/react` — a `useUmpire` hook that memoizes `check()` and tracks `prev` via `useRef`
+- `@umpire/signals` — signal-backed availability with fine-grained proxy tracking
+- `@umpire/zustand` — subscribes to a store slice, penalties come free from Zustand's `(next, prev)`
 
-## The Five Design Principles
+## Five Principles
 
-1. Availability, not validation. Ask whether a field should be on the field, not whether its value is correct.
-2. Recommendations, not mutations. `flag()` suggests resets and leaves state ownership to the consumer.
-3. Pure core, reactive adapters. Core stays framework-free, adapters stay thin.
-4. Explainable. Every disabled field has a `reason`, and `challenge()` can expose the full trace.
-5. Tiny. The library is intentionally scoped to field interdependencies, not full form orchestration.
-
-## Practical Boundary
-
-Good Umpire rules:
-
-- `requires('repeatEvery', 'startTime')`
-- `enabledWhen('companyName', (_values, ctx) => ctx.plan === 'business')`
-- `oneOf('subDayStrategy', { hourList: ['everyHour'], interval: ['startTime', 'endTime'] })`
-
-Not Umpire’s job:
-
-- Syncing `endTime` after `startTime` changes
-- Auto-filling fallback calendar IDs
-- Submitting forms
-- Running schema validation over every field
-
-If the logic decides whether a field is available, Umpire is the right layer. If it transforms values or proves they are correct, keep it elsewhere.
+1. **Availability, not validation.** Is this field on the field? Not: is this value correct?
+2. **Recommendations, not mutations.** `flag()` suggests resets. State ownership stays with the consumer.
+3. **Pure core, reactive adapters.** Core is framework-free. Adapters are thin.
+4. **Explainable.** Every disabled field has a `reason`. `challenge()` exposes the full dependency trace.
+5. **Tiny.** Field interdependencies, not form orchestration. If the scope grows past that, something is wrong.
