@@ -1,9 +1,15 @@
 ---
-title: Signup Form Walkthrough
-description: Step-by-step walkthrough of a signup form with availability checks and reset recommendations.
+title: Interactive Signup Form
+description: Interactive walkthrough of a signup form with availability checks and reset recommendations.
 ---
 
-Users pick a plan — personal or business. Business accounts get extra fields for company name and size. When they switch back to personal, those fields need to go away and their stale values need to be flagged for cleanup. Four rules handle the whole thing.
+import SignupDemo from '../../../components/SignupDemo.tsx'
+
+<div class="umpire-lineup-demo">
+  <SignupDemo client:load />
+</div>
+
+Users pick a plan: personal or business. Business accounts get extra fields for company name and size. When they switch back to personal, those stale values need to be flagged for cleanup. Four rules handle the whole flow.
 
 ## The Rules
 
@@ -16,8 +22,8 @@ const signupUmp = umpire({
     password:        { required: true, isEmpty: (v) => !v },
     confirmPassword: { required: true, isEmpty: (v) => !v },
     referralCode:    {},
-    companyName:     {},
-    companySize:     {},
+    companyName:     { isEmpty: (v) => !v },
+    companySize:     { isEmpty: (v) => !v },
   },
   rules: [
     // Can't confirm what doesn't exist yet
@@ -57,9 +63,9 @@ const result = signupUmp.check(
 | companyName | `false` | `false` | `'business plan required'` |
 | companySize | `false` | `false` | `'business plan required'` |
 
-Company fields are off the field — personal plan, no business fields. `confirmPassword` is available because `password` is present. Notice `required` is suppressed to `false` on disabled fields. You can't require something that isn't available.
+Company fields are off the field on a personal plan. `confirmPassword` is available because `password` is present. Notice that `required` is suppressed to `false` on disabled fields. You cannot require something that is not available.
 
-## Step 2 — Switch to Business Plan
+## Step 2 — Switch To Business Plan
 
 Same values, different context:
 
@@ -70,7 +76,7 @@ const result = signupUmp.check(
 )
 ```
 
-Now `companyName` is enabled — but `companySize` is still off:
+Now `companyName` is enabled, but `companySize` is still off:
 
 ```ts
 result.companyName
@@ -81,7 +87,7 @@ result.companySize
 //   reason: 'requires companyName', reasons: ['requires companyName'] }
 ```
 
-Two rules layer here. `enabledWhen` opens the gate (business plan), then `requires` keeps `companySize` waiting until `companyName` has a value. The rules compose — you don't have to think about ordering.
+Two rules layer here. `enabledWhen` opens the gate for the business plan, then `requires` keeps `companySize` waiting until `companyName` has a value. The rules compose cleanly without imperative branching.
 
 ## Step 3 — No Password Yet
 
@@ -96,11 +102,11 @@ result.confirmPassword
 //   reason: 'requires password', reasons: ['requires password'] }
 ```
 
-`password` is absent (undefined = not satisfied), so `confirmPassword` is disabled. The `required: false` suppression matters here — a validation library checking required fields won't flag `confirmPassword` as missing when it isn't even available.
+`password` is absent, so `confirmPassword` is disabled. The `required: false` suppression matters here because a validation layer should not complain about a field that is not even available.
 
 ## Step 4 — Switching Plans, Flagging Resets
 
-The user filled out business fields, then switched back to personal. The values are still there, but the fields are no longer available. What should be cleaned up?
+The user filled the business-only fields, then switched back to personal. The values are still there, but the fields are no longer available. `flag()` recommends the cleanup:
 
 ```ts
 const penalties = signupUmp.flag(
@@ -120,17 +126,17 @@ const penalties = signupUmp.flag(
 // ]
 ```
 
-Only context changed — the values are identical. `flag()` compares two full snapshots (values + context), so context-only transitions work naturally.
+Only context changed. The values are identical. Because snapshots include `context`, `flag()` handles context-only transitions naturally.
 
-Three conditions had to be true for each recommendation:
-1. The field was enabled in the "before" snapshot but disabled in "after"
-2. The field's current value is not empty (per `isEmpty`)
-3. The current value differs from `suggestedValue` (the field's `default`, or `undefined`)
+Three conditions must be true for each recommendation:
+
+1. The field was enabled in the before snapshot but disabled in the after snapshot.
+2. The field's current value is not empty, according to its `isEmpty`.
+3. The current value differs from `suggestedValue`, which is the field `default` or `undefined`.
 
 Apply the recommendations to converge:
 
 ```ts
-// After clearing the flagged fields:
 signupUmp.flag(
   { values: { email: 'alex@example.com', password: 'hunter2',
               companyName: 'Acme', companySize: '50' },
@@ -138,9 +144,9 @@ signupUmp.flag(
   { values: { email: 'alex@example.com', password: 'hunter2' },
     context: { plan: 'personal' } },
 )
-// → [] (nothing left to clean up)
+// -> [] (nothing left to clean up)
 ```
 
 ## What This Doesn't Cover
 
-Umpire doesn't validate that the email is well-formed, the password meets policy, or `confirmPassword` matches `password`. Those are correctness concerns. Umpire handles availability — whether fields should be on the field at all.
+Umpire does not validate that the email is well-formed, the password meets policy, or `confirmPassword` matches `password`. Those are correctness concerns. Umpire handles availability: whether fields should be on the field at all.
