@@ -56,7 +56,7 @@ The adapter packages layer reactivity on top:
 
 ## Five Principles
 
-1. **Availability, not validation.** Is this field on the field? Not: is this value correct?
+1. **Availability, not validation.** Should this field be in play right now? Not: is this value correct?
 2. **Recommendations, not mutations.** `flag()` suggests resets. State ownership stays with the consumer.
 3. **Pure core, reactive adapters.** Core is framework-free. Adapters are thin.
 4. **Explainable.** Every disabled field has a `reason`. `challenge()` exposes the full dependency trace.
