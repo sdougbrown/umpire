@@ -109,7 +109,7 @@ oneOf(
   },
   {
     reason?: string | ((values, context) => string)
-    activeBranch?: string | ((values) => string | null | undefined)
+    activeBranch?: string | ((values, context) => string | null | undefined)
   },
 )
 ```
@@ -119,7 +119,7 @@ Only one branch stays enabled at a time.
 Branch resolution is:
 
 1. Explicit static `activeBranch`, if provided.
-2. Explicit function `activeBranch(values)`, if provided.
+2. Explicit function `activeBranch(values, context)`, if provided.
 3. Auto-detection from satisfied fields.
 4. `prev`-assisted resolution when multiple branches are satisfied.
 5. First satisfied branch as a fallback, with a development warning.

@@ -36,7 +36,7 @@ type OneOfOptions<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
 > = RuleOptions<F, C> & {
-  activeBranch?: string | ((values: FieldValues<F>) => string | null | undefined)
+  activeBranch?: string | ((values: FieldValues<F>, context: C) => string | null | undefined)
 }
 
 type FunctionValidator = (value: unknown) => boolean
@@ -228,6 +228,7 @@ export function resolveOneOfState<
   prev: FieldValues<F> | undefined,
   activeBranch: OneOfOptions<F, C>['activeBranch'],
   fields?: F,
+  context?: C,
 ): OneOfResolution {
   const branchNames = Object.keys(branches)
   const branchStates = Object.fromEntries(
@@ -249,7 +250,7 @@ export function resolveOneOfState<
   }
 
   if (typeof activeBranch === 'function') {
-    const resolvedBranch = activeBranch(values)
+    const resolvedBranch = activeBranch(values, context as C)
     if (resolvedBranch == null) {
       return {
         activeBranch: null,
@@ -492,6 +493,7 @@ export function oneOf<
         prev,
         options?.activeBranch,
         fields,
+        context,
       )
 
       if (resolution.activeBranch === null) {

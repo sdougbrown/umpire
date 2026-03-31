@@ -12,3 +12,5 @@
 - Use `init(overrides?)` to seed default field values from field definitions.
 - Use `challenge(field, values, context?, prev?)` for debugging rule traces and transitive dependency failures.
 - Predicates receive values and optional context, not the computed availability map.
+- `oneOf` `activeBranch` function receives `(values, context)` — use context for external state like mode toggles, feature flags, or matchup data.
+- Define fields statically when possible for compile-time field name checking. Dynamic `Record<string, FieldDef>` works but loses type safety.

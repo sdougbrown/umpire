@@ -158,4 +158,31 @@ describe('oneOf resolution', () => {
     expect(result.alpha.enabled).toBe(true)
     expect(result.beta.enabled).toBe(true)
   })
+
+  test('activeBranch function receives context', () => {
+    type Ctx = { pitcher: 'L' | 'R' }
+
+    const ump = umpire<TestFields, Ctx>({
+      fields: { alpha: {}, beta: {}, gamma: {}, mode: {} },
+      rules: [
+        oneOf<TestFields, Ctx>(
+          'platoon',
+          {
+            vsLefty: ['alpha'],
+            vsRighty: ['beta'],
+          },
+          { activeBranch: (_values, ctx) => ctx.pitcher === 'L' ? 'vsLefty' : 'vsRighty' },
+        ),
+      ],
+    })
+
+    const vsLefty = ump.check({}, { pitcher: 'L' })
+    expect(vsLefty.alpha.enabled).toBe(true)
+    expect(vsLefty.beta.enabled).toBe(false)
+    expect(vsLefty.beta.reason).toBe('conflicts with vsLefty strategy')
+
+    const vsRighty = ump.check({}, { pitcher: 'R' })
+    expect(vsRighty.alpha.enabled).toBe(false)
+    expect(vsRighty.beta.enabled).toBe(true)
+  })
 })

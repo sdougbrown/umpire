@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { umpire, enabledWhen, requires } from '@umpire/core'
+import { umpire, enabledWhen, requires, oneOf } from '@umpire/core'
 import type { FieldDef, FieldValues } from '@umpire/core'
 
 // --- Roster data ---
@@ -32,25 +32,28 @@ for (const id of Object.keys(roster)) {
   fields[id] = {}
 }
 fields.morrisonRested = {}
-fields.opposingPitcher = {} // 'L' or 'R'
 
-const lineupUmp = umpire<typeof fields>({
+type Ctx = { opposingPitcher: 'L' | 'R' }
+
+const lineupUmp = umpire<typeof fields, Ctx>({
   fields,
   rules: [
     // Platoon: 1B — Delgado (L) vs righty pitchers, Vega (R) vs lefty pitchers
-    enabledWhen('delgado', (v) => v.opposingPitcher !== 'L', {
-      reason: 'platoon — lefty sits vs LHP',
-    }),
-    enabledWhen('vega', (v) => v.opposingPitcher === 'L', {
-      reason: 'platoon — righty sits vs RHP',
+    oneOf('firstBasePlatoon', {
+      vsRighty: ['delgado'],
+      vsLefty:  ['vega'],
+    }, {
+      activeBranch: (_v, ctx) => ctx.opposingPitcher === 'L' ? 'vsLefty' : 'vsRighty',
+      reason: 'platoon matchup',
     }),
 
     // Platoon: LF — Reyes (L) vs righty pitchers, Patterson (R) vs lefty pitchers
-    enabledWhen('reyes', (v) => v.opposingPitcher !== 'L', {
-      reason: 'platoon — lefty sits vs LHP',
-    }),
-    enabledWhen('patterson', (v) => v.opposingPitcher === 'L', {
-      reason: 'platoon — righty sits vs RHP',
+    oneOf('leftFieldPlatoon', {
+      vsRighty: ['reyes'],
+      vsLefty:  ['patterson'],
+    }, {
+      activeBranch: (_v, ctx) => ctx.opposingPitcher === 'L' ? 'vsLefty' : 'vsRighty',
+      reason: 'platoon matchup',
     }),
 
     // Morrison can't start without rest
@@ -86,22 +89,23 @@ export default function LineupCard() {
       v[`${id}_injured`] = injuries.has(id) || undefined
     }
     v.morrisonRested = morrisonRested || undefined
-    v.opposingPitcher = opposingPitcher
     return v as FieldValues<typeof fields>
-  }, [injuries, morrisonRested, opposingPitcher])
+  }, [injuries, morrisonRested])
+
+  const context: Ctx = useMemo(() => ({ opposingPitcher }), [opposingPitcher])
 
   const availability = useMemo(
-    () => lineupUmp.check(values),
-    [values],
+    () => lineupUmp.check(values, context),
+    [values, context],
   )
 
   const penalties = useMemo(() => {
     if (!prevValues) return []
     return lineupUmp.flag(
-      { values: prevValues },
-      { values },
+      { values: prevValues, context },
+      { values, context },
     )
-  }, [values, prevValues])
+  }, [values, context, prevValues])
 
   const penaltyFields = new Set(penalties.map(p => p.field))
 

@@ -100,6 +100,7 @@ function describeRuleForField<
       prev,
       metadata.options?.activeBranch,
       fields,
+      context,
     )
     const thisBranch =
       Object.entries(metadata.branches).find(([, branchFields]) => branchFields.includes(field))?.[0] ?? null
@@ -399,6 +400,7 @@ export function umpire<
                 prev,
                 oneOfMetadata.options?.activeBranch,
                 fields,
+                resolvedContext,
               ),
             }
           : null
