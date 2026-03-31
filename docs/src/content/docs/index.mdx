@@ -58,6 +58,68 @@ Umpire answers one question: given the current field values and conditions, whic
 
 It does not manage state, render UI, validate data correctness, or mutate values for you. It recommends resets with `flag()`, but the consumer decides whether to apply them.
 
+## Plain TypeScript — No Framework Required
+
+Umpire is a pure function. No hooks, no subscriptions, no render cycle. Declare rules, call `check()`, get a result. Here's a database migration tool where what you're allowed to do depends on the environment:
+
+```ts title="migrate.ts"
+import { umpire, enabledWhen } from '@umpire/core'
+
+const migrate = umpire({
+  fields: {
+    migration:   { required: true },
+    backup:      {},
+    seed:        {},
+    schemaReset: {},
+  },
+  rules: [
+    // Can't back up dev — nothing worth saving
+    enabledWhen('backup', (_v, c) => c.env !== 'development', {
+      reason: 'no backup in dev',
+    }),
+    // Prod migrations require a backup first
+    enabledWhen('migration', (v, c) =>
+      c.env !== 'production' || !!v.backup, {
+      reason: 'backup required in prod',
+    }),
+    // Seed data is dev/staging only
+    enabledWhen('seed', (_v, c) => c.env !== 'production', {
+      reason: 'no seeding in prod',
+    }),
+    // Schema reset is dev only — too destructive anywhere else
+    enabledWhen('schemaReset', (_v, c) => c.env === 'development', {
+      reason: 'dev only — too destructive',
+    }),
+  ],
+})
+
+// Dev — do whatever you want
+migrate.check({ migration: 'add-users-table' }, { env: 'development' })
+// → backup:      { enabled: false, reason: 'no backup in dev' }
+// → seed:        { enabled: true }
+// → schemaReset: { enabled: true }
+
+// Staging — test your infra, but no schema nuking
+migrate.check({ migration: 'add-users-table' }, { env: 'staging' })
+// → seed:        { enabled: true }
+// → schemaReset: { enabled: false, reason: 'dev only — too destructive' }
+
+// Prod — migration blocked until you back up
+migrate.check({ migration: 'add-users-table' }, { env: 'production' })
+// → migration:   { enabled: false, reason: 'backup required in prod' }
+// → seed:        { enabled: false, reason: 'no seeding in prod' }
+// → schemaReset: { enabled: false, reason: 'dev only — too destructive' }
+
+// Prod with backup — now the migration is cleared
+migrate.check(
+  { migration: 'add-users-table', backup: 'snapshot-2024-03-15' },
+  { env: 'production' },
+)
+// → migration:   { enabled: true }
+```
+
+Same `check()` call, same result shape — the environment condition reshapes what's available. No React, no DOM, no build step. This works in Node, Deno, Bun, or a browser `<script>` tag.
+
 ## Signup Example
 
 <div class="umpire-columns">
