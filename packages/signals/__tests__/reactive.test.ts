@@ -156,8 +156,8 @@ describe('reactiveUmp', () => {
     expect(typeof reactive.update).toBe('function')
     expect(typeof reactive.dispose).toBe('function')
     expect(reactive.values).toBeDefined()
-    // penalties should be available when adapter has effect
-    expect(reactive.penalties).toBeDefined()
+    // fouls should be available when adapter has effect
+    expect(reactive.fouls).toBeDefined()
   })
 
   test('field(name) returns correct availability properties', () => {
@@ -315,7 +315,7 @@ describe('reactiveUmp', () => {
     const ump = createTestUmpire()
     const reactive = reactiveUmp(ump, adapter)
 
-    // Should have created effects for penalties tracking
+    // Should have created effects for fouls tracking
     expect(adapter._effects.length).toBeGreaterThan(0)
 
     reactive.dispose()
@@ -349,7 +349,7 @@ describe('reactiveUmp without effect', () => {
     warn.mockRestore()
   })
 
-  test('penalties throws when adapter has no effect', () => {
+  test('fouls throws when adapter has no effect', () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => {})
 
     const adapter = createMockAdapter()
@@ -361,7 +361,7 @@ describe('reactiveUmp without effect', () => {
     const ump = createTestUmpire()
     const reactive = reactiveUmp(ump, noEffectAdapter)
 
-    expect(() => reactive.penalties).toThrow('penalties is unavailable')
+    expect(() => reactive.fouls).toThrow('fouls is unavailable')
 
     warn.mockRestore()
   })
@@ -389,7 +389,7 @@ describe('reactiveUmp without effect', () => {
 })
 
 describe('reactiveUmp with disables rules', () => {
-  test('penalties returns reset recommendations when fields become disabled', () => {
+  test('fouls returns reset recommendations when fields become disabled', () => {
     const adapter = createMockAdapter()
 
     const ump = umpire({
@@ -423,15 +423,15 @@ describe('reactiveUmp with disables rules', () => {
     // Flush to run the effect again — captures the transition
     adapter._flush()
 
-    // Penalties should recommend resetting startTime and endTime
-    const penalties = reactive.penalties
-    expect(penalties.length).toBe(2)
+    // Fouls should recommend resetting startTime and endTime
+    const fouls = reactive.fouls
+    expect(fouls.length).toBe(2)
 
-    const fields = penalties.map((p) => p.field).sort()
+    const fields = fouls.map((p) => p.field).sort()
     expect(fields).toEqual(['endTime', 'startTime'])
   })
 
-  test('penalties converges to empty after consumer applies resets', () => {
+  test('fouls converges to empty after consumer applies resets', () => {
     const adapter = createMockAdapter()
 
     const ump = umpire({
@@ -458,13 +458,13 @@ describe('reactiveUmp with disables rules', () => {
     reactive.set('isAllDay', true)
     adapter._flush()
 
-    expect(reactive.penalties.length).toBe(1)
+    expect(reactive.fouls.length).toBe(1)
 
     // Consumer applies the reset
     reactive.set('startTime', undefined)
     adapter._flush()
 
-    // After clearing the value, the penalty should disappear
-    expect(reactive.penalties.length).toBe(0)
+    // After clearing the value, the foul should disappear
+    expect(reactive.fouls.length).toBe(0)
   })
 })

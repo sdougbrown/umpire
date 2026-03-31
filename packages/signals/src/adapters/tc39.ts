@@ -14,5 +14,5 @@ export const tc39Adapter: SignalProtocol = {
     return new Signal.Computed(fn)
   },
   // TC39 has no effect or batch — omit both.
-  // penalties tracking unavailable; check/field availability still works.
+  // fouls tracking unavailable; check/field availability still works.
 }

@@ -109,7 +109,7 @@ result.confirmPassword
 The user filled the business-only fields, then switched back to personal. The values are still there, but the fields are no longer available. `flag()` recommends the cleanup:
 
 ```ts
-const penalties = signupUmp.flag(
+const fouls = signupUmp.flag(
   { values: { email: 'alex@example.com', password: 'hunter2',
               companyName: 'Acme', companySize: '50' },
     conditions: { plan: 'business' } },

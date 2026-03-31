@@ -47,9 +47,9 @@
   color: #ff716c;
 }
 
-/* Penalties */
+/* Fouls */
 
-.lineup__penalties {
+.lineup__fouls {
   border: 1px solid rgba(254, 208, 35, 0.3);
   border-radius: 10px;
   padding: 0.6rem 1rem;
@@ -59,7 +59,7 @@
     rgba(18, 18, 18, 0.96);
 }
 
-.lineup__penalties-title {
+.lineup__fouls-title {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   letter-spacing: 0.12em;
@@ -68,13 +68,13 @@
   margin-bottom: 0.4rem;
 }
 
-.lineup__penalty {
+.lineup__foul {
   font-size: 0.8rem;
   color: #f9f9f9;
   margin-bottom: 0.15rem;
 }
 
-.lineup__penalty-reason {
+.lineup__foul-reason {
   color: #a0a0a0;
 }
 

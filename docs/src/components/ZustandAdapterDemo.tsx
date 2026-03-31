@@ -116,7 +116,7 @@ export default function ZustandAdapterDemo() {
   const umpStore = umpStoreRef.current
   const state = useStore(store, (snapshot) => snapshot)
   const availability = useUmpireStore(umpStore)
-  const penalties = umpStore.penalties
+  const fouls = umpStore.fouls
   const [subscriptionCount, setSubscriptionCount] = useState(0)
 
   useEffect(() => {
@@ -343,22 +343,22 @@ export default function ZustandAdapterDemo() {
 
             <section
               className={cls(
-                'zustand-demo__penalties',
-                penalties.length > 0 && 'zustand-demo__penalties--alert',
+                'zustand-demo__fouls',
+                fouls.length > 0 && 'zustand-demo__fouls--alert',
               )}
             >
               <div className="zustand-demo__json-header">
-                <span className="zustand-demo__json-title">penalties</span>
+                <span className="zustand-demo__json-title">fouls</span>
                 <span className="zustand-demo__json-meta">
-                  {penalties.length > 0 ? 'native next/prev tracking' : '[]'}
+                  {fouls.length > 0 ? 'native next/prev tracking' : '[]'}
                 </span>
               </div>
-              <JsonBlock value={penalties.length > 0 ? prettyJson(penalties) : '[]'} />
+              <JsonBlock value={fouls.length > 0 ? prettyJson(fouls) : '[]'} />
             </section>
 
             <p className="zustand-demo__note">
               Set a company name while the plan is business, then toggle back to personal to watch
-              the adapter surface a reset penalty without manual prev-state bookkeeping.
+              the adapter surface a reset foul without manual prev-state bookkeeping.
             </p>
           </div>
         </section>

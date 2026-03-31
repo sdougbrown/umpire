@@ -3,7 +3,7 @@ import type {
   FieldAvailability,
   FieldDef,
   InputValues,
-  ResetRecommendation,
+  Foul,
   Umpire,
 } from '@umpire/core'
 import type { SignalProtocol } from './protocol.js'
@@ -24,7 +24,7 @@ export interface ReactiveUmpire<F extends Record<string, FieldDef>> {
   set(name: keyof F & string, value: unknown): void
   update(partial: Partial<Record<keyof F & string, unknown>>): void
   readonly values: Record<keyof F & string, unknown>
-  readonly penalties: ResetRecommendation<F>[]
+  readonly fouls: Foul<F>[]
   dispose(): void
 }
 
@@ -154,12 +154,12 @@ export function reactiveUmp<
     },
   )
 
-  // --- 6. Penalties tracking (requires effect) ---
+  // --- 6. Fouls tracking (requires effect) ---
   const disposeFns: Array<() => void> = []
-  let penaltiesComputed: { get(): ResetRecommendation<F>[] } | null = null
+  let foulsComputed: { get(): Foul<F>[] } | null = null
 
   if (adapter.effect) {
-    // Penalties tracking via effect + mutable snapshots.
+    // Fouls tracking via effect + mutable snapshots.
     //
     // We maintain two mutable snapshots (plain variables, not signals):
     // - `beforeValues`/`beforeConditions`: the state BEFORE the most recent change
@@ -168,9 +168,9 @@ export function reactiveUmp<
     // When the effect fires (a dependency changed):
     // 1. `beforeValues` = `lastValues` (the old "current" is now "before")
     // 2. `lastValues` = actual current signal values
-    // 3. Bump a version counter signal to trigger penalties recomputation
+    // 3. Bump a version counter signal to trigger fouls recomputation
     //
-    // The penalties computed reads the version counter (to track as a dependency)
+    // The fouls computed reads the version counter (to track as a dependency)
     // and uses `ump.flag(before, after)` with the snapshots.
 
     let beforeValues: InputValues = Object.fromEntries(
@@ -211,14 +211,14 @@ export function reactiveUmp<
       lastValues = currentVals
       lastConditions = currentCond as C
 
-      // Bump version to notify penalties computed
+      // Bump version to notify fouls computed
       version.set(version.get() + 1)
     })
 
     disposeFns.push(dispose)
 
-    // Penalties computed: diff before vs current using ump.flag()
-    penaltiesComputed = adapter.computed<ResetRecommendation<F>[]>(() => {
+    // Fouls computed: diff before vs current using ump.flag()
+    foulsComputed = adapter.computed<Foul<F>[]>(() => {
       // Read version to register dependency
       const v = version.get()
       if (v === 0) return []
@@ -233,7 +233,7 @@ export function reactiveUmp<
     // No effect available — warn and degrade gracefully
     console.warn(
       '[@umpire/signals] Adapter does not provide effect(). ' +
-        'penalties tracking is unavailable. ' +
+        'fouls tracking is unavailable. ' +
         'Field availability still works.',
     )
   }
@@ -294,14 +294,14 @@ export function reactiveUmp<
       return valuesComputed.get()
     },
 
-    get penalties() {
-      if (!penaltiesComputed) {
+    get fouls() {
+      if (!foulsComputed) {
         throw new Error(
-          '[@umpire/signals] penalties is unavailable — adapter does not provide effect(). ' +
+          '[@umpire/signals] fouls is unavailable — adapter does not provide effect(). ' +
             'Use an adapter with effect support (e.g., alien-signals or @preact/signals-core).',
         )
       }
-      return penaltiesComputed.get()
+      return foulsComputed.get()
     },
 
     dispose() {

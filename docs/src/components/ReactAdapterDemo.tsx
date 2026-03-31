@@ -136,7 +136,7 @@ export default function ReactAdapterDemo() {
   const [plan, setPlan] = useState<Plan>('personal')
 
   const conditions: Cond = { plan }
-  const { check, penalties } = useUmpire(demoUmp, values, conditions)
+  const { check, fouls } = useUmpire(demoUmp, values, conditions)
 
   function updateValue(field: DemoField, nextValue: string) {
     setValues((current) => ({
@@ -250,7 +250,7 @@ export default function ReactAdapterDemo() {
             </div>
 
             <p className="react-demo__note">
-              Type a company name on the business plan, then switch back to personal to surface a penalty.
+              Type a company name on the business plan, then switch back to personal to surface a foul.
             </p>
           </div>
         </section>
@@ -268,7 +268,7 @@ export default function ReactAdapterDemo() {
             <div className="react-demo__hook-line">
               <span className="react-demo__hook-label">Hook</span>
               <code className="react-demo__hook-code">
-                {'const { check, penalties } = useUmpire(demoUmp, values, conditions)'}
+                {'const { check, fouls } = useUmpire(demoUmp, values, conditions)'}
               </code>
             </div>
 
@@ -285,18 +285,18 @@ export default function ReactAdapterDemo() {
             <section
               className={cls(
                 'react-demo__json-section',
-                'react-demo__json-section--penalties',
-                penalties.length > 0 && 'react-demo__json-section--alert',
+                'react-demo__json-section--fouls',
+                fouls.length > 0 && 'react-demo__json-section--alert',
               )}
             >
               <div className="react-demo__json-header">
-                <span className="react-demo__json-title">penalties</span>
+                <span className="react-demo__json-title">fouls</span>
                 <span className="react-demo__json-meta">
-                  {penalties.length > 0 ? 'reset recommendations' : '[]'}
+                  {fouls.length > 0 ? 'reset recommendations' : '[]'}
                 </span>
               </div>
               <div className="react-demo__code-shell">
-                <JsonBlock value={penalties.length > 0 ? prettyJson(penalties) : '[]'} />
+                <JsonBlock value={fouls.length > 0 ? prettyJson(fouls) : '[]'} />
               </div>
             </section>
           </div>

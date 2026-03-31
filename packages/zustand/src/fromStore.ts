@@ -3,7 +3,7 @@ import type {
   FieldAvailability,
   FieldDef,
   InputValues,
-  ResetRecommendation,
+  Foul,
   Umpire,
 } from '@umpire/core'
 
@@ -19,7 +19,7 @@ type FromStoreOptions<S, F extends Record<string, FieldDef>, C extends Record<st
 
 export interface UmpireStore<F extends Record<string, FieldDef>> {
   field(name: keyof F & string): FieldAvailability
-  get penalties(): ResetRecommendation<F>[]
+  get fouls(): Foul<F>[]
   getAvailability(): AvailabilityMap<F>
   subscribe(listener: (availability: AvailabilityMap<F>) => void): () => void
   destroy(): void
@@ -41,7 +41,7 @@ export function fromStore<
   const initialCond = conditions ? conditions(initialState) : (undefined as unknown as C)
 
   let currentAvailability = ump.check(initialValues, initialCond)
-  let currentPenalties: ResetRecommendation<F>[] = []
+  let currentFouls: Foul<F>[] = []
   let prevValues = initialValues
   let prevCond = initialCond
 
@@ -54,7 +54,7 @@ export function fromStore<
     const prevConditions = conditions ? conditions(prevState) : (undefined as unknown as C)
 
     currentAvailability = ump.check(nextValues, nextCond, prev)
-    currentPenalties = ump.flag(
+    currentFouls = ump.flag(
       { values: prev, conditions: prevConditions },
       { values: nextValues, conditions: nextCond },
     )
@@ -72,8 +72,8 @@ export function fromStore<
       return currentAvailability[name]
     },
 
-    get penalties(): ResetRecommendation<F>[] {
-      return currentPenalties
+    get fouls(): Foul<F>[] {
+      return currentFouls
     },
 
     getAvailability(): AvailabilityMap<F> {

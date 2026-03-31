@@ -57,7 +57,7 @@ const availability = fromStore(signupUmp, store, {
 })
 
 availability.field('confirmPassword').enabled
-availability.penalties
+availability.fouls
 availability.getAvailability()
 
 const unsubscribe = availability.subscribe((next) => {
@@ -71,14 +71,14 @@ availability.destroy()
 ## API
 
 - `field(name)` returns the current `FieldAvailability` for one field.
-- `penalties` returns the latest `ResetRecommendation[]`.
+- `fouls` returns the latest `Foul[]`.
 - `getAvailability()` returns the full `AvailabilityMap`.
 - `subscribe(listener)` notifies when availability is recomputed.
 - `destroy()` unsubscribes from the store and clears listeners.
 
 ## Why Zustand Fits
 
-Zustand subscriptions provide both `next` and `prev` state, so `fromStore()` can compute penalties without extra bookkeeping. Availability and reset recommendations stay derived from store transitions rather than form-side effects.
+Zustand subscriptions provide both `next` and `prev` state, so `fromStore()` can compute fouls without extra bookkeeping. Availability and reset recommendations stay derived from store transitions rather than form-side effects.
 
 ## Docs
 

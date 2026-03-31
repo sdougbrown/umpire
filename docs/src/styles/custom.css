@@ -333,7 +333,7 @@ th:last-child {
   color: #6bfe9c !important;
 }
 
-/* Strings and template literals: penalty yellow */
+/* Strings and template literals: foul yellow */
 .expressive-code span[style*="--0:#a5d6ff"],
 .expressive-code span[style*="--0:#a5d6ff;"] {
   --0: #fed023 !important;

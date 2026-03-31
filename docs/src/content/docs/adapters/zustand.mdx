@@ -42,7 +42,7 @@ function fromStore<
 ```ts
 interface UmpireStore<F extends Record<string, FieldDef>> {
   field(name: keyof F & string): FieldAvailability
-  get penalties(): ResetRecommendation<F>[]
+  get fouls(): Foul<F>[]
   getAvailability(): AvailabilityMap<F>
   subscribe(listener: (availability: AvailabilityMap<F>) => void): () => void
   destroy(): void
@@ -88,7 +88,7 @@ const umpStore = fromStore(recurrenceUmp, store, {
 
 const stop = umpStore.subscribe((availability) => {
   console.log(availability.startTime.enabled)
-  console.log(umpStore.penalties)
+  console.log(umpStore.fouls)
 })
 ```
 

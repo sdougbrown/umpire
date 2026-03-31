@@ -3,7 +3,7 @@ import type {
   AvailabilityMap,
   FieldDef,
   InputValues,
-  ResetRecommendation,
+  Foul,
   Snapshot,
   Umpire,
 } from '@umpire/core'
@@ -17,7 +17,7 @@ export function useUmpire<
   conditions?: C,
 ): {
   check: AvailabilityMap<F>
-  penalties: ResetRecommendation<F>[]
+  fouls: Foul<F>[]
 } {
   const prevRef = useRef<Snapshot<F, C> | undefined>(undefined)
 
@@ -26,7 +26,7 @@ export function useUmpire<
     [ump, values, conditions],
   )
 
-  const penalties = useMemo(() => {
+  const fouls = useMemo(() => {
     const prev = prevRef.current
     if (!prev) {
       return []
@@ -34,8 +34,8 @@ export function useUmpire<
     return ump.flag(prev, { values, conditions })
   }, [ump, values, conditions])
 
-  // Update prev ref after computing check and penalties
+  // Update prev ref after computing check and fouls
   prevRef.current = { values, conditions }
 
-  return { check, penalties }
+  return { check, fouls }
 }

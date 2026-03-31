@@ -52,7 +52,7 @@ The adapter packages layer reactivity on top:
 
 - `@umpire/react` — a `useUmpire` hook that memoizes `check()` and tracks `prev` via `useRef`
 - `@umpire/signals` — signal-backed availability with fine-grained proxy tracking
-- `@umpire/zustand` — subscribes to a store slice, penalties come free from Zustand's `(next, prev)`
+- `@umpire/zustand` — subscribes to a store slice, fouls come free from Zustand's `(next, prev)`
 
 ## Five Principles
 

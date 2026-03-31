@@ -2,7 +2,7 @@
  * SignalProtocol — minimal interface that any signal library can implement.
  *
  * Uses .get()/.set() accessors (matching the TC39 Signal proposal shape).
- * `effect` and `batch` are optional — if omitted, penalties tracking is
+ * `effect` and `batch` are optional — if omitted, fouls tracking is
  * unavailable but check/field availability still works.
  */
 export interface SignalProtocol {

@@ -29,7 +29,7 @@ export type Snapshot<
   conditions?: C
 }
 
-export type ResetRecommendation<F extends Record<string, FieldDef>> = {
+export type Foul<F extends Record<string, FieldDef>> = {
   field: keyof F & string
   reason: string
   suggestedValue: unknown
@@ -84,7 +84,7 @@ export interface Umpire<
   C extends Record<string, unknown> = Record<string, unknown>,
 > {
   check(values: InputValues, conditions?: C, prev?: InputValues): AvailabilityMap<F>
-  flag(before: Snapshot<F, C>, after: Snapshot<F, C>): ResetRecommendation<F>[]
+  flag(before: Snapshot<F, C>, after: Snapshot<F, C>): Foul<F>[]
   init(overrides?: InputValues): FieldValues<F>
   challenge(
     field: keyof F & string,

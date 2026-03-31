@@ -62,7 +62,7 @@ describe('useUmpire', () => {
     expect(result.current.check.phone.enabled).toBe(true)
   })
 
-  it('returns empty penalties on first render', () => {
+  it('returns empty fouls on first render', () => {
     const ump = umpire({
       fields,
       rules: [
@@ -74,10 +74,10 @@ describe('useUmpire', () => {
       useUmpire(ump, { name: 'Alice', email: '', phone: '555-1234' }),
     )
 
-    expect(result.current.penalties).toEqual([])
+    expect(result.current.fouls).toEqual([])
   })
 
-  it('returns penalties when field transitions from enabled to disabled', () => {
+  it('returns fouls when field transitions from enabled to disabled', () => {
     const ump = umpire({
       fields,
       rules: [
@@ -90,13 +90,13 @@ describe('useUmpire', () => {
       { initialProps: { values: { name: 'Alice', email: '', phone: '555-1234' } } },
     )
 
-    expect(result.current.penalties).toEqual([])
+    expect(result.current.fouls).toEqual([])
 
-    // Clear name -> phone should become disabled, triggering a penalty
+    // Clear name -> phone should become disabled, triggering a foul
     rerender({ values: { name: '', email: '', phone: '555-1234' } })
 
-    expect(result.current.penalties.length).toBe(1)
-    expect(result.current.penalties[0].field).toBe('phone')
+    expect(result.current.fouls.length).toBe(1)
+    expect(result.current.fouls[0].field).toBe('phone')
   })
 
   it('tracks prev correctly across rerenders', () => {
@@ -112,17 +112,17 @@ describe('useUmpire', () => {
       { initialProps: { values: { name: 'Alice', email: '', phone: '555-1234' } } },
     )
 
-    // Second render: still enabled, no penalty
+    // Second render: still enabled, no foul
     rerender({ values: { name: 'Bob', email: '', phone: '555-1234' } })
-    expect(result.current.penalties).toEqual([])
+    expect(result.current.fouls).toEqual([])
 
     // Third render: disable phone
     rerender({ values: { name: '', email: '', phone: '555-1234' } })
-    expect(result.current.penalties.length).toBe(1)
+    expect(result.current.fouls.length).toBe(1)
 
-    // Fourth render: re-enable phone — no penalty (was disabled -> enabled)
+    // Fourth render: re-enable phone — no foul (was disabled -> enabled)
     rerender({ values: { name: 'Carol', email: '', phone: '555-1234' } })
-    expect(result.current.penalties).toEqual([])
+    expect(result.current.fouls).toEqual([])
   })
 
   it('passes conditions to check', () => {

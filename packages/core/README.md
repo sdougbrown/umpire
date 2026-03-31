@@ -43,7 +43,7 @@ const availability = signupUmp.check(
 availability.companySize
 // { enabled: false, required: false, reason: 'requires companyName', reasons: ['requires companyName'] }
 
-const penalties = signupUmp.flag(
+const fouls = signupUmp.flag(
   {
     values: {
       email: 'alex@example.com',
@@ -74,7 +74,7 @@ const penalties = signupUmp.flag(
 
 - `umpire({ fields, rules })` creates an instance with a validated dependency graph.
 - `ump.check(values, context?, prev?)` returns an `AvailabilityMap`.
-- `ump.flag(before, after)` returns `ResetRecommendation[]`.
+- `ump.flag(before, after)` returns `Foul[]`.
 - `ump.init(overrides?)` returns default field values.
 - `ump.challenge(field, values, context?, prev?)` returns a debug trace for one field.
 - `ump.graph()` returns the structural dependency graph.

@@ -158,13 +158,13 @@ export default function LineupCard() {
     [opposingPitcher, injuries, morrisonRested],
   )
 
-  // --- useUmpire: availability + penalties in one call ---
+  // --- useUmpire: availability + fouls in one call ---
   //
   // useUmpire() handles check() and flag() internally, including snapshot
-  // tracking for penalty detection. No manual useRef, no saveSnapshot()
+  // tracking for foul detection. No manual useRef, no saveSnapshot()
   // before every toggle. Pass values + conditions, get results.
 
-  const { check: availability, penalties } = useUmpire(lineupUmp, values, conditions)
+  const { check: availability, fouls } = useUmpire(lineupUmp, values, conditions)
 
   // --- Derived: effective lineup ---
   //
@@ -258,14 +258,14 @@ export default function LineupCard() {
         </button>
       </div>
 
-      {/* Penalty flags — useUmpire detected fields that just became ineligible */}
-      {penalties.length > 0 && (
-        <div className="lineup__penalties">
-          <div className="lineup__penalties-title">🚩 Flag on the play</div>
-          {penalties.map((p, i) => (
-            <div key={i} className="lineup__penalty">
+      {/* Foul flags — useUmpire detected fields that just became ineligible */}
+      {fouls.length > 0 && (
+        <div className="lineup__fouls">
+          <div className="lineup__fouls-title">🚩 Flag on the play</div>
+          {fouls.map((p, i) => (
+            <div key={i} className="lineup__foul">
               <strong>{roster[p.field]?.name ?? p.field}</strong>
-              <span className="lineup__penalty-reason"> — {p.reason}</span>
+              <span className="lineup__foul-reason"> — {p.reason}</span>
             </div>
           ))}
         </div>

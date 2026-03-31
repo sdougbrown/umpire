@@ -171,14 +171,14 @@
 }
 
 .zustand-demo__json-shell,
-.zustand-demo__penalties {
+.zustand-demo__fouls {
   border: 1px solid rgba(107, 254, 156, 0.1);
   border-radius: 0.95rem;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.02);
 }
 
-.zustand-demo__penalties--alert {
+.zustand-demo__fouls--alert {
   border-color: rgba(254, 208, 35, 0.28);
   box-shadow: 0 0 0 1px rgba(254, 208, 35, 0.08), 0 0 24px rgba(254, 208, 35, 0.08);
 }
@@ -193,7 +193,7 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
-.zustand-demo__penalties--alert .zustand-demo__json-header {
+.zustand-demo__fouls--alert .zustand-demo__json-header {
   background: rgba(254, 208, 35, 0.08);
 }
 
@@ -207,7 +207,7 @@
   color: var(--umpire-demo-green);
 }
 
-.zustand-demo__penalties--alert .zustand-demo__json-meta {
+.zustand-demo__fouls--alert .zustand-demo__json-meta {
   color: var(--umpire-demo-yellow);
 }
 

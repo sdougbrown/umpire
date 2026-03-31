@@ -40,7 +40,7 @@ const availability = signupUmp.check(
 availability.companyName
 // { enabled: false, required: false, reason: 'business plan required', reasons: ['business plan required'] }
 
-const penalties = signupUmp.flag(
+const fouls = signupUmp.flag(
   {
     values: {
       email: 'alex@example.com',

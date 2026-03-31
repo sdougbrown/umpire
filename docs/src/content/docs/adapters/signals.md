@@ -24,7 +24,7 @@ interface SignalProtocol {
 }
 ```
 
-`effect` and `batch` are optional at the protocol level, but `effect` is required if you want `penalties`.
+`effect` and `batch` are optional at the protocol level, but `effect` is required if you want `fouls`.
 
 ## `reactiveUmp()`
 
@@ -60,7 +60,7 @@ interface ReactiveUmpire<F extends Record<string, FieldDef>> {
   set(name: keyof F & string, value: unknown): void
   update(partial: Partial<Record<keyof F & string, unknown>>): void
   readonly values: Record<keyof F & string, unknown>
-  readonly penalties: ResetRecommendation<F>[]
+  readonly fouls: Foul<F>[]
   dispose(): void
 }
 ```
@@ -108,9 +108,9 @@ const reactive = reactiveUmp(loginUmp, adapter, {
 
 Changing `captchaTokenSignal` recomputes availability just like changing a field signal.
 
-## Penalties Tracking
+## Fouls Tracking
 
-`penalties` depends on `effect()`.
+`fouls` depends on `effect()`.
 
 The adapter uses an effect to advance an internal "before" snapshot whenever field or conditions signals change, then computes `ump.flag(before, after)` from that transition.
 
@@ -118,7 +118,7 @@ If the protocol does not provide `effect()`:
 
 - creation logs a warning
 - field availability still works
-- reading `penalties` throws
+- reading `fouls` throws
 
 ## Proxy-Based Fine-Grained Tracking
 
@@ -171,4 +171,4 @@ const tc39Adapter: SignalProtocol = {
 }
 ```
 
-The TC39-shaped adapter works for field availability, but not for `penalties`, because it has no `effect()`.
+The TC39-shaped adapter works for field availability, but not for `fouls`, because it has no `effect()`.

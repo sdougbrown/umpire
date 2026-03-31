@@ -19,13 +19,13 @@ type Snapshot<
 ump.flag(
   before: Snapshot<F, C>,
   after: Snapshot<F, C>,
-): ResetRecommendation<F>[]
+): Foul<F>[]
 ```
 
 ## Return Shape
 
 ```ts
-type ResetRecommendation<F extends Record<string, FieldDef>> = {
+type Foul<F extends Record<string, FieldDef>> = {
   field: keyof F & string
   reason: string
   suggestedValue: unknown
@@ -84,7 +84,7 @@ That is true even for non-empty defaults because the method suppresses no-op rec
 ## Example
 
 ```ts
-const penalties = signupUmp.flag(
+const fouls = signupUmp.flag(
   {
     values: {
       companyName: 'Acme',

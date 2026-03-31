@@ -1,6 +1,6 @@
 ---
 title: '@umpire/react'
-description: A thin React hook that memoizes availability and penalties without effects.
+description: A thin React hook that memoizes availability and fouls without effects.
 ---
 
 import ReactAdapterDemo from '../../../components/ReactAdapterDemo.tsx'
@@ -31,18 +31,18 @@ function useUmpire<
   conditions?: C,
 ): {
   check: AvailabilityMap<F>
-  penalties: ResetRecommendation<F>[]
+  fouls: Foul<F>[]
 }
 ```
 
 ## Behavior
 
 - `check` is memoized from `ump.check(values, conditions, prevValues)`.
-- `penalties` is memoized from `ump.flag(previousSnapshot, currentSnapshot)`.
+- `fouls` is memoized from `ump.flag(previousSnapshot, currentSnapshot)`.
 - Previous values are tracked internally with `useRef`.
 - There is no `useEffect()`.
 
-That means the hook is pure derivation. You decide what to do with `penalties` in event handlers or higher-level state logic.
+That means the hook is pure derivation. You decide what to do with `fouls` in event handlers or higher-level state logic.
 
 ## Example
 
@@ -80,7 +80,7 @@ const signupUmp = umpire<typeof fields, SignupConditions>({
 export function SignupForm() {
   const [plan, setPlan] = useState<SignupConditions['plan']>('personal')
   const [values, setValues] = useState(() => signupUmp.init())
-  const { check, penalties } = useUmpire(signupUmp, values, { plan })
+  const { check, fouls } = useUmpire(signupUmp, values, { plan })
 
   return (
     <form>
@@ -133,7 +133,7 @@ export function SignupForm() {
       )}
 
       {!check.companyName.enabled && <p>{check.companyName.reason}</p>}
-      {penalties.length > 0 && <pre>{JSON.stringify(penalties, null, 2)}</pre>}
+      {fouls.length > 0 && <pre>{JSON.stringify(fouls, null, 2)}</pre>}
     </form>
   )
 }

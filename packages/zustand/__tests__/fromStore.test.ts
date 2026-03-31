@@ -63,7 +63,7 @@ describe('fromStore', () => {
     us.destroy()
   })
 
-  it('penalties track transitions', () => {
+  it('fouls track transitions', () => {
     const store = createFormStore({
       username: 'alice',
       password: 'secret',
@@ -74,16 +74,16 @@ describe('fromStore', () => {
       select: (state) => state as Record<string, unknown>,
     })
 
-    // Initially no penalties
-    expect(us.penalties).toHaveLength(0)
+    // Initially no fouls
+    expect(us.fouls).toHaveLength(0)
 
     // confirmPassword was enabled and had a value — now clear password to disable it
     store.setState({ password: '' })
 
     expect(us.field('confirmPassword').enabled).toBe(false)
     // confirmPassword had 'secret' and is now disabled — should recommend reset
-    expect(us.penalties.length).toBeGreaterThanOrEqual(1)
-    expect(us.penalties.some((p) => p.field === 'confirmPassword')).toBe(true)
+    expect(us.fouls.length).toBeGreaterThanOrEqual(1)
+    expect(us.fouls.some((p) => p.field === 'confirmPassword')).toBe(true)
 
     us.destroy()
   })

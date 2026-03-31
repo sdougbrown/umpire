@@ -84,7 +84,7 @@ export default function SignupDemo() {
   const [plan, setPlan] = useState<'personal' | 'business'>('personal')
 
   const conditions: SignupConditions = { plan }
-  const { check: availability, penalties } = useUmpire(signupUmp, values, conditions)
+  const { check: availability, fouls } = useUmpire(signupUmp, values, conditions)
 
   function updateValue(field: SignupField, nextValue: string) {
     setValues((current) => ({
@@ -97,8 +97,8 @@ export default function SignupDemo() {
     setValues((current) => {
       const next = { ...current }
 
-      for (const penalty of penalties) {
-        next[penalty.field] = penalty.suggestedValue
+      for (const foul of fouls) {
+        next[foul.field] = foul.suggestedValue
       }
 
       return next
@@ -107,17 +107,17 @@ export default function SignupDemo() {
 
   return (
     <div className="signup-demo umpire-demo">
-      {penalties.length > 0 && (
-        <div className="signup-demo__penalties">
-          <div className="signup-demo__penalties-copy">
-            <div className="signup-demo__penalties-kicker">Flag penalties</div>
-            <div className="signup-demo__penalties-list">
-              {penalties.map((penalty) => (
-                <div key={penalty.field} className="signup-demo__penalty">
-                  <span className="signup-demo__penalty-field">
-                    {fieldMeta[penalty.field].label}
+      {fouls.length > 0 && (
+        <div className="signup-demo__fouls">
+          <div className="signup-demo__fouls-copy">
+            <div className="signup-demo__fouls-kicker">Flag fouls</div>
+            <div className="signup-demo__fouls-list">
+              {fouls.map((foul) => (
+                <div key={foul.field} className="signup-demo__foul">
+                  <span className="signup-demo__foul-field">
+                    {fieldMeta[foul.field].label}
                   </span>
-                  <span className="signup-demo__penalty-reason">{penalty.reason}</span>
+                  <span className="signup-demo__foul-reason">{foul.reason}</span>
                 </div>
               ))}
             </div>

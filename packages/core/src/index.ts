@@ -5,7 +5,7 @@ export type {
   FieldValues,
   InputValues,
   Snapshot,
-  ResetRecommendation,
+  Foul,
   ChallengeTrace,
   Rule,
   Umpire,

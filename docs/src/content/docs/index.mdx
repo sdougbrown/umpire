@@ -257,10 +257,10 @@ const values = Object.fromEntries(
 )
 
 // useUmpire handles check() + flag() + snapshot tracking internally.
-const { check: availability, penalties } = useUmpire(lineupUmp, values, conditions)
+const { check: availability, fouls } = useUmpire(lineupUmp, values, conditions)
 
 // availability.delgado → { enabled: false, reason: 'platoon matchup' }
-// penalties → [{ field: 'delgado', reason: 'platoon matchup', ... }]
+// fouls → [{ field: 'delgado', reason: 'platoon matchup', ... }]
 //   (only if Delgado was in the lineup when the pitcher flipped)
 ```
 

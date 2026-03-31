@@ -45,25 +45,25 @@ function SignupForm({
   values: Record<string, unknown>
   plan: 'personal' | 'business'
 }) {
-  const { check, penalties } = useUmpire(signupUmp, values, { plan })
+  const { check, fouls } = useUmpire(signupUmp, values, { plan })
 
   check.companyName.enabled
   check.companyName.reason
-  penalties
+  fouls
 
   return null
 }
 ```
 
-`useUmpire()` stays deliberately thin. It derives `check` with `useMemo`, tracks the previous snapshot with `useRef`, and computes `penalties` without `useEffect`.
+`useUmpire()` stays deliberately thin. It derives `check` with `useMemo`, tracks the previous snapshot with `useRef`, and computes `fouls` without `useEffect`.
 
 ## Returned Shape
 
 ```ts
-const { check, penalties } = useUmpire(ump, values, context)
+const { check, fouls } = useUmpire(ump, values, context)
 // check.fieldName.enabled
 // check.fieldName.reason
-// penalties: ResetRecommendation[]
+// fouls: Foul[]
 ```
 
 ## Docs

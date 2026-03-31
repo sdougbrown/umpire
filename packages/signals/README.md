@@ -23,7 +23,7 @@ interface SignalProtocol {
 }
 ```
 
-`effect()` is optional for availability tracking, but required for `penalties`. `batch()` is optional and used by `update()`.
+`effect()` is optional for availability tracking, but required for `fouls`. `batch()` is optional and used by `update()`.
 
 ## Usage
 
@@ -64,7 +64,7 @@ form.field('companyName').reason
 form.set('password', 'hunter2')
 form.update({ companyName: 'Acme', companySize: '50' })
 form.values
-form.penalties
+form.fouls
 
 form.dispose()
 ```
@@ -102,9 +102,9 @@ const form = reactiveUmp(signupUmp, alienAdapter, {
 - `@umpire/signals/tc39`
 - `@umpire/signals/protocol`
 
-## Penalties and `effect()`
+## Fouls and `effect()`
 
-If the adapter does not provide `effect()`, field availability still works, but penalties tracking is unavailable. Accessing `form.penalties` in that mode throws, which is expected for the TC39 adapter.
+If the adapter does not provide `effect()`, field availability still works, but fouls tracking is unavailable. Accessing `form.fouls` in that mode throws, which is expected for the TC39 adapter.
 
 ## Docs
 

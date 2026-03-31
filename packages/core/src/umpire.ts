@@ -8,7 +8,7 @@ import type {
   FieldDef,
   FieldValues,
   RuleEvaluation,
-  ResetRecommendation,
+  Foul,
   Rule,
   Umpire,
 } from './types.js'
@@ -322,7 +322,7 @@ export function umpire<
         createEmptyConditions(after.conditions),
         before.values as FieldValues<F>,
       )
-      const recommendations: ResetRecommendation<F>[] = []
+      const recommendations: Foul<F>[] = []
 
       for (const field of fieldNames) {
         if (!beforeAvailability[field].enabled || afterAvailability[field].enabled) {

@@ -67,7 +67,7 @@ That split is deliberate.
 Reset recommendations only appear when the now-disabled field still holds a non-empty value. `isEmpty` therefore affects both rule evaluation and cleanup behavior.
 
 ```ts
-const penalties = ump.flag(
+const fouls = ump.flag(
   { values: { weekdays: [1, 3, 5] } },
   { values: { weekdays: [1, 3, 5], dates: ['2026-04-01'] } },
 )

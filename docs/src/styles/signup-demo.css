@@ -38,7 +38,7 @@
   color: rgba(245, 247, 244, 0.52);
 }
 
-.signup-demo__penalties {
+.signup-demo__fouls {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -51,11 +51,11 @@
     rgba(18, 18, 18, 0.92);
 }
 
-.signup-demo__penalties-copy {
+.signup-demo__fouls-copy {
   min-width: 0;
 }
 
-.signup-demo__penalties-kicker {
+.signup-demo__fouls-kicker {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.67rem;
   letter-spacing: 0.16em;
@@ -63,14 +63,14 @@
   color: rgba(254, 208, 35, 0.8);
 }
 
-.signup-demo__penalties-list {
+.signup-demo__fouls-list {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem 1rem;
   margin-top: 0.45rem;
 }
 
-.signup-demo__penalty {
+.signup-demo__foul {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
@@ -78,12 +78,12 @@
   font-size: 0.9rem;
 }
 
-.signup-demo__penalty-field {
+.signup-demo__foul-field {
   font-weight: 700;
   color: #fff3b8;
 }
 
-.signup-demo__penalty-reason {
+.signup-demo__foul-reason {
   color: rgba(255, 243, 184, 0.78);
 }
 
@@ -175,7 +175,7 @@
 }
 
 @media (max-width: 50rem) {
-  .signup-demo__penalties {
+  .signup-demo__fouls {
     flex-direction: column;
     align-items: stretch;
   }
