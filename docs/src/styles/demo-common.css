@@ -1,7 +1,4 @@
 .umpire-demo {
-}
-
-.umpire-demo--styled {
   --umpire-demo-green: #6bfe9c;
   --umpire-demo-yellow: #fed023;
   --umpire-demo-red: #ff716c;
@@ -42,6 +39,14 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.sl-markdown-content .umpire-demo section + section,
+.sl-markdown-content .umpire-demo button + button {
+  margin-top: 0;
+}
+
+.umpire-demo--styled {
   padding: var(--umpire-demo-root-padding);
   border: 1px solid var(--umpire-demo-root-border);
   border-radius: var(--umpire-demo-root-radius);

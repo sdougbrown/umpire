@@ -5,11 +5,23 @@ import react from '@astrojs/react'
 export default defineConfig({
   site: 'https://sdougbrown.github.io',
   base: '/umpire',
+  vite: {
+    plugins: [{
+      name: 'reload-starlight-css',
+      handleHotUpdate({ file, server }) {
+        if (file.includes('/src/styles/')) {
+          server.ws.send({ type: 'full-reload' })
+          return []
+        }
+      },
+    }],
+  },
   integrations: [
     react(),
     starlight({
       title: '🛂 Umpire',
       description: 'Rule the form. Flag the field.',
+      favicon: '/favicon.svg',
       customCss: [
         './src/styles/custom.css',
         './src/styles/lineup.css',
