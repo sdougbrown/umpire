@@ -168,10 +168,10 @@ export function reactiveUmp<
     // When the effect fires (a dependency changed):
     // 1. `beforeValues` = `lastValues` (the old "current" is now "before")
     // 2. `lastValues` = actual current signal values
-    // 3. Bump a version counter signal to trigger fouls recomputation
     //
-    // The fouls computed reads the version counter (to track as a dependency)
-    // and uses `ump.flag(before, after)` with the snapshots.
+    // The fouls computed reads current values through the proxy (which tracks
+    // signal dependencies), so it recomputes whenever field/condition signals
+    // change — no version counter needed.
 
     let beforeValues: InputValues = Object.fromEntries(
       fieldNames.map((n) => [n, fieldSignals.get(n)!.get()]),
@@ -182,7 +182,6 @@ export function reactiveUmp<
     let lastValues: InputValues = { ...beforeValues }
     let lastConditions: C = { ...beforeConditions } as C
 
-    const version = adapter.signal(0)
     let isFirstRun = true
 
     const dispose = adapter.effect(() => {
@@ -210,20 +209,14 @@ export function reactiveUmp<
       // Store new current
       lastValues = currentVals
       lastConditions = currentCond as C
-
-      // Bump version to notify fouls computed
-      version.set(version.get() + 1)
     })
 
     disposeFns.push(dispose)
 
     // Fouls computed: diff before vs current using ump.flag()
+    // Reads current values through the proxy, which tracks field signal
+    // dependencies — so this recomputes whenever any field or condition changes.
     foulsComputed = adapter.computed<Foul<F>[]>(() => {
-      // Read version to register dependency
-      const v = version.get()
-      if (v === 0) return []
-
-      // Read current values through proxy for signal tracking
       return ump.flag(
         { values: beforeValues, conditions: beforeConditions },
         { values: valuesProxy, conditions: conditionsProxy },
