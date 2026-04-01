@@ -68,6 +68,7 @@ export default defineConfig({
             { label: 'Availability', slug: 'concepts/availability' },
             { label: 'Satisfaction', slug: 'concepts/satisfaction' },
             { label: 'Evaluation Order', slug: 'concepts/evaluation' },
+            { label: 'Composing Validation', slug: 'concepts/validation' },
           ],
         },
         {

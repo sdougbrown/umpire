@@ -36,6 +36,8 @@ Not Umpire's job:
 
 If the logic decides whether a field is *available*, Umpire is the right layer. If it transforms values or proves they're correct, keep it elsewhere.
 
+That said, availability and validation are closely related — a field needs to be *present* before it can be *valid*, and sometimes a field needs to be *valid* before a dependent field becomes available. See [satisfaction semantics](/concepts/satisfaction/#use-presence-first-validation-second) for how presence checks work, and [composing with validation](/concepts/validation/) for how to plug in libraries like Zod alongside Umpire.
+
 ## Recommendations, Not Mutations
 
 When the manager scratches a player from the lineup, the player still exists. He's in the dugout. His stats are still on the board.
