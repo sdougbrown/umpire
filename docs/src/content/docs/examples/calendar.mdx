@@ -3,6 +3,12 @@ title: Calendar Recurrence
 description: A complex recurrence scheduling example showing disables, oneOf, and requires working together.
 ---
 
+import CalendarDemo from '../../../components/CalendarDemo.tsx'
+
+<div class="umpire-lineup-demo">
+  <CalendarDemo client:load />
+</div>
+
 A recurring event scheduler where fields interact in multiple ways at once. This is the kind of form that turns into a mess of `useEffect` chains without a system to manage it.
 
 ## The Problem
