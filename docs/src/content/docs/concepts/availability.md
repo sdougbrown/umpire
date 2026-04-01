@@ -46,6 +46,99 @@ Umpire works the same way. When a field becomes disabled, Umpire doesn't clear i
 
 `flag()` returns reset *recommendations*. The consumer decides when and how to apply them — immediately, after a confirmation prompt, or not at all.
 
+## Availability as Visibility
+
+Umpire tells you whether a field is available. What you do with that information is up to you.
+
+A common pattern: if a field isn't available, don't show it. Hide it with CSS, conditionally render it, remove it from the DOM entirely — whatever fits your UI. The availability map *is* a visibility map if you want it to be.
+
+```tsx
+// React — conditionally render
+const { companyName } = ump.check(values, { plan });
+
+{companyName.enabled && (
+  <input name="companyName" value={values.companyName} />
+)}
+```
+
+```ts
+// Vanilla JS — toggle with CSS
+const result = ump.check(values);
+for (const [field, status] of Object.entries(result)) {
+  document.getElementById(field).hidden = !status.enabled;
+}
+```
+
+```tsx
+// Or just disable it — your call
+<input
+  name="companyName"
+  disabled={!companyName.enabled}
+  value={values.companyName}
+/>
+```
+
+Umpire doesn't have an opinion here. It doesn't distinguish between "hidden" and "disabled" — it gives you `enabled: boolean` and you decide the presentation. Some forms dim unavailable fields so users can see what's possible. Others remove them entirely to reduce clutter. Both are valid.
+
+## Pre-Building Option Sets
+
+For UIs with lots of selects and no text input — printer dialogs, configuration panels, quote builders — you can use `check()` at initialization time to figure out which options are available under each top-level selection, then build your option sets up front.
+
+The idea: loop through each possible value of the driving field, call `check()` with that value, and record which dependent fields are enabled. Now your render logic doesn't need to think about availability at all — it just picks the pre-built set for the current selection.
+
+```ts
+import { umpire, enabledWhen, disables } from '@umpire/core'
+
+const printerUmp = umpire({
+  fields: {
+    printer: {},
+    colorMode: {},
+    duplex: {},
+    paperType: {},
+    bannerMode: {},
+    staple: {},
+  },
+  rules: [
+    enabledWhen('colorMode', v => v.printer === 'colorLaser',
+      { reason: 'Fixed color mode on this printer' }),
+    enabledWhen('duplex', v => v.printer === 'colorLaser',
+      { reason: 'Only the color laser supports duplex' }),
+    enabledWhen('paperType', v => v.printer === 'inkjetPhoto',
+      { reason: 'Paper type only applies to the photo printer' }),
+    enabledWhen('bannerMode', v => v.printer === 'dotMatrix',
+      { reason: 'Banner mode is only available on the dot-matrix' }),
+    enabledWhen('staple', v => v.printer === 'colorLaser',
+      { reason: 'Only the color laser has a stapler' }),
+  ],
+})
+
+// At init: check each printer to learn its available fields
+const printers = ['dotMatrix', 'colorLaser', 'inkjetPhoto'] as const
+
+const optionsByPrinter = Object.fromEntries(
+  printers.map(printer => {
+    const result = printerUmp.check({ printer })
+    const enabled = Object.entries(result)
+      .filter(([_, status]) => status.enabled)
+      .map(([field]) => field)
+    return [printer, enabled]
+  }),
+)
+
+// optionsByPrinter is now:
+// {
+//   dotMatrix:    ['printer', 'bannerMode'],
+//   colorLaser:   ['printer', 'colorMode', 'duplex', 'staple'],
+//   inkjetPhoto:  ['printer', 'paperType'],
+// }
+```
+
+At render time, you just look up `optionsByPrinter[currentPrinter]` and show those fields. No availability logic in the render path — it's already resolved.
+
+This works because `check()` is pure and cheap. There's no cost to calling it many times during setup, and the results are deterministic — same inputs, same output.
+
+You still want live `check()` calls for interactions *within* a printer's options (like banner mode disabling paper size), but the top-level "which fields exist for this printer" question is answered once at init.
+
 ## Pure Core, Reactive Adapters
 
 `@umpire/core` is a pure function engine. Hand it values and conditions, get availability back. No framework, no DOM, no subscriptions.
