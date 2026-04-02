@@ -539,8 +539,7 @@ function renderForm(root: HTMLElement, state: PrintState, availability: Availabi
     const fieldAvailability = availability[field]
     const disabled = visible && !fieldAvailability.enabled
 
-    toggleClass(shell, 'printer-demo__field--hidden', !visible)
-    toggleClass(shell, 'umpire-demo__field--disabled', disabled)
+    toggleClass(shell, 'umpire-demo__field--disabled', !visible || disabled)
     toggleClass(statusEl, 'umpire-demo__status--enabled', fieldAvailability.enabled)
     toggleClass(statusEl, 'umpire-demo__status--disabled', !fieldAvailability.enabled)
 
@@ -555,7 +554,7 @@ function renderForm(root: HTMLElement, state: PrintState, availability: Availabi
     const groupEl = $(`[data-field-group="${group.key}"]`, root)
     if (!groupEl) continue
     const anyVisible = group.fields.some((field) => isFieldVisibleForPrinter(field, state.printer))
-    toggleClass(groupEl, 'printer-demo__field--hidden', !anyVisible)
+    toggleClass(groupEl, 'umpire-demo__field--disabled', !anyVisible)
   }
 }
 
