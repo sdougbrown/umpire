@@ -45,14 +45,19 @@ import LineupCard from '../../components/LineupCard.tsx'
 
 ## Try It Live — Tonight's Lineup
 
+<div class="umpire-content">
 Tonight's card is set — full roster against a right-handed pitcher. Now break it. Toggle Morrison to fatigued and watch him get pulled from the mound. Flip the opposing pitcher to a lefty and the platoon swaps kick in. Hit "Random injury" a few times and see slots empty out as players land on the IL.
+</div>
 
 <div class="umpire-lineup-demo">
   <LineupCard client:load />
 </div>
 
+<div class="umpire-content">
 Three rule types drive the whole card: **`enabledWhen`** (injuries and fatigue scratch players), **`oneOf`** (platoon matchups swap batters when the pitcher flips), and **`requires`** (Morrison needs rest before he can start). Every change produces fouls — fields that just lost their player and need a replacement. Clear the card and rebuild from scratch if you want to see it from the other direction.
+</div>
 
+<div class="umpire-content">
 ## How the Demo Works
 
 The lineup card is a React component backed by a real `@umpire/core` instance. Here's how the state flows:
@@ -109,6 +114,7 @@ const { check: availability, fouls } = useUmpire(lineupUmp, values, conditions)
 ```
 
 `check()` tells you what's available *right now*. `flag()` tells you what *just broke* — fields that were enabled before but disabled after, and still hold values that should be cleaned up.
+</div>
 
 <div class="umpire-divider"></div>
 
@@ -179,25 +185,30 @@ ump.flag(
 </div>
 </div>
 
+<div class="umpire-content">
 This example is intentionally about availability, not validation. `confirmPassword` depends on `password` being present, but Umpire does not check whether the two values match. That belongs in your validation layer.
+</div>
 
 <div class="umpire-divider"></div>
 
+<div class="umpire-content">
 ## What It Does
 
-Umpire answers one question: given the current field values and conditions, which fields should be enabled, required, or flagged for cleanup?
+Umpire answers one question: given the current field values and conditions, which fields should be *enabled*, **required**, or <u>flagged</u> for cleanup?
 
-It does not manage state, render UI, validate data correctness, or mutate values for you. It recommends resets with `flag()`, but the consumer decides whether to apply them.
+## Where Umpire Ends and Your Code Begins
 
-## What It Does Not Do
+Umpire is intentionally small — it handles availability so you can handle everything else with whatever tools you already use.
 
-- It does not own form state.
-- It does not validate that values are correct.
-- It does not hide your fields or render your UI.
-- It does not clear stale values automatically.
+- **State** — yours. Umpire reads values, never writes them. Use React state, Zustand, signals, a plain object — whatever owns your form.
+- **Validation** — yours, but composable. [`check()`](/umpire/api/rules/#checkfield-validator) bridges validators (Zod, regex, functions) into availability rules. See [Composing with Validation](/umpire/concepts/validation/).
+- **Rendering** — yours. Umpire returns `enabled: boolean` per field. Hide it, disable it, dim it — your call.
+- **Cleanup** — yours, but guided. `flag()` recommends which stale values to reset. You decide when and whether to apply them.
+</div>
 
 <div class="umpire-divider"></div>
 
+<div class="umpire-content">
 ## Install
 
 ```bash
@@ -215,3 +226,4 @@ Use `@umpire/core` when you just need pure availability logic. Add `@umpire/reac
 - Read [Field Satisfaction Semantics](./concepts/satisfaction/) before writing rules with `isEmpty`.
 - Use [umpire()](./api/umpire/) and [Rules](./api/rules/) as the reference for the core API.
 - See [Signup Form Walkthrough](./examples/signup/) for the same example broken down step by step.
+</div>
