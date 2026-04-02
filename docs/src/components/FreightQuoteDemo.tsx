@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react'
-import { computed, effect, signal } from '@preact/signals-core'
-import { enabledWhen, oneOf, requires, umpire, type Foul } from '@umpire/core'
+import { useRef } from 'preact/hooks'
+import { enabledWhen, oneOf, requires, umpire } from '@umpire/core'
 import { reactiveUmp, type ReactiveUmpire, type SignalProtocol } from '@umpire/signals'
+import { computed, effect, signal } from '@preact/signals'
 import '../styles/freight-demo.css'
 
 const fields = {
@@ -247,14 +247,6 @@ function isFieldHidden(
   return false
 }
 
-type FieldState = {
-  value: unknown
-  enabled: boolean
-  required: boolean
-  reason: string | null
-  hidden: boolean
-}
-
 function FieldControl({
   field,
   reactive,
@@ -266,57 +258,37 @@ function FieldControl({
 }) {
   const meta = fieldMeta[field]
   const controlId = `freight-demo-${field}`
-
-  const [state, setState] = useState<FieldState>(() => {
-    const availability = reactive.field(field)
-    return {
-      value: reactive.values[field],
-      enabled: availability.enabled,
-      required: availability.required,
-      reason: availability.reason,
-      hidden: hidden(),
-    }
-  })
-
-  const effectRef = useRef<(() => void) | null>(null)
-  if (!effectRef.current) {
-    effectRef.current = effect(() => {
-      const availability = reactive.field(field)
-      const next: FieldState = {
-        value: reactive.values[field],
-        enabled: availability.enabled,
-        required: availability.required,
-        reason: availability.reason,
-        hidden: hidden(),
-      }
-      queueMicrotask(() => setState(next))
-    })
-  }
+  const availability = reactive.field(field)
+  const value = reactive.values[field]
+  const enabled = availability.enabled
+  const required = availability.required
+  const reason = availability.reason
+  const isHidden = hidden()
 
   return (
     <div
-      className={cls(
+      class={cls(
         'umpire-demo__field',
-        !state.enabled && 'umpire-demo__field--disabled',
-        state.hidden && 'freight-demo__field--hidden',
+        !enabled && 'umpire-demo__field--disabled',
+        isHidden && 'freight-demo__field--hidden',
       )}
     >
-      <div className="umpire-demo__field-header">
-        <div className="umpire-demo__field-label">
-          <label htmlFor={controlId}>{meta.label}</label>
-          {state.required && (
-            <span className="umpire-demo__required-pill">required</span>
+      <div class="umpire-demo__field-header">
+        <div class="umpire-demo__field-label">
+          <label for={controlId}>{meta.label}</label>
+          {required && (
+            <span class="umpire-demo__required-pill">required</span>
           )}
         </div>
         <span
-          className={cls(
+          class={cls(
             'umpire-demo__status',
-            state.enabled ? 'umpire-demo__status--enabled' : 'umpire-demo__status--disabled',
+            enabled ? 'umpire-demo__status--enabled' : 'umpire-demo__status--disabled',
           )}
         >
-          <span className="umpire-demo__status-dot" />
-          <span className="umpire-demo__status-text">
-            {state.enabled ? 'enabled' : 'disabled'}
+          <span class="umpire-demo__status-dot" />
+          <span class="umpire-demo__status-text">
+            {enabled ? 'enabled' : 'disabled'}
           </span>
         </span>
       </div>
@@ -324,9 +296,9 @@ function FieldControl({
       {meta.kind === 'select' && (
         <select
           id={controlId}
-          className="umpire-demo__input"
-          disabled={!state.enabled}
-          value={typeof state.value === 'string' ? state.value : ''}
+          class="umpire-demo__input"
+          disabled={!enabled}
+          value={typeof value === 'string' ? value : ''}
           onChange={(event) => reactive.set(field, event.currentTarget.value)}
         >
           {meta.options?.map((option) => (
@@ -340,30 +312,30 @@ function FieldControl({
       {meta.kind === 'text' && (
         <input
           id={controlId}
-          className="umpire-demo__input"
+          class="umpire-demo__input"
           type="text"
-          disabled={!state.enabled}
+          disabled={!enabled}
           placeholder={meta.placeholder}
-          value={typeof state.value === 'string' ? state.value : ''}
+          value={typeof value === 'string' ? value : ''}
           onChange={(event) => reactive.set(field, event.currentTarget.value)}
         />
       )}
 
       {meta.kind === 'checkbox' && (
-        <label className="freight-demo__checkbox-row" htmlFor={controlId}>
+        <label class="freight-demo__checkbox-row" for={controlId}>
           <input
             id={controlId}
             type="checkbox"
-            disabled={!state.enabled}
-            checked={state.value === true}
+            disabled={!enabled}
+            checked={value === true}
             onChange={(event) => reactive.set(field, event.currentTarget.checked ? true : undefined)}
           />
           <span>{meta.checkboxLabel ?? meta.label}</span>
         </label>
       )}
 
-      {!state.enabled && state.reason && (
-        <div className="umpire-demo__field-reason">{state.reason}</div>
+      {!enabled && reason && (
+        <div class="umpire-demo__field-reason">{reason}</div>
       )}
     </div>
   )
@@ -379,25 +351,25 @@ function ConditionToggle({
   onChange: (next: boolean) => void
 }) {
   return (
-    <div className="umpire-demo__field">
-      <div className="umpire-demo__field-header">
-        <div className="umpire-demo__field-label">
+    <div class="umpire-demo__field">
+      <div class="umpire-demo__field-header">
+        <div class="umpire-demo__field-label">
           <span>{label}</span>
         </div>
         <span
-          className={cls(
+          class={cls(
             'umpire-demo__status',
             value ? 'umpire-demo__status--enabled' : 'umpire-demo__status--disabled',
           )}
         >
-          <span className="umpire-demo__status-dot" />
-          <span className="umpire-demo__status-text">
+          <span class="umpire-demo__status-dot" />
+          <span class="umpire-demo__status-text">
             {value ? 'active' : 'inactive'}
           </span>
         </span>
       </div>
 
-      <div className="umpire-demo__plan-toggle" aria-label={label}>
+      <div class="umpire-demo__plan-toggle" aria-label={label}>
         {[
           { label: 'Off', value: false },
           { label: 'On', value: true },
@@ -406,7 +378,7 @@ function ConditionToggle({
             key={option.label}
             type="button"
             aria-pressed={value === option.value}
-            className={cls(
+            class={cls(
               'umpire-demo__plan-option',
               value === option.value && 'umpire-demo__plan-option--active',
             )}
@@ -446,62 +418,44 @@ export default function FreightQuoteDemo() {
 
   const { reactive, isAdminSignal, promoActiveSignal } = ref.current
 
-  const [conditions, setConditions] = useState<FreightConditions>({
-    isAdmin: false,
-    promoActive: false,
-  })
-  const [values, setValues] = useState(() => reactive.values)
-  const [fouls, setFouls] = useState<Foul<typeof fields>[]>([])
-
-  const effectRef = useRef<(() => void) | null>(null)
-  if (!effectRef.current) {
-    effectRef.current = effect(() => {
-      const nextConditions: FreightConditions = {
-        isAdmin: isAdminSignal.value,
-        promoActive: promoActiveSignal.value,
-      }
-      const nextValues = reactive.values
-      const nextFouls = reactive.fouls
-
-      queueMicrotask(() => {
-        setConditions(nextConditions)
-        setValues(nextValues)
-        setFouls(nextFouls)
-      })
-    })
+  const conditions: FreightConditions = {
+    isAdmin: isAdminSignal.value,
+    promoActive: promoActiveSignal.value,
   }
+  const values = reactive.values
+  const fouls = reactive.fouls
 
   return (
-    <div className="freight-demo umpire-demo">
-      <div className="freight-demo__panel">
-        <div className="umpire-demo__panel-header">
+    <div class="freight-demo umpire-demo">
+      <div class="freight-demo__panel">
+        <div class="umpire-demo__panel-header">
           <div>
-            <div className="umpire-demo__eyebrow">Signals Adapter</div>
-            <h2 className="umpire-demo__title">Freight Quote</h2>
+            <div class="umpire-demo__eyebrow">Signals Adapter</div>
+            <h2 class="umpire-demo__title">Freight Quote</h2>
           </div>
-          <span className="umpire-demo__panel-accent">reactiveUmp()</span>
+          <span class="umpire-demo__panel-accent">reactiveUmp()</span>
         </div>
 
-        <div className="umpire-demo__panel-body">
-          <div className="freight-demo__callout">
-            <span className="freight-demo__badge">5 rule types</span>
-            <p className="freight-demo__callout-text">
+        <div class="umpire-demo__panel-body">
+          <div class="freight-demo__callout">
+            <span class="freight-demo__badge">5 rule types</span>
+            <p class="freight-demo__callout-text">
               Quote logic mixes predicate requirements, direct field dependencies,
               mutually exclusive handling branches, admin gating, and promo locks
               without hand-written orchestration code.
             </p>
           </div>
 
-          <div className="umpire-demo__conditions">
-            <span className="umpire-demo__conditions-label">Conditions</span>
-            <code className="umpire-demo__conditions-code">
+          <div class="umpire-demo__conditions">
+            <span class="umpire-demo__conditions-label">Conditions</span>
+            <code class="umpire-demo__conditions-code">
               {`{ isAdmin: ${conditions.isAdmin}, promoActive: ${conditions.promoActive} }`}
             </code>
           </div>
 
-          <section className="freight-demo__field-group">
-            <div className="freight-demo__group-label">Conditions</div>
-            <div className="freight-demo__group-fields">
+          <section class="freight-demo__field-group">
+            <div class="freight-demo__group-label">Conditions</div>
+            <div class="freight-demo__group-fields">
               <ConditionToggle
                 label="Admin Mode"
                 value={conditions.isAdmin}
@@ -516,23 +470,23 @@ export default function FreightQuoteDemo() {
           </section>
 
           {fouls.length > 0 && (
-            <div className="umpire-demo__fouls">
-              <div className="umpire-demo__fouls-copy">
-                <div className="umpire-demo__fouls-kicker">Fouls</div>
-                <div className="umpire-demo__fouls-list">
+            <div class="umpire-demo__fouls">
+              <div class="umpire-demo__fouls-copy">
+                <div class="umpire-demo__fouls-kicker">Fouls</div>
+                <div class="umpire-demo__fouls-list">
                   {fouls.map((foul) => (
-                    <div key={foul.field} className="umpire-demo__foul">
-                      <span className="umpire-demo__foul-field">
+                    <div key={foul.field} class="umpire-demo__foul">
+                      <span class="umpire-demo__foul-field">
                         {fieldMeta[foul.field].label}
                       </span>
-                      <span className="umpire-demo__foul-reason">{foul.reason}</span>
+                      <span class="umpire-demo__foul-reason">{foul.reason}</span>
                     </div>
                   ))}
                 </div>
               </div>
               <button
                 type="button"
-                className="umpire-demo__reset-button"
+                class="umpire-demo__reset-button"
                 onClick={() => {
                   for (const foul of fouls) {
                     reactive.set(foul.field, foul.suggestedValue)
@@ -544,7 +498,7 @@ export default function FreightQuoteDemo() {
             </div>
           )}
 
-          <div className="umpire-demo__fields">
+          <div class="umpire-demo__fields">
             {fieldGroups.map((group) => {
               const visibleFields = group.fields.filter((field) => !isFieldHidden(field, values, conditions))
 
@@ -553,9 +507,9 @@ export default function FreightQuoteDemo() {
               }
 
               return (
-                <section key={group.label} className="freight-demo__field-group">
-                  <div className="freight-demo__group-label">{group.label}</div>
-                  <div className="freight-demo__group-fields">
+                <section key={group.label} class="freight-demo__field-group">
+                  <div class="freight-demo__group-label">{group.label}</div>
+                  <div class="freight-demo__group-fields">
                     {group.fields.map((field) => (
                       <FieldControl
                         key={field}
@@ -573,12 +527,12 @@ export default function FreightQuoteDemo() {
             })}
           </div>
 
-          <section className="umpire-demo__json-shell">
-            <div className="umpire-demo__json-header">
-              <span className="umpire-demo__json-title">signal state</span>
-              <span className="umpire-demo__json-meta">@preact/signals-core</span>
+          <section class="umpire-demo__json-shell">
+            <div class="umpire-demo__json-header">
+              <span class="umpire-demo__json-title">signal state</span>
+              <span class="umpire-demo__json-meta">@preact/signals</span>
             </div>
-            <pre className="umpire-demo__code-block">
+            <pre class="umpire-demo__code-block">
               <code>{prettyJson({ conditions, values, fouls })}</code>
             </pre>
           </section>

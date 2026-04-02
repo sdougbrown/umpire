@@ -1,12 +1,33 @@
 import { defineConfig } from 'astro/config'
 import starlight from '@astrojs/starlight'
+import preact from '@astrojs/preact'
 import react from '@astrojs/react'
 
 export default defineConfig({
   site: 'https://sdougbrown.github.io',
   base: '/umpire',
+  vite: {
+    server: {
+      watch: {
+        // Force polling — native FSEvents may not be propagating changes
+        usePolling: true,
+        interval: 500,
+      },
+    },
+    plugins: [{
+      name: 'starlight-asset-reload',
+      handleHotUpdate({ file, server }) {
+        // Log to confirm file watcher is firing at all
+        if (file.includes('/docs/src/')) {
+          console.log(`[asset-reload] changed: ${file.split('/docs/')[1]}`);
+          server.ws.send({ type: 'full-reload' });
+        }
+      },
+    }],
+  },
   integrations: [
-    react(),
+    preact({ include: ['**/SignalsFineGrainedDemo.*', '**/FreightQuoteDemo.*'] }),
+    react({ exclude: ['**/SignalsFineGrainedDemo.*', '**/FreightQuoteDemo.*'] }),
     starlight({
       title: '🛂 Umpire',
       description: 'Rule the form. Flag the field.',

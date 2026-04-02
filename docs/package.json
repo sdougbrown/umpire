@@ -9,16 +9,19 @@
     "preview": "astro preview"
   },
   "dependencies": {
+    "@astrojs/preact": "^4.0.0",
     "@astrojs/react": "^5.0.2",
     "@astrojs/starlight": "^0.37.7",
     "@neo-reckoning/core": "0.1.1",
     "@neo-reckoning/react": "0.1.1",
+    "@preact/signals": "^1.0.0",
     "@preact/signals-core": "^1.0.0",
     "@umpire/core": "portal:../packages/core",
     "@umpire/react": "portal:../packages/react",
     "@umpire/signals": "portal:../packages/signals",
     "@umpire/zustand": "portal:../packages/zustand",
     "astro": "^5.18.1",
+    "preact": "^10.0.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "zustand": "^5.0.0"

@@ -11,37 +11,20 @@ import SignalsFineGrainedDemo from '../../../components/SignalsFineGrainedDemo.t
   <SignalsFineGrainedDemo client:load />
 </div>
 
-Each field is a self-contained `FieldControl` component with its own `effect()`. When the plan signal changes, only the fields whose availability actually moved re-render — the rest stay frozen.
+Each field reads the signals it touches directly during render. When the plan signal changes, only the fields whose availability actually moved re-render — the rest stay frozen.
 
 ```tsx
 function FieldControl({ field, reactive }) {
-  const [state, setState] = useState(() => ({
-    value: reactive.values[field],
-    ...reactive.field(field),  // { enabled, required, reason }
-  }))
-
-  // One effect per field — tracks only this field's signals
-  const effectRef = useRef(null)
-  if (!effectRef.current) {
-    effectRef.current = effect(() => {
-      const next = {
-        value: reactive.values[field],
-        ...reactive.field(field),
-      }
-      queueMicrotask(() => setState(next))
-    })
-  }
+  const availability = reactive.field(field)
+  const value = reactive.values[field]
 
   return (
-    // Controls + availability in one place:
-    // - "Set" disabled when field is disabled
-    // - "Clear" disabled when field is empty (always available for foul cleanup)
-    // - Reason shown when disabled
+    // Preact auto-subscribes when signal-backed values are read in render.
   )
 }
 ```
 
-Each effect calls `reactive.field(field)` and `reactive.values[field]`, which reads that field's computed signals — so it only tracks what that field depends on. The component owns its value, its controls, and its availability display. That's the natural unit of fine-grained reactivity.
+Each render reads `reactive.field(field)` and `reactive.values[field]`, which touches only that field's computed signals. The component owns its value, its controls, and its availability display. That's the natural unit of fine-grained reactivity.
 
 ### Why signals instead of `useUmpire`?
 
@@ -56,7 +39,7 @@ If you'd collapse all signals into one blob and re-render everything anyway, jus
 ## Install
 
 ```bash
-yarn add @umpire/core @umpire/signals @preact/signals-core
+yarn add @umpire/core @umpire/signals @preact/signals @preact/signals-core
 ```
 
 Bring your own signal implementation or one of the shipped adapter entry points.
@@ -191,7 +174,7 @@ Those patterns cause all field signals to be read.
 ## Adapter Examples
 
 ```ts
-import { batch, computed, effect, signal } from '@preact/signals-core'
+import { batch, computed, effect, signal } from '@preact/signals'
 
 const preactAdapter: SignalProtocol = {
   signal(initial) {
