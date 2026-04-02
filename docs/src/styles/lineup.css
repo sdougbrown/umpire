@@ -87,6 +87,12 @@
   align-items: start;
 }
 
+@media (min-width: 50rem) {
+  .sl-markdown-content .lineup__panels .lineup__panel + .lineup__panel {
+    margin-top: 0;
+  }
+}
+
 @media (max-width: 50rem) {
   .lineup__panels {
     grid-template-columns: 1fr;
