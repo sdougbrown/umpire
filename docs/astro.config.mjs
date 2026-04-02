@@ -86,7 +86,15 @@ export default defineConfig({
           label: 'API Reference',
           items: [
             { label: 'umpire()', slug: 'api/umpire' },
-            { label: 'Rules', slug: 'api/rules' },
+            { label: 'Rules', collapsed: true, items: [
+              { label: 'Overview', slug: 'api/rules' },
+              { label: 'requires()', slug: 'api/rules/requires' },
+              { label: 'enabledWhen()', slug: 'api/rules/enabled-when' },
+              { label: 'disables()', slug: 'api/rules/disables' },
+              { label: 'oneOf()', slug: 'api/rules/one-of' },
+              { label: 'anyOf()', slug: 'api/rules/any-of' },
+              { label: 'check()', slug: 'api/rules/check' },
+            ] },
             { label: 'check()', slug: 'api/check' },
             { label: 'flag()', slug: 'api/flag' },
             { label: 'challenge()', slug: 'api/challenge' },
