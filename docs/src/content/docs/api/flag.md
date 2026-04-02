@@ -114,3 +114,36 @@ const fouls = signupUmp.flag(
 //   },
 // ]
 ```
+
+## `foulMap()` — lookup by field
+
+`flag()` returns an array, which is convenient for rendering a banner but requires `.find()` when you need the foul for a specific field. `foulMap()` converts the array into a field-keyed map:
+
+```ts
+import { foulMap } from '@umpire/core'
+
+const fouls = ump.flag(before, after)
+const byField = foulMap(fouls)
+
+byField.companyName?.reason   // 'business plan required'
+byField.referralCode          // undefined — no foul for this field
+```
+
+Both representations are useful: the array for iterating (fouls banner, reset-all button), the map for per-field access (inline foul indicators, field-level reset buttons).
+
+## Reactive `foul()` in signals
+
+The `@umpire/signals` adapter exposes `reactive.foul(name)` for per-field foul access with fine-grained reactivity:
+
+```ts
+const reactive = reactiveUmp(ump, adapter)
+
+// Per-field — only re-renders when this field's foul changes
+const foul = reactive.foul('companyName')
+// → Foul | undefined
+
+// Full array — for banner rendering
+const allFouls = reactive.fouls
+```
+
+`reactive.foul(name)` mirrors `reactive.field(name)` — availability and fouls have the same per-field accessor pattern.

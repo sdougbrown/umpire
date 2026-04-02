@@ -264,7 +264,7 @@ function FieldControl({
   const required = availability.required
   const reason = availability.reason
   const isHidden = hidden()
-  const foul = reactive.fouls.find((f) => f.field === field)
+  const foul = reactive.foul(field)
 
   return (
     <div

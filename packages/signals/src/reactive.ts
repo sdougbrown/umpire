@@ -21,6 +21,7 @@ export type ReactiveField = {
 
 export interface ReactiveUmpire<F extends Record<string, FieldDef>> {
   field(name: keyof F & string): ReactiveField
+  foul(name: keyof F & string): Foul<F> | undefined
   set(name: keyof F & string, value: unknown): void
   update(partial: Partial<Record<keyof F & string, unknown>>): void
   readonly values: Record<keyof F & string, unknown>
@@ -285,6 +286,16 @@ export function reactiveUmp<
 
     get values() {
       return valuesComputed.get()
+    },
+
+    foul(name: keyof F & string): Foul<F> | undefined {
+      if (!foulsComputed) {
+        throw new Error(
+          '[@umpire/signals] foul() is unavailable — adapter does not provide effect(). ' +
+            'Use an adapter with effect support (e.g., alien-signals or @preact/signals-core).',
+        )
+      }
+      return foulsComputed.get().find((f) => f.field === name)
     },
 
     get fouls() {

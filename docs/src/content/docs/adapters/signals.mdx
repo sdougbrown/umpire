@@ -101,6 +101,7 @@ type ReactiveField = {
 
 interface ReactiveUmpire<F extends Record<string, FieldDef>> {
   field(name: keyof F & string): ReactiveField
+  foul(name: keyof F & string): Foul<F> | undefined
   set(name: keyof F & string, value: unknown): void
   update(partial: Partial<Record<keyof F & string, unknown>>): void
   readonly values: Record<keyof F & string, unknown>
@@ -158,11 +159,28 @@ Changing `captchaTokenSignal` recomputes availability just like changing a field
 
 The adapter uses an effect to advance an internal "before" snapshot whenever field or conditions signals change, then computes `ump.flag(before, after)` from that transition.
 
+### Per-field access
+
+Use `reactive.foul(name)` to get the foul for a specific field, or `undefined` if none exists. This mirrors `reactive.field(name)` for availability:
+
+```ts
+// Per-field — use in FieldControl components
+const foul = reactive.foul('companyName')
+if (foul) {
+  // foul.reason, foul.suggestedValue
+}
+
+// Full array — use for banner rendering
+const allFouls = reactive.fouls
+```
+
+### No `effect()` fallback
+
 If the protocol does not provide `effect()`:
 
 - creation logs a warning
 - field availability still works
-- reading `fouls` throws
+- reading `fouls` or calling `foul()` throws
 
 ## Proxy-Based Fine-Grained Tracking
 
