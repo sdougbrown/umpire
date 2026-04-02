@@ -19,11 +19,13 @@
     "@umpire/core": "portal:../packages/core",
     "@umpire/react": "portal:../packages/react",
     "@umpire/signals": "portal:../packages/signals",
+    "@umpire/zod": "portal:../packages/zod",
     "@umpire/zustand": "portal:../packages/zustand",
     "astro": "^5.18.1",
     "preact": "^10.0.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "zod": "^3.23.8",
     "zustand": "^5.0.0"
   },
   "resolutions": {

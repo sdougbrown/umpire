@@ -111,10 +111,10 @@ export default defineConfig({
         {
           label: 'Examples',
           items: [
+            { label: 'Login + Captcha', slug: 'examples/captcha' },
             { label: 'Signup Form', slug: 'examples/signup' },
             { label: 'Calendar Recurrence', slug: 'examples/calendar' },
             { label: 'Freight Quote', slug: 'examples/freight-quote' },
-            { label: 'Login + Captcha', slug: 'examples/captcha' },
           ],
         },
       ],
