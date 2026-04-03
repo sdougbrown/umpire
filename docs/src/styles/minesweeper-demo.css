@@ -247,10 +247,6 @@
   cursor: default;
 }
 
-.minesweeper-demo__cell--flagged {
-  color: var(--umpire-demo-yellow);
-}
-
 .minesweeper-demo__cell--mine {
   background: rgba(255, 113, 108, 0.28);
   color: var(--umpire-demo-red);
@@ -258,6 +254,11 @@
 
 .minesweeper-demo__cell--disabled {
   opacity: 0.6;
+}
+
+.minesweeper-demo__cell--flagged {
+  color: var(--umpire-demo-red);
+  opacity: 1;
 }
 
 .minesweeper-demo__flag,
