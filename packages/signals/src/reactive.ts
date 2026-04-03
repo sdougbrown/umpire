@@ -214,11 +214,11 @@ export function reactiveUmp<
 
     disposeFns.push(dispose)
 
-    // Fouls computed: diff before vs current using ump.flag()
+    // Fouls computed: diff before vs current using ump.play()
     // Reads current values through the proxy, which tracks field signal
     // dependencies — so this recomputes whenever any field or condition changes.
     foulsComputed = adapter.computed<Foul<F>[]>(() => {
-      return ump.flag(
+      return ump.play(
         { values: beforeValues, conditions: beforeConditions },
         { values: valuesProxy, conditions: conditionsProxy },
       )

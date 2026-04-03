@@ -61,7 +61,7 @@ const lineupSlots: LineupSlot[] = [
 // One field per player. All the factors that affect eligibility — pitcher
 // handedness, injuries, rest status — are *conditions*: external facts that
 // affect availability but aren't form fields the user fills in. Conditions go
-// in the second argument to check() and flag().
+// in the second argument to check() and play().
 
 const fields: Record<string, FieldDef> = Object.fromEntries(
   playerIds.map(id => [id, {}]),
@@ -152,8 +152,8 @@ export default function LineupCard() {
   // --- Build the inputs to Umpire ---
   //
   // Values: only players assigned to lineup slots get truthy values. This is
-  // what makes flag() work correctly — it detects fields that "had a value but
-  // just became disabled." Bench players have no values, so they're never flagged.
+  // what makes play() work correctly — it detects fields that "had a value but
+  // just became disabled." Bench players have no values, so they never produce fouls.
   //
   // Conditions: external facts — pitcher handedness, injuries, rest status.
 
@@ -169,7 +169,7 @@ export default function LineupCard() {
 
   // --- useUmpire: availability + fouls in one call ---
   //
-  // useUmpire() handles check() and flag() internally, including snapshot
+  // useUmpire() handles check() and play() internally, including snapshot
   // tracking for foul detection. No manual useRef, no saveSnapshot()
   // before every toggle. Pass values + conditions, get results.
 

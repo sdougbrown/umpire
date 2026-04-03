@@ -32,7 +32,7 @@ type FieldDef = {
 `fields` defines the field names and per-field behavior:
 
 - `required` marks the field as required when enabled.
-- `default` seeds `init()` and becomes the `suggestedValue` for `flag()`.
+- `default` seeds `init()` and becomes the `suggestedValue` for `play()`.
 - `isEmpty` overrides the default presence check.
 
 `rules` is an ordered array of rule objects returned by helpers like `enabledWhen()`, `requires()`, `disables()`, `oneOf()`, and `anyOf()`.
@@ -45,7 +45,7 @@ type FieldDef = {
 2. Validates `oneOf()` branches, including unknown fields and invalid static `activeBranch` values.
 3. Builds the structural dependency graph.
 4. Detects cycles in ordering edges.
-5. Computes the topological field order used by `check()` and `flag()`.
+5. Computes the topological field order used by `check()` and `play()`.
 
 If a cycle exists, creation throws immediately rather than leaving the issue for runtime evaluation.
 
@@ -57,7 +57,7 @@ interface Umpire<
   C extends Record<string, unknown> = Record<string, unknown>,
 > {
   check(values: InputValues, conditions?: C, prev?: InputValues): AvailabilityMap<F>
-  flag(before: Snapshot<F, C>, after: Snapshot<F, C>): Foul<F>[]
+  play(before: Snapshot<F, C>, after: Snapshot<F, C>): Foul<F>[]
   init(overrides?: InputValues): FieldValues<F>
   challenge(
     field: keyof F & string,

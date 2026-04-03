@@ -1,8 +1,8 @@
 # 🛂 Umpire
 
-> Rule the form. Flag the field.
+> Rule the form. Play the field.
 
-Umpire is a reactive field availability library for forms with interdependent options. It answers a structural question, not a validation question: given the current values and conditions, which fields should be in play right now, and which stale values should be flagged for cleanup?
+Umpire is a reactive field availability library for forms with interdependent options. It answers a structural question, not a validation question: given the current values and conditions, which fields should be in play right now, and which stale values just fell out of play and need cleanup?
 
 [Docs](https://sdougbrown.github.io/umpire/) • [GitHub](https://github.com/sdougbrown/umpire)
 
@@ -40,7 +40,7 @@ const availability = signupUmp.check(
 availability.companyName
 // { enabled: false, required: false, reason: 'business plan required', reasons: ['business plan required'] }
 
-const fouls = signupUmp.flag(
+const fouls = signupUmp.play(
   {
     values: {
       email: 'alex@example.com',
@@ -80,7 +80,7 @@ const fouls = signupUmp.flag(
 
 - Pure logic, zero dependencies.
 - Declarative rules: `requires`, `disables`, `enabledWhen`, `oneOf`.
-- Recommendations, not mutations: `flag()` suggests resets, you decide when to apply them.
+- Recommendations, not mutations: `play()` suggests resets, you decide when to apply them.
 - Framework adapters for React, signals, and Zustand.
 - Debuggable: `challenge()` traces why any field was ruled out.
 

@@ -5,7 +5,7 @@ description: A thin React hook that memoizes availability and fouls without effe
 
 import ReactAdapterDemo from '../../../components/ReactAdapterDemo.tsx'
 
-`@umpire/react` is intentionally small. It does not add a subscription layer or side-effect system. It just derives `check()` and `flag()` results during render.
+`@umpire/react` is intentionally small. It does not add a subscription layer or side-effect system. It just derives `check()` and `play()` results during render.
 
 <div class="umpire-demo">
   <ReactAdapterDemo client:load />
@@ -38,7 +38,7 @@ function useUmpire<
 ## Behavior
 
 - `check` is memoized from `ump.check(values, conditions, prevValues)`.
-- `fouls` is memoized from `ump.flag(previousSnapshot, currentSnapshot)`.
+- `fouls` is memoized from `ump.play(previousSnapshot, currentSnapshot)`.
 - Previous values are tracked internally with `useRef`.
 - There is no `useEffect()`.
 

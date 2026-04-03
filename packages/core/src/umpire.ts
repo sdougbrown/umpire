@@ -395,7 +395,7 @@ export function umpire<
       )
     },
 
-    flag(before, after) {
+    play(before, after) {
       const beforeAvailability = evaluate(
         fields,
         rules,

@@ -51,7 +51,7 @@ yarn typecheck      # tsc --noEmit via turbo
 - Multiple rules targeting the same field are ANDed; use `anyOf` for OR behavior
 - Declaration order controls reason precedence when multiple rules fail
 - A disabled field must report `required: false`, even if the field is declared required
-- `flag()` recommends resets only for fields that became disabled, still have a non-empty value, and differ from the suggested value
+- `play()` recommends resets only for fields that became disabled, still have a non-empty value, and differ from the suggested value
 - `challenge()` is debug-only introspection: direct rule trace, transitive dependencies, and `oneOf` resolution details
 
 ## Testing

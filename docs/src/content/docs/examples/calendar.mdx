@@ -155,14 +155,14 @@ The `prev` parameter lets `oneOf` resolve ambiguity — it knows the `interval` 
 If `everyHour` was empty, there's nothing to clean up:
 
 ```ts
-scheduler.flag({ values: prev2 }, { values })
+scheduler.play({ values: prev2 }, { values })
 // → []
 ```
 
 But if the user had previously set specific hours before switching strategies:
 
 ```ts
-scheduler.flag(
+scheduler.play(
   { values: { ...prev2, everyHour: [9, 17] } },
   { values },
 )
@@ -171,7 +171,7 @@ scheduler.flag(
 //      suggestedValue: undefined }]
 ```
 
-`flag()` only recommends clearing fields that (1) just became disabled, (2) hold a non-empty value, and (3) don't already match their default. No false positives.
+`play()` only recommends clearing fields that (1) just became disabled, (2) hold a non-empty value, and (3) don't already match their default. No false positives.
 
 ## Why This Works
 

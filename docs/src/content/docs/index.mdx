@@ -100,12 +100,12 @@ const lineupUmp = umpire<typeof fields, Conditions>({
 
 ```ts title="In the component — useUmpire does the rest"
 // Values: only players assigned to lineup slots. Bench players have no
-// values, so flag() only fires for players actually in the lineup.
+// values, so play() only fires for players actually in the lineup.
 const values = Object.fromEntries(
   Object.values(lineup).filter(Boolean).map(id => [id, id]),
 )
 
-// useUmpire handles check() + flag() + snapshot tracking internally.
+// useUmpire handles check() + play() + snapshot tracking internally.
 const { check: availability, fouls } = useUmpire(lineupUmp, values, conditions)
 
 // availability.delgado → { enabled: false, reason: 'platoon matchup' }
@@ -113,7 +113,7 @@ const { check: availability, fouls } = useUmpire(lineupUmp, values, conditions)
 //   (only if Delgado was in the lineup when the pitcher flipped)
 ```
 
-`check()` tells you what's available *right now*. `flag()` tells you what *just broke* — fields that were enabled before but disabled after, and still hold values that should be cleaned up.
+`check()` tells you what's available *right now*. `play()` tells you what just fell out of play — fields that were enabled before but disabled after, and still hold values that should be cleaned up.
 </div>
 
 <div class="umpire-divider"></div>
@@ -170,7 +170,7 @@ ump.check(
 // → { enabled: false, reason: 'requires companyName' }
 
 // Switch plans — what should reset?
-ump.flag(
+ump.play(
   { values: { companyName: 'Acme', companySize: '50' },
     conditions: { plan: 'business' } },
   { values: { companyName: 'Acme', companySize: '50' },
@@ -194,7 +194,7 @@ This example is intentionally about availability, not validation. `confirmPasswo
 <div class="umpire-content">
 ## What It Does
 
-Umpire answers one question: given the current field values and conditions, which fields should be *enabled*, **required**, or <u>flagged</u> for cleanup?
+Umpire answers one question: given the current field values and conditions, which fields should be *enabled*, **required**, or due for cleanup?
 
 ## Where Umpire Ends and Your Code Begins
 
@@ -203,7 +203,7 @@ Umpire is intentionally small — it handles availability so you can handle ever
 - **State** — yours. Umpire reads values, never writes them. Use React state, Zustand, signals, a plain object — whatever owns your form.
 - **Validation** — yours, but composable. [`check()`](/umpire/api/rules/#checkfield-validator) bridges validators (Zod, regex, functions) into availability rules. See [Composing with Validation](/umpire/concepts/validation/).
 - **Rendering** — yours. Umpire returns `enabled: boolean` per field. Hide it, disable it, dim it — your call.
-- **Cleanup** — yours, but guided. `flag()` recommends which stale values to reset. You decide when and whether to apply them.
+- **Cleanup** — yours, but guided. `play()` recommends which stale values to reset. You decide when and whether to apply them.
 </div>
 
 <div class="umpire-divider"></div>

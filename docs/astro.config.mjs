@@ -30,7 +30,7 @@ export default defineConfig({
     react({ exclude: ['**/SignalsFineGrainedDemo.*', '**/FreightQuoteDemo.*', '**/LearnDemos.*'] }),
     starlight({
       title: '🛂 Umpire',
-      description: 'Rule the form. Flag the field.',
+      description: 'Rule the form. Play the field.',
       favicon: '/favicon.svg',
       customCss: [
         './src/styles/custom.css',
@@ -96,7 +96,7 @@ export default defineConfig({
               { label: 'check()', slug: 'api/rules/check' },
             ] },
             { label: 'check()', slug: 'api/check' },
-            { label: 'flag()', slug: 'api/flag' },
+            { label: 'play()', slug: 'api/play' },
             { label: 'challenge()', slug: 'api/challenge' },
           ],
         },

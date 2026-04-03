@@ -44,7 +44,7 @@ When the manager scratches a player from the lineup, the player still exists. He
 
 Umpire works the same way. When a field becomes disabled, Umpire doesn't clear it. The value is still there — and it should be, because `disables` and `oneOf` intentionally check stale values. A disabled field with a lingering value still affects its dependents until the consumer clears it.
 
-`flag()` returns reset *recommendations*. The consumer decides when and how to apply them — immediately, after a confirmation prompt, or not at all.
+`play()` returns reset *recommendations*. The consumer decides when and how to apply them — immediately, after a confirmation prompt, or not at all.
 
 ## Availability as Visibility
 
@@ -152,7 +152,7 @@ The adapter packages layer reactivity on top:
 ## Five Principles
 
 1. **Availability, not validation.** Should this field be in play right now? Not: is this value correct?
-2. **Recommendations, not mutations.** `flag()` suggests resets. State ownership stays with the consumer.
+2. **Recommendations, not mutations.** `play()` suggests resets. State ownership stays with the consumer.
 3. **Pure core, reactive adapters.** Core is framework-free. Adapters are thin.
 4. **Explainable.** Every disabled field has a `reason`. `challenge()` exposes the full dependency trace.
 5. **Tiny.** Field interdependencies, not form orchestration. If the scope grows past that, something is wrong.

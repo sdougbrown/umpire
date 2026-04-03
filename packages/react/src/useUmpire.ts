@@ -31,7 +31,7 @@ export function useUmpire<
     if (!prev) {
       return []
     }
-    return ump.flag(prev, { values, conditions })
+    return ump.play(prev, { values, conditions })
   }, [ump, values, conditions])
 
   // Update prev ref after computing check and fouls

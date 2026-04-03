@@ -1,9 +1,9 @@
 ---
-title: ump.flag()
-description: Compare two snapshots and return reset recommendations for fields that just became disabled.
+title: ump.play()
+description: Compare two snapshots and return reset recommendations for fields that just fell out of play.
 ---
 
-`flag()` is the cleanup companion to `check()`. It never mutates values. It only recommends what the consumer should clear or reset.
+`play()` is the cleanup companion to `check()`. It never mutates values. It only recommends what the consumer should clear or reset.
 
 ## Signature
 
@@ -16,7 +16,7 @@ type Snapshot<
   conditions?: C
 }
 
-ump.flag(
+ump.play(
   before: Snapshot<F, C>,
   after: Snapshot<F, C>,
 ): Foul<F>[]
@@ -34,7 +34,7 @@ type Foul<F extends Record<string, FieldDef>> = {
 
 ## When A Recommendation Appears
 
-`flag()` only returns a recommendation when all three conditions are true:
+`play()` only returns a recommendation when all three conditions are true:
 
 1. The field was enabled in `before` and disabled in `after`.
 2. The current value in `after` is still non-empty under that field’s `isEmpty` rules.
@@ -64,10 +64,10 @@ Disabling `startTime` recommends `'09:00'`. Disabling `endTime` recommends `unde
 
 ## Conditions-Only Transitions
 
-Because snapshots include `conditions`, `flag()` works even when field values do not change.
+Because snapshots include `conditions`, `play()` works even when field values do not change.
 
 ```ts
-signupUmp.flag(
+signupUmp.play(
   { values: formValues, conditions: { plan: 'business' } },
   { values: formValues, conditions: { plan: 'personal' } },
 )
@@ -77,14 +77,14 @@ That is how plan switches, feature flags, or captcha expiration can still produc
 
 ## Convergence
 
-`flag()` has a useful convergence property: as the consumer applies the recommended resets, the next pass eventually returns `[]`.
+`play()` has a useful convergence property: as the consumer applies the recommended resets, the next pass eventually returns `[]`.
 
 That is true even for non-empty defaults because the method suppresses no-op recommendations when the field already equals its `suggestedValue`.
 
 ## Example
 
 ```ts
-const fouls = signupUmp.flag(
+const fouls = signupUmp.play(
   {
     values: {
       companyName: 'Acme',
@@ -117,12 +117,12 @@ const fouls = signupUmp.flag(
 
 ## `foulMap()` — lookup by field
 
-`flag()` returns an array, which is convenient for rendering a banner but requires `.find()` when you need the foul for a specific field. `foulMap()` converts the array into a field-keyed map:
+`play()` returns an array, which is convenient for rendering a banner but requires `.find()` when you need the foul for a specific field. `foulMap()` converts the array into a field-keyed map:
 
 ```ts
 import { foulMap } from '@umpire/core'
 
-const fouls = ump.flag(before, after)
+const fouls = ump.play(before, after)
 const byField = foulMap(fouls)
 
 byField.companyName?.reason   // 'business plan required'

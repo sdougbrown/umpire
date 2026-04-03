@@ -10,7 +10,7 @@ import {
   OneOfDemo,
   CheckDemo,
   AnyOfDemo,
-  FlagDemo,
+  PlayDemo,
 } from '../../components/LearnDemos.tsx'
 
 This page teaches one Umpire primitive at a time. Each section shows the smallest useful rule, the result of one call, and a live demo using the real library.
@@ -19,7 +19,7 @@ This page teaches one Umpire primitive at a time. Each section shows the smalles
 yarn add @umpire/core
 ```
 
-Add `@umpire/react` when you want the snapshot-tracking hook used in the final `flag()` example.
+Add `@umpire/react` when you want the snapshot-tracking hook used in the final `play()` example.
 
 ## `requires()`
 
@@ -140,9 +140,9 @@ ump.check({ phone: '', email: '', submit: undefined }).submit
   <AnyOfDemo client:load />
 </div>
 
-## `flag()`
+## `play()`
 
-`check()` tells you what is available now. `flag()` tells you what just became stale after a transition, which is why plan switches and feature flips can surface reset recommendations even if the values did not change.
+`check()` tells you what is available now. `play()` tells you what just fell out of play after a transition, which is why plan switches and feature flips can surface reset recommendations even if the values did not change.
 
 ```ts
 const ump = umpire({
@@ -152,7 +152,7 @@ const ump = umpire({
     requires('companySize', 'companyName')],
 })
 
-ump.flag(
+ump.play(
   { values: { companyName: 'Acme', companySize: '50' }, conditions: { plan: 'business' } },
   { values: { companyName: 'Acme', companySize: '50' }, conditions: { plan: 'personal' } },
 )
@@ -160,7 +160,7 @@ ump.flag(
 ```
 
 <div class="umpire-demo learn-demo">
-  <FlagDemo client:only="preact" />
+  <PlayDemo client:only="preact" />
 </div>
 
 ## Where to next

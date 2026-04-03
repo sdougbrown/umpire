@@ -54,7 +54,7 @@ export function fromStore<
     const prevConditions = conditions ? conditions(prevState) : (undefined as unknown as C)
 
     currentAvailability = ump.check(nextValues, nextCond, prev)
-    currentFouls = ump.flag(
+    currentFouls = ump.play(
       { values: prev, conditions: prevConditions },
       { values: nextValues, conditions: nextCond },
     )

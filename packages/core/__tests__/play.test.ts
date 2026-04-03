@@ -11,7 +11,7 @@ type TestConditions = {
   plan?: 'basic' | 'pro'
 }
 
-describe('flag', () => {
+describe('play', () => {
   test('recommends a reset when a field transitions from enabled to disabled with a value', () => {
     const ump = umpire<TestFields>({
       fields: {
@@ -22,7 +22,7 @@ describe('flag', () => {
       rules: [enabledWhen<TestFields, TestConditions>('dependent', (values) => values.toggle === true)],
     })
 
-    const recommendations = ump.flag(
+    const recommendations = ump.play(
       { values: { toggle: true, dependent: 'keep me' } },
       { values: { toggle: false, dependent: 'keep me' } },
     )
@@ -46,7 +46,7 @@ describe('flag', () => {
       rules: [enabledWhen<TestFields, TestConditions>('dependent', (values) => values.toggle === true)],
     })
 
-    const recommendations = ump.flag(
+    const recommendations = ump.play(
       { values: { toggle: false, dependent: 'stale' } },
       { values: { toggle: false, dependent: 'stale' } },
     )
@@ -64,7 +64,7 @@ describe('flag', () => {
       rules: [enabledWhen<TestFields, TestConditions>('dependent', (values) => values.toggle === true)],
     })
 
-    const recommendations = ump.flag(
+    const recommendations = ump.play(
       { values: { toggle: true, dependent: '' } },
       { values: { toggle: false, dependent: '' } },
     )
@@ -82,7 +82,7 @@ describe('flag', () => {
       rules: [enabledWhen<TestFields, TestConditions>('dependent', (values) => values.toggle === true)],
     })
 
-    const recommendations = ump.flag(
+    const recommendations = ump.play(
       { values: { toggle: true, dependent: '09:00' } },
       { values: { toggle: false, dependent: '09:00' } },
     )
@@ -103,7 +103,7 @@ describe('flag', () => {
       ],
     })
 
-    const recommendations = ump.flag(
+    const recommendations = ump.play(
       { values: { toggle: true, dependent: '12:00', other: 'notes' } },
       { values: { toggle: false, dependent: '12:00', other: 'notes' } },
     )
@@ -130,7 +130,7 @@ describe('flag', () => {
       ],
     })
 
-    const recommendations = ump.flag(
+    const recommendations = ump.play(
       { values: { dependent: 'kept' }, conditions: { plan: 'pro' } },
       { values: { dependent: 'kept' }, conditions: { plan: 'basic' } },
     )
@@ -159,7 +159,7 @@ describe('flag', () => {
 
     const before = { values: { toggle: true, dependent: 'stale', other: '12:00' } }
     const after = { values: { toggle: false, dependent: 'stale', other: '12:00' } }
-    const recommendations = ump.flag(before, after)
+    const recommendations = ump.play(before, after)
 
     const resetValues = { ...after.values }
     for (const recommendation of recommendations) {
@@ -168,7 +168,7 @@ describe('flag', () => {
 
     expect(recommendations).toHaveLength(2)
     expect(
-      ump.flag(after, {
+      ump.play(after, {
         values: resetValues,
       }),
     ).toEqual([])

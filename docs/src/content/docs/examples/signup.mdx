@@ -9,7 +9,7 @@ import SignupDemo from '../../../components/SignupDemo.tsx'
   <SignupDemo client:load />
 </div>
 
-This demo composes two layers: **Umpire** decides which fields are available (enabled, required, flagged for cleanup), and **Zod** validates the ones that are. Neither knows about the other — they compose through [`@umpire/zod`](/umpire/api/rules/#typing-conditions), a thin adapter that builds a dynamic Zod schema from the availability map.
+This demo composes two layers: **Umpire** decides which fields are available (enabled, required, or due for cleanup), and **Zod** validates the ones that are. Neither knows about the other — they compose through [`@umpire/zod`](/umpire/api/rules/#typing-conditions), a thin adapter that builds a dynamic Zod schema from the availability map.
 
 ## The Availability Rules
 
@@ -128,7 +128,7 @@ That's it. Availability, validation, required markers, disabled states, inline e
 
 **Business plan** — company fields enable. `companyName` becomes required, and Zod validates it's non-empty. `companySize` must be digits only.
 
-**Switch plans with stale values** — `flag()` recommends clearing company fields. Apply resets and the validation errors disappear with the values.
+**Switch plans with stale values** — `play()` recommends clearing company fields. Apply resets and the validation errors disappear with the values.
 
 **Type a bad email** — Umpire says `email` is enabled and required. Zod says the value is malformed. Both layers contribute, neither steps on the other.
 
@@ -138,7 +138,7 @@ That's it. Availability, validation, required markers, disabled states, inline e
 | --- | --- | --- |
 | Should this field be in play? | Umpire | `companyName` disabled on personal plan |
 | Is this value well-formed? | Zod | `email` must match a pattern |
-| What should reset after a transition? | Umpire `flag()` | Company fields flagged when switching to personal |
+| What should reset after a transition? | Umpire `play()` | Company fields get reset recommendations when switching to personal |
 | Should we show this validation error? | `@umpire/zod` | Only for enabled fields |
 
 See [Composing with Validation](/umpire/concepts/validation/) for the full patterns, including dynamic schema building and the `check()` bridge for gating availability on validity.

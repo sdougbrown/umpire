@@ -62,12 +62,12 @@ That split is deliberate.
 - `disables()` only looks at whether the source is active. A stale value in a disabled source still disables targets.
 - `oneOf()` branch detection only looks at values. A stale value can still keep a branch active until you clear it.
 
-## `flag()` Uses The Same Empty Rules
+## `play()` Uses The Same Empty Rules
 
 Reset recommendations only appear when the now-disabled field still holds a non-empty value. `isEmpty` therefore affects both rule evaluation and cleanup behavior.
 
 ```ts
-const fouls = ump.flag(
+const fouls = ump.play(
   { values: { weekdays: [1, 3, 5] } },
   { values: { weekdays: [1, 3, 5], dates: ['2026-04-01'] } },
 )

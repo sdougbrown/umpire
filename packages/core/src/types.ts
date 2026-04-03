@@ -85,7 +85,7 @@ export interface Umpire<
   C extends Record<string, unknown> = Record<string, unknown>,
 > {
   check(values: InputValues, conditions?: C, prev?: InputValues): AvailabilityMap<F>
-  flag(before: Snapshot<F, C>, after: Snapshot<F, C>): Foul<F>[]
+  play(before: Snapshot<F, C>, after: Snapshot<F, C>): Foul<F>[]
   init(overrides?: InputValues): FieldValues<F>
   challenge(
     field: keyof F & string,

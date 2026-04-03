@@ -489,18 +489,18 @@ export function AnyOfDemo() {
   )
 }
 
-const flagFields = {
+const playFields = {
   companyName: { isEmpty: (value: unknown) => !value },
   companySize: { isEmpty: (value: unknown) => !value },
 }
 
-const flagFieldLabels = {
+const playFieldLabels = {
   companyName: 'Company name',
   companySize: 'Company size',
 } as const
 
-const flagUmp = umpire<typeof flagFields, PlanConditions>({
-  fields: flagFields,
+const playUmp = umpire<typeof playFields, PlanConditions>({
+  fields: playFields,
   rules: [
     enabledWhen('companyName', (_values, conditions) => conditions.plan === 'business', {
       reason: 'business plan required',
@@ -512,7 +512,7 @@ const flagUmp = umpire<typeof flagFields, PlanConditions>({
   ],
 })
 
-export function FlagDemo() {
+export function PlayDemo() {
   const [plan, setPlan] = useState<PlanConditions['plan']>('business')
   const [values, setValues] = useState<InputValues>({
     companyName: '',
@@ -520,15 +520,15 @@ export function FlagDemo() {
   })
 
   const conditions = { plan }
-  const availability = useMemo(() => flagUmp.check(values, conditions), [values, plan])
+  const availability = useMemo(() => playUmp.check(values, conditions), [values, plan])
   const prevRef = useRef({ values, conditions })
   const fouls = useMemo(() => {
-    const result = flagUmp.flag(prevRef.current, { values, conditions })
+    const result = playUmp.play(prevRef.current, { values, conditions })
     prevRef.current = { values, conditions }
     return result
   }, [values, plan])
 
-  function updateValue(field: keyof typeof flagFields, nextValue: string) {
+  function updateValue(field: keyof typeof playFields, nextValue: string) {
     setValues((current) => ({
       ...current,
       [field]: nextValue,
@@ -552,11 +552,11 @@ export function FlagDemo() {
       {fouls.length > 0 && (
         <div className="umpire-demo__fouls">
           <div className="umpire-demo__fouls-copy">
-            <div className="umpire-demo__fouls-kicker">Flag fouls</div>
+            <div className="umpire-demo__fouls-kicker">Foul calls</div>
             <div className="umpire-demo__fouls-list">
               {fouls.map((foul) => (
                 <div key={foul.field} className="umpire-demo__foul">
-                  <span className="umpire-demo__foul-field">{flagFieldLabels[foul.field]}</span>
+                  <span className="umpire-demo__foul-field">{playFieldLabels[foul.field]}</span>
                   <span className="umpire-demo__foul-reason">{foul.reason}</span>
                 </div>
               ))}

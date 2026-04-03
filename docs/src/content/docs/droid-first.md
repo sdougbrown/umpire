@@ -16,8 +16,8 @@ Here's what `@umpire/core` teaches your assistant:
 ```
 - Create an umpire with umpire({ fields, rules }).
 - Do not drive availability with useEffect; derive it
-  from ump.check(values, context?) during render.
-- Use flag(before, after) for transition-time reset
+  from ump.check(values, conditions?) during render.
+- Use play(before, after) for transition-time reset
   recommendations, not on every render.
 - requires checks both value satisfaction and availability.
 - disables and oneOf check source values only, not
@@ -27,11 +27,11 @@ Here's what `@umpire/core` teaches your assistant:
 And `@umpire/react`:
 
 ```
-- Use useUmpire(ump, values, context?) to derive
+- Use useUmpire(ump, values, conditions?) to derive
   availability inside React components.
 - Do not use useEffect to react to availability changes;
   availability is derived each render.
-- fouls come from ump.flag() comparing the current render
+- fouls come from ump.play() comparing the current render
   snapshot to the previous one.
 ```
 
@@ -42,7 +42,7 @@ No prompt engineering required. Your assistant reads these rules the moment it t
 Without droid-first rules, an AI assistant writing Umpire integration code will probably:
 
 1. Wrap `check()` in a `useEffect` and sync it to state
-2. Call `flag()` on every render instead of on transitions
+2. Call `play()` on every render instead of on transitions
 3. Store availability in a `useState` instead of deriving it
 4. Spread the reactive proxy and defeat fine-grained signal tracking
 
@@ -52,7 +52,7 @@ These are the exact mistakes that are easy to make and hard to debug. The per-pa
 
 | Package | Rule file | Key guidance |
 | --- | --- | --- |
-| `@umpire/core` | `.claude/rules/umpire-core.md` | Satisfaction semantics, rule evaluation order, `check()` vs `flag()` vs `challenge()` |
+| `@umpire/core` | `.claude/rules/umpire-core.md` | Satisfaction semantics, rule evaluation order, `check()` vs `play()` vs `challenge()` |
 | `@umpire/react` | `.claude/rules/umpire-react.md` | `useUmpire` hook, no `useEffect`, snapshot tracking is internal |
 | `@umpire/signals` | `.claude/rules/umpire-signals.md` | `reactiveUmp()`, no spread on proxy, `effect()` required for fouls |
 | `@umpire/zustand` | `.claude/rules/umpire-zustand.md` | `fromStore()`, native `subscribe(next, prev)`, no manual prev tracking |

@@ -43,7 +43,7 @@ const availability = signupUmp.check(
 availability.companySize
 // { enabled: false, required: false, reason: 'requires companyName', reasons: ['requires companyName'] }
 
-const fouls = signupUmp.flag(
+const fouls = signupUmp.play(
   {
     values: {
       email: 'alex@example.com',
@@ -51,7 +51,7 @@ const fouls = signupUmp.flag(
       companyName: 'Acme',
       companySize: '50',
     },
-    context: { plan: 'business' },
+    conditions: { plan: 'business' },
   },
   {
     values: {
@@ -60,7 +60,7 @@ const fouls = signupUmp.flag(
       companyName: 'Acme',
       companySize: '50',
     },
-    context: { plan: 'personal' },
+    conditions: { plan: 'personal' },
   },
 )
 
@@ -73,10 +73,10 @@ const fouls = signupUmp.flag(
 ## API Overview
 
 - `umpire({ fields, rules })` creates an instance with a validated dependency graph.
-- `ump.check(values, context?, prev?)` returns an `AvailabilityMap`.
-- `ump.flag(before, after)` returns `Foul[]`.
+- `ump.check(values, conditions?, prev?)` returns an `AvailabilityMap`.
+- `ump.play(before, after)` returns `Foul[]`.
 - `ump.init(overrides?)` returns default field values.
-- `ump.challenge(field, values, context?, prev?)` returns a debug trace for one field.
+- `ump.challenge(field, values, conditions?, prev?)` returns a debug trace for one field.
 - `ump.graph()` returns the structural dependency graph.
 
 See the docs for full type details and behavior notes: https://sdougbrown.github.io/umpire/

@@ -73,4 +73,4 @@ If both fail, `reason` is `"Enter a valid email address"` because that rule was 
 3. Detect cycles in ordering edges.
 4. Compute the topological order once.
 
-After that, `check()`, `flag()`, and `challenge()` reuse the precomputed structure on every call.
+After that, `check()`, `play()`, and `challenge()` reuse the precomputed structure on every call.
