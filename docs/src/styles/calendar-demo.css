@@ -335,7 +335,7 @@
 }
 
 .calendar-demo__toggle-grid--hours {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .calendar-demo__toggle {
@@ -462,6 +462,10 @@
   color: var(--umpire-demo-text-muted);
 }
 
+.calendar-demo__weekday:first-child {
+  margin-top: var(--sl-content-gap-y);
+}
+
 .calendar-demo__month-grid {
   margin-top: 0.55rem;
 }
@@ -479,6 +483,11 @@
     linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 56%),
     rgba(255, 255, 255, 0.02);
   overflow: hidden;
+}
+
+.sl-markdown-content .calendar-demo__month-grid > div,
+.sl-markdown-content .calendar-demo__legend > .calendar-demo__legend-item {
+  margin-top: 0;
 }
 
 .calendar-demo__day::after {

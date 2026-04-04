@@ -175,7 +175,7 @@ scheduler.play(
 
 ## Why This Works
 
-This form has three interaction patterns layered on top of each other:
+Three interaction patterns layered on top of each other:
 
 - **`disables`** — explicit dates are authoritative. A stale value in `dates` still shuts everything down, because Umpire checks the value, not the field's availability. The consumer has to clear `dates` to release the pattern fields.
 - **`oneOf`** — the two scheduling strategies are mutually exclusive. No `if/else` chain needed — declare the branches and Umpire handles the rest.
