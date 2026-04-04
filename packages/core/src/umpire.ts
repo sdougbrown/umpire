@@ -1,9 +1,19 @@
 import { evaluate, evaluateRuleForField, indexRulesByTarget } from './evaluator.js'
+import {
+  getFieldBuilderDef,
+  getFieldBuilderName,
+  getFieldBuilderRules,
+  isFieldBuilder,
+} from './field.js'
+import type { FieldInput, NormalizeFields } from './field.js'
 import { buildGraph, detectCycles, exportGraph, topologicalSort } from './graph.js'
 import {
+  enabledWhen,
+  fairWhen,
   getGraphSourceInfo,
   getInternalRuleMetadata,
   getSourceField,
+  requires,
   resolveOneOfState,
 } from './rules.js'
 import { isSatisfied } from './satisfaction.js'
@@ -12,14 +22,82 @@ import type {
   ChallengeTrace,
   FieldDef,
   FieldValues,
-  RuleEvaluation,
   Foul,
+  InputValues,
   Rule,
+  RuleEvaluation,
   Umpire,
 } from './types.js'
 
 function createEmptyConditions<C extends Record<string, unknown>>(conditions: C | undefined): C {
   return (conditions ?? ({} as C)) as C
+}
+
+function normalizeConfig<
+  F extends Record<string, FieldInput>,
+  C extends Record<string, unknown>,
+>(
+  rawFields: F,
+  explicitRules: Rule<NormalizeFields<F>, C>[],
+): {
+  fields: NormalizeFields<F>
+  rules: Rule<NormalizeFields<F>, C>[]
+} {
+  const normalizedFields = {} as NormalizeFields<F>
+  const attachedRules: Rule<NormalizeFields<F>, C>[] = []
+
+  for (const [fieldKey, rawField] of Object.entries(rawFields) as Array<[keyof F & string, F[keyof F & string]]>) {
+    if (!isFieldBuilder(rawField)) {
+      normalizedFields[fieldKey] = rawField as unknown as NormalizeFields<F>[keyof F & string]
+      continue
+    }
+
+    const namedField = getFieldBuilderName(rawField)
+    if (namedField && namedField !== fieldKey) {
+      throw new Error(
+        `[umpire] Named field builder "${namedField}" does not match field key "${fieldKey}"`,
+      )
+    }
+
+    normalizedFields[fieldKey] = getFieldBuilderDef(rawField) as NormalizeFields<F>[keyof F & string]
+
+    for (const attachedRule of getFieldBuilderRules(rawField)) {
+      if (attachedRule.kind === 'enabledWhen') {
+        attachedRules.push(
+          enabledWhen<NormalizeFields<F>, C>(
+            fieldKey,
+            attachedRule.predicate as Parameters<typeof enabledWhen<NormalizeFields<F>, C>>[1],
+            attachedRule.options as Parameters<typeof enabledWhen<NormalizeFields<F>, C>>[2],
+          ),
+        )
+        continue
+      }
+
+      if (attachedRule.kind === 'fairWhen') {
+        attachedRules.push(
+          fairWhen<NormalizeFields<F>, C>(
+            fieldKey,
+            attachedRule.predicate as Parameters<typeof fairWhen<NormalizeFields<F>, C>>[1],
+            attachedRule.options as Parameters<typeof fairWhen<NormalizeFields<F>, C>>[2],
+          ),
+        )
+        continue
+      }
+
+      attachedRules.push(
+        requires<NormalizeFields<F>, C>(
+          fieldKey,
+          attachedRule.dependency as keyof NormalizeFields<F> & string,
+          attachedRule.options as Parameters<typeof requires<NormalizeFields<F>, C>>[2],
+        ),
+      )
+    }
+  }
+
+  return {
+    fields: normalizedFields,
+    rules: [...attachedRules, ...explicitRules],
+  }
 }
 
 function describeRuleForField<
@@ -78,6 +156,16 @@ function describeRuleForField<
     }
   }
 
+  if (metadata?.kind === 'fairWhen') {
+    return {
+      rule: 'fair',
+      passed: evaluation.fair !== false,
+      reason: evaluation.reason,
+      predicate: metadata.predicate.toString(),
+      value: values[field],
+    }
+  }
+
   if (metadata?.kind === 'requires') {
     const dependencies = metadata.dependencies.map((dependency) => {
       const dependencyField = getSourceField(dependency)
@@ -94,6 +182,7 @@ function describeRuleForField<
         dependency,
         satisfied: isSatisfied(values[dependency], fields[dependency]),
         dependencyEnabled: availability[dependency].enabled,
+        dependencyFair: availability[dependency].fair,
       }
     })
 
@@ -105,6 +194,7 @@ function describeRuleForField<
       dependencyValue: dependencies[0]?.dependencyValue,
       satisfied: dependencies[0]?.satisfied,
       dependencyEnabled: dependencies[0]?.dependencyEnabled,
+      dependencyFair: dependencies[0]?.dependencyFair,
       dependencies,
     }
   }
@@ -148,7 +238,7 @@ function describeRuleForField<
 
     return {
       rule: 'anyOf',
-      passed: evaluation.enabled,
+      passed: metadata.constraint === 'fair' ? evaluation.fair !== false : evaluation.enabled,
       reason: evaluation.reason,
       inner,
     }
@@ -188,7 +278,7 @@ function collectFailedDependenciesForRule<
       baseRuleCache,
     )
 
-    if (evaluation.enabled) {
+    if (metadata.constraint === 'fair' ? evaluation.fair !== false : evaluation.enabled) {
       return []
     }
 
@@ -233,7 +323,7 @@ function collectFailedDependenciesForRule<
     const dependencySatisfied = isSatisfied(values[dependency], fields[dependency])
     const dependencyAvailability = availability[dependency]
 
-    return !(dependencySatisfied && dependencyAvailability.enabled)
+    return !(dependencySatisfied && dependencyAvailability.enabled && dependencyAvailability.fair)
   })
 }
 
@@ -301,7 +391,7 @@ function buildTransitiveDeps<
         const dependencySatisfied = isSatisfied(values[dependency], fields[dependency])
         const dependencyAvailability = availability[dependency]
 
-        if (dependencySatisfied && dependencyAvailability.enabled) {
+        if (dependencySatisfied && dependencyAvailability.enabled && dependencyAvailability.fair) {
           continue
         }
 
@@ -313,6 +403,7 @@ function buildTransitiveDeps<
         result.push({
           field: dependency,
           enabled: dependencyAvailability.enabled,
+          fair: dependencyAvailability.fair,
           reason: dependencyAvailability.reason,
           causedBy: describeCausedBy(
             dependency,
@@ -326,7 +417,7 @@ function buildTransitiveDeps<
           ),
         })
 
-        if (!dependencyAvailability.enabled) {
+        if (!dependencyAvailability.enabled || !dependencyAvailability.fair) {
           visit(dependency)
         }
       }
@@ -369,11 +460,14 @@ function validateRules<
 }
 
 export function umpire<
-  F extends Record<string, FieldDef>,
+  FInput extends Record<string, FieldInput>,
   C extends Record<string, unknown> = Record<string, unknown>,
->(config: { fields: F; rules: Rule<F, C>[] }): Umpire<F, C> {
-  const { fields, rules } = config
-  const fieldNames = Object.keys(fields) as Array<keyof F & string>
+>(config: {
+  fields: FInput
+  rules: Rule<NormalizeFields<FInput>, C>[]
+}): Umpire<NormalizeFields<FInput>, C> {
+  const { fields, rules } = normalizeConfig(config.fields, config.rules)
+  const fieldNames = Object.keys(fields) as Array<keyof NormalizeFields<FInput> & string>
 
   validateRules(fields, rules)
 
@@ -388,9 +482,9 @@ export function umpire<
         fields,
         rules,
         topoOrder,
-        values as FieldValues<F>,
+        values as FieldValues<NormalizeFields<FInput>>,
         createEmptyConditions(conditions),
-        prev as FieldValues<F> | undefined,
+        prev as FieldValues<NormalizeFields<FInput>> | undefined,
         rulesByTarget,
       )
     },
@@ -400,7 +494,7 @@ export function umpire<
         fields,
         rules,
         topoOrder,
-        before.values as FieldValues<F>,
+        before.values as FieldValues<NormalizeFields<FInput>>,
         createEmptyConditions(before.conditions),
         undefined,
         rulesByTarget,
@@ -409,15 +503,20 @@ export function umpire<
         fields,
         rules,
         topoOrder,
-        after.values as FieldValues<F>,
+        after.values as FieldValues<NormalizeFields<FInput>>,
         createEmptyConditions(after.conditions),
-        before.values as FieldValues<F>,
+        before.values as FieldValues<NormalizeFields<FInput>>,
         rulesByTarget,
       )
-      const recommendations: Foul<F>[] = []
+      const recommendations: Foul<NormalizeFields<FInput>>[] = []
 
       for (const field of fieldNames) {
-        if (!beforeAvailability[field].enabled || afterAvailability[field].enabled) {
+        const disabledTransition =
+          beforeAvailability[field].enabled && !afterAvailability[field].enabled
+        const foulTransition =
+          beforeAvailability[field].fair && afterAvailability[field].fair === false
+
+        if (!disabledTransition && !foulTransition) {
           continue
         }
 
@@ -434,7 +533,7 @@ export function umpire<
 
         recommendations.push({
           field,
-          reason: afterAvailability[field].reason ?? 'field disabled',
+          reason: afterAvailability[field].reason ?? (disabledTransition ? 'field disabled' : 'field fouled'),
           suggestedValue,
         })
       }
@@ -443,10 +542,10 @@ export function umpire<
     },
 
     init(overrides) {
-      const values = {} as FieldValues<F>
+      const values = {} as FieldValues<NormalizeFields<FInput>>
 
       for (const field of fieldNames) {
-        values[field] = fields[field].default
+        values[field] = fields[field].default as FieldValues<NormalizeFields<FInput>>[typeof field]
       }
 
       if (!overrides) {
@@ -455,7 +554,7 @@ export function umpire<
 
       for (const field of fieldNames) {
         if (field in overrides) {
-          values[field] = overrides[field]
+          values[field] = overrides[field] as FieldValues<NormalizeFields<FInput>>[typeof field]
         }
       }
 
@@ -468,8 +567,8 @@ export function umpire<
       }
 
       const resolvedConditions = createEmptyConditions(conditions)
-      const typedValues = values as FieldValues<F>
-      const typedPrev = prev as FieldValues<F> | undefined
+      const typedValues = values as FieldValues<NormalizeFields<FInput>>
+      const typedPrev = prev as FieldValues<NormalizeFields<FInput>> | undefined
       const availability = evaluate(
         fields,
         rules,
@@ -479,7 +578,7 @@ export function umpire<
         typedPrev,
         rulesByTarget,
       )
-      const baseRuleCache = new Map<Rule<F, C>, Map<string, RuleEvaluation>>()
+      const baseRuleCache = new Map<Rule<NormalizeFields<FInput>, C>, Map<string, RuleEvaluation>>()
       const directReasons = (rulesByTarget.get(field) ?? [])
         .map((rule) =>
           describeRuleForField(
@@ -518,6 +617,7 @@ export function umpire<
       return {
         field,
         enabled: availability[field].enabled,
+        fair: availability[field].fair,
         directReasons,
         transitiveDeps: buildTransitiveDeps(
           field,

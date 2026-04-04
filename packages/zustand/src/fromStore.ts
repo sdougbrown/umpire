@@ -13,7 +13,7 @@ type StoreApi<S> = {
 }
 
 type FromStoreOptions<S, F extends Record<string, FieldDef>, C extends Record<string, unknown>> = {
-  select: (state: S) => InputValues
+  select: (state: S) => InputValues<F>
   conditions?: (state: S) => C
 }
 

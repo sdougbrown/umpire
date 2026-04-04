@@ -21,10 +21,10 @@ describe('edge cases', () => {
     })
 
     expect(ump.check({})).toEqual({
-      alpha: { enabled: true, required: true, reason: null, reasons: [] },
-      beta: { enabled: true, required: false, reason: null, reasons: [] },
-      gamma: { enabled: true, required: false, reason: null, reasons: [] },
-      delta: { enabled: true, required: false, reason: null, reasons: [] },
+      alpha: { enabled: true, fair: true, required: true, reason: null, reasons: [] },
+      beta: { enabled: true, fair: true, required: false, reason: null, reasons: [] },
+      gamma: { enabled: true, fair: true, required: false, reason: null, reasons: [] },
+      delta: { enabled: true, fair: true, required: false, reason: null, reasons: [] },
     })
   })
 
@@ -69,6 +69,7 @@ describe('edge cases', () => {
 
     expect(ump.check({}).delta).toEqual({
       enabled: false,
+      fair: true,
       required: false,
       reason: 'first failure',
       reasons: ['first failure', 'second failure'],
@@ -88,6 +89,7 @@ describe('edge cases', () => {
 
     expect(ump.check({}).delta).toEqual({
       enabled: true,
+      fair: true,
       required: false,
       reason: null,
       reasons: [],

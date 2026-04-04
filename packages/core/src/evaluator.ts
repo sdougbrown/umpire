@@ -64,6 +64,24 @@ export function evaluateRuleForField<
       ),
     )
 
+    if (metadata.constraint === 'fair') {
+      if (innerResults.some((result) => result.fair !== false)) {
+        return {
+          enabled: true,
+          fair: true,
+          reason: null,
+        }
+      }
+
+      const reasons = innerResults.flatMap(getFailureReasons)
+      return {
+        enabled: true,
+        fair: false,
+        reason: reasons[0] ?? null,
+        reasons: reasons.length === 0 ? undefined : reasons,
+      }
+    }
+
     if (innerResults.some((result) => result.enabled)) {
       return { enabled: true, reason: null }
     }
@@ -90,8 +108,9 @@ export function evaluateRuleForField<
 
       const dependencySatisfied = isSatisfied(values[dependency], fields[dependency])
       const dependencyEnabled = availability[dependency]?.enabled ?? true
+      const dependencyFair = availability[dependency]?.fair ?? true
 
-      if (dependencySatisfied && dependencyEnabled) {
+      if (dependencySatisfied && dependencyEnabled && dependencyFair) {
         return []
       }
 
@@ -121,6 +140,7 @@ export function evaluateRuleForField<
 
   return {
     enabled: result.enabled,
+    fair: result.fair,
     reason: result.reason,
     reasons: result.reasons && result.reasons.length > 0 ? [...result.reasons] : undefined,
   }
@@ -144,11 +164,20 @@ export function evaluate<
 
   for (const field of topoOrder) {
     const fieldRules = resolvedRulesByTarget.get(field) ?? []
+    const gateRules = fieldRules.filter((rule) => {
+      const metadata = getInternalRuleMetadata(rule)
+      return !(metadata?.kind === 'fairWhen' || (metadata?.kind === 'anyOf' && metadata.constraint === 'fair'))
+    })
+    const fairRules = fieldRules.filter((rule) => {
+      const metadata = getInternalRuleMetadata(rule)
+      return metadata?.kind === 'fairWhen' || (metadata?.kind === 'anyOf' && metadata.constraint === 'fair')
+    })
     const reasons: string[] = []
     let enabled = true
+    let fair = true
     let reason: string | null = null
 
-    for (const rule of fieldRules) {
+    for (const rule of gateRules) {
       const result = evaluateRuleForField(
         rule,
         field,
@@ -173,8 +202,36 @@ export function evaluate<
       reasons.push(...getFailureReasons(result))
     }
 
+    if (enabled) {
+      for (const rule of fairRules) {
+        const result = evaluateRuleForField(
+          rule,
+          field,
+          fields,
+          values,
+          conditions,
+          prev,
+          availability,
+          baseRuleCache,
+        )
+
+        if (result.fair !== false) {
+          continue
+        }
+
+        fair = false
+
+        if (reason === null) {
+          reason = result.reason
+        }
+
+        reasons.push(...getFailureReasons(result))
+      }
+    }
+
     availability[field] = {
       enabled,
+      fair,
       required: enabled ? fields[field].required ?? false : false,
       reason,
       reasons,

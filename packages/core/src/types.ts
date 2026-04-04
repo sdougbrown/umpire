@@ -1,11 +1,12 @@
-export type FieldDef = {
+export type FieldDef<V = unknown> = {
   required?: boolean
-  default?: unknown
-  isEmpty?: (value: unknown) => boolean
+  default?: V
+  isEmpty?: (value: V | null | undefined) => boolean
 }
 
 export type FieldAvailability = {
   enabled: boolean
+  fair: boolean
   required: boolean
   reason: string | null
   reasons: string[]
@@ -15,17 +16,21 @@ export type AvailabilityMap<F extends Record<string, FieldDef>> = {
   [K in keyof F]: FieldAvailability
 }
 
+export type FieldValue<T extends FieldDef> = T extends FieldDef<infer V> ? V : unknown
+
 export type FieldValues<F extends Record<string, FieldDef>> = {
-  [K in keyof F]?: unknown
+  [K in keyof F]?: FieldValue<F[K]>
 }
 
-export type InputValues = Record<string, unknown>
+export type InputValues<
+  F extends Record<string, FieldDef> = Record<string, FieldDef>,
+> = FieldValues<F>
 
 export type Snapshot<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
 > = {
-  values: InputValues
+  values: InputValues<F>
   conditions?: C
 }
 
@@ -38,6 +43,7 @@ export type Foul<F extends Record<string, FieldDef>> = {
 export type ChallengeTrace = {
   field: string
   enabled: boolean
+  fair: boolean
   directReasons: Array<{
     rule: string
     reason: string | null
@@ -47,6 +53,7 @@ export type ChallengeTrace = {
   transitiveDeps: Array<{
     field: string
     enabled: boolean
+    fair: boolean
     reason: string | null
     causedBy: Array<{ rule: string; [key: string]: unknown }>
   }>
@@ -60,6 +67,7 @@ export type ChallengeTrace = {
 
 export type RuleEvaluation = {
   enabled: boolean
+  fair?: boolean
   reason: string | null
   reasons?: string[]
 }
@@ -84,14 +92,14 @@ export interface Umpire<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown> = Record<string, unknown>,
 > {
-  check(values: InputValues, conditions?: C, prev?: InputValues): AvailabilityMap<F>
+  check(values: InputValues<F>, conditions?: C, prev?: InputValues<F>): AvailabilityMap<F>
   play(before: Snapshot<F, C>, after: Snapshot<F, C>): Foul<F>[]
-  init(overrides?: InputValues): FieldValues<F>
+  init(overrides?: InputValues<F>): FieldValues<F>
   challenge(
     field: keyof F & string,
-    values: InputValues,
+    values: InputValues<F>,
     conditions?: C,
-    prev?: InputValues,
+    prev?: InputValues<F>,
   ): ChallengeTrace
   graph(): { nodes: string[]; edges: Array<{ from: string; to: string; type: string }> }
 }

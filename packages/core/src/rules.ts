@@ -1,3 +1,4 @@
+import { getFieldBuilderName } from './field.js'
 import { isSatisfied } from './satisfaction.js'
 import type { FieldDef, FieldValues, Rule, RuleEvaluation } from './types.js'
 
@@ -22,10 +23,23 @@ type RuleOptions<
   reason?: ReasonOption<F, C>
 }
 
+type FieldSelector<
+  F extends Record<string, FieldDef>,
+  V = unknown,
+> = (keyof F & string) | { readonly __umpfield: keyof F & string } | { readonly __umpfield: string }
+
 type Source<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
 > = (keyof F & string) | Predicate<F, C>
+
+type FairPredicate<
+  V,
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+> = ((value: NonNullable<V>, values: FieldValues<F>, conditions: C) => boolean) & {
+  _checkField?: keyof F & string
+}
 
 type OneOfBranches<F extends Record<string, FieldDef>> = Record<
   string,
@@ -56,6 +70,12 @@ export type InternalSource<
 
 export type InternalOneOfBranches<F extends Record<string, FieldDef>> = OneOfBranches<F>
 
+export type InternalFairPredicate<
+  V,
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+> = FairPredicate<V, F, C>
+
 export type InternalRuleMetadata<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
@@ -68,6 +88,11 @@ export type InternalRuleMetadata<
   | {
       kind: 'disables'
       source: Source<F, C>
+      options?: RuleOptions<F, C>
+    }
+  | {
+      kind: 'fairWhen'
+      predicate: FairPredicate<unknown, F, C>
       options?: RuleOptions<F, C>
     }
   | {
@@ -84,6 +109,7 @@ export type InternalRuleMetadata<
   | {
       kind: 'anyOf'
       rules: Rule<F, C>[]
+      constraint: 'enabled' | 'fair'
     }
 
 type InternalRuleCarrier<
@@ -142,6 +168,34 @@ function getCheckField<F extends Record<string, FieldDef>, C extends Record<stri
   return source._checkField
 }
 
+function getFairCheckField<
+  V,
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(
+  predicate: FairPredicate<V, F, C>,
+): (keyof F & string) | undefined {
+  return predicate._checkField
+}
+
+function getFieldNameOrThrow<
+  F extends Record<string, FieldDef>,
+  V,
+>(
+  field: FieldSelector<F, V>,
+): keyof F & string {
+  if (typeof field === 'string') {
+    return field
+  }
+
+  const name = getFieldBuilderName(field)
+  if (!name) {
+    throw new Error('[umpire] Named field builder required when passing a field() value to a rule')
+  }
+
+  return name as keyof F & string
+}
+
 export function getSourceField<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
@@ -175,6 +229,15 @@ export function getGraphSourceInfo<
     }
   }
 
+  if (metadata?.kind === 'fairWhen') {
+    const source = getFairCheckField(metadata.predicate)
+
+    return {
+      ordering: [],
+      informational: source ? [source] : [],
+    }
+  }
+
   if (metadata?.kind === 'anyOf') {
     const ordering = uniqueFields(
       metadata.rules.flatMap((innerRule) => getGraphSourceInfo(innerRule).ordering),
@@ -202,6 +265,17 @@ function getSourceFields<F extends Record<string, FieldDef>, C extends Record<st
   source: InternalSource<F, C>,
 ): Array<keyof F & string> {
   const checkField = getSourceField(source)
+  return checkField ? [checkField] : []
+}
+
+function getFairSourceFields<
+  V,
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(
+  predicate: FairPredicate<V, F, C>,
+): Array<keyof F & string> {
+  const checkField = getFairCheckField(predicate)
   return checkField ? [checkField] : []
 }
 
@@ -239,6 +313,23 @@ function uniqueFields<F extends Record<string, FieldDef>>(
   fields: Array<keyof F & string>,
 ): Array<keyof F & string> {
   return [...new Set(fields)]
+}
+
+function getRuleConstraint<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(rule: Rule<F, C>): 'enabled' | 'fair' {
+  const metadata = getInternalRuleMetadata(rule)
+
+  if (metadata?.kind === 'fairWhen') {
+    return 'fair'
+  }
+
+  if (metadata?.kind === 'anyOf') {
+    return metadata.constraint
+  }
+
+  return 'enabled'
 }
 
 function branchHasSatisfiedField<F extends Record<string, FieldDef>>(
@@ -377,19 +468,22 @@ export function resolveOneOfState<
 export function enabledWhen<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown> = Record<string, unknown>,
+  V = unknown,
 >(
-  field: keyof F & string,
+  field: FieldSelector<F, V>,
   predicate: Predicate<F, C>,
   options?: RuleOptions<F, C>,
 ): Rule<F, C> {
+  const target = getFieldNameOrThrow(field)
+
   const rule: InternalRuleCarrier<F, C> = {
     type: 'enabledWhen',
-    targets: [field],
+    targets: [target],
     sources: [],
     evaluate(values, conditions) {
       const passed = predicate(values, conditions)
 
-      return createResultMap([field], () => ({
+      return createResultMap([target], () => ({
         enabled: passed,
         reason: passed
           ? null
@@ -401,6 +495,58 @@ export function enabledWhen<
   rule._umpire = {
     kind: 'enabledWhen',
     predicate,
+    options,
+  }
+
+  return rule
+}
+
+export function fairWhen<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown> = Record<string, unknown>,
+  V = unknown,
+>(
+  field: FieldSelector<F, V>,
+  predicate: FairPredicate<V, F, C>,
+  options?: RuleOptions<F, C>,
+): Rule<F, C> {
+  const target = getFieldNameOrThrow(field)
+
+  const rule: InternalRuleCarrier<F, C> = {
+    type: 'fairWhen',
+    targets: [target],
+    sources: getFairSourceFields(predicate),
+    evaluate(values, conditions, _prev, fields) {
+      const value = values[target]
+
+      if (!isSatisfied(value, fields?.[target])) {
+        return createResultMap([target], () => ({
+          enabled: true,
+          fair: true,
+          reason: null,
+        }))
+      }
+
+      const passed = predicate(value as NonNullable<V>, values, conditions)
+
+      return createResultMap([target], () => ({
+        enabled: true,
+        fair: passed,
+        reason: passed
+          ? null
+          : resolveReason(
+              options?.reason,
+              values,
+              conditions,
+              'selection is no longer valid',
+            ),
+      }))
+    },
+  }
+
+  rule._umpire = {
+    kind: 'fairWhen',
+    predicate: predicate as FairPredicate<unknown, F, C>,
     options,
   }
 
@@ -446,21 +592,23 @@ export function disables<
 export function requires<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown> = Record<string, unknown>,
+  V = unknown,
 >(
-  field: keyof F & string,
+  field: FieldSelector<F, V>,
   ...deps: Array<Source<F, C> | RuleOptions<F, C>>
 ): Rule<F, C> {
+  const target = getFieldNameOrThrow(field)
   const maybeOptions = deps[deps.length - 1]
   const options = isReasonOptions<F, C>(maybeOptions) ? maybeOptions : undefined
   const dependencies = (options ? deps.slice(0, -1) : deps) as Array<Source<F, C>>
 
   if (dependencies.length === 0) {
-    throw new Error(`[umpire] requires("${field}") requires at least one dependency`)
+    throw new Error(`[umpire] requires("${target}") requires at least one dependency`)
   }
 
   const rule: InternalRuleCarrier<F, C> = {
     type: 'requires',
-    targets: [field],
+    targets: [target],
     sources: uniqueFields(
       dependencies.flatMap((dependency) => getSourceFields(dependency)),
     ),
@@ -469,7 +617,8 @@ export function requires<
         const passed =
           typeof dependency === 'string'
             ? isSatisfied(values[dependency], fields?.[dependency]) &&
-              (availability?.[dependency]?.enabled ?? true)
+              (availability?.[dependency]?.enabled ?? true) &&
+              (availability?.[dependency]?.fair ?? true)
             : dependency(values, conditions)
 
         if (passed) {
@@ -484,7 +633,7 @@ export function requires<
         return [resolveReason(options?.reason, values, conditions, fallback)]
       })
 
-      return createResultMap([field], () => ({
+      return createResultMap([target], () => ({
         enabled: reasons.length === 0,
         reason: reasons[0] ?? null,
         reasons: reasons.length === 0 ? undefined : reasons,
@@ -607,6 +756,13 @@ export function anyOf<
   }
 
   const sources = uniqueFields(rules.flatMap((rule) => rule.sources))
+  const constraint = getRuleConstraint(rules[0])
+
+  for (const innerRule of rules.slice(1)) {
+    if (getRuleConstraint(innerRule) !== constraint) {
+      throw new Error('[umpire] anyOf() cannot mix fairWhen rules with availability rules')
+    }
+  }
 
   const rule: InternalRuleCarrier<F, C> = {
     type: 'anyOf',
@@ -620,7 +776,28 @@ export function anyOf<
       return createResultMap(rules[0].targets, (target) => {
         const targetResults = evaluations
           .map((evaluation) => evaluation.get(target))
-          .filter((result): result is { enabled: boolean; reason: string | null } => !!result)
+          .filter((result): result is RuleEvaluation => !!result)
+
+        if (constraint === 'fair') {
+          if (targetResults.some((result) => result.fair !== false)) {
+            return {
+              enabled: true,
+              fair: true,
+              reason: null,
+            }
+          }
+
+          const reasons = targetResults
+            .map((result) => result.reason)
+            .filter((reason): reason is string => reason !== null)
+
+          return {
+            enabled: true,
+            fair: false,
+            reason: reasons[0] ?? null,
+            reasons: reasons.length === 0 ? undefined : reasons,
+          }
+        }
 
         if (targetResults.some((result) => result.enabled)) {
           return { enabled: true, reason: null }
@@ -642,6 +819,7 @@ export function anyOf<
   rule._umpire = {
     kind: 'anyOf',
     rules,
+    constraint,
   }
 
   return rule
@@ -650,12 +828,15 @@ export function anyOf<
 export function check<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown> = Record<string, unknown>,
+  V = unknown,
 >(
-  field: keyof F & string,
+  field: FieldSelector<F, V>,
   validator: Validator,
 ): Predicate<F, C> {
+  const target = getFieldNameOrThrow(field)
+
   const predicate = ((values: FieldValues<F>) => {
-    const value = values[field]
+    const value = values[target]
 
     if (typeof validator === 'function') {
       return validator(value)
@@ -672,7 +853,7 @@ export function check<
     return false
   }) as Predicate<F, C>
 
-  predicate._checkField = field
+  predicate._checkField = target
 
   return predicate
 }
@@ -692,6 +873,7 @@ export function createRules<
 >() {
   return {
     enabledWhen: enabledWhen as typeof enabledWhen<F, C>,
+    fairWhen: fairWhen as typeof fairWhen<F, C>,
     disables: disables as typeof disables<F, C>,
     requires: requires as typeof requires<F, C>,
     oneOf: oneOf as typeof oneOf<F, C>,

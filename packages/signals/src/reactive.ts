@@ -14,6 +14,7 @@ import type { SignalProtocol } from './protocol.js'
 
 export type ReactiveField = {
   readonly enabled: boolean
+  readonly fair: boolean
   readonly required: boolean
   readonly reason: string | null
   readonly reasons: string[]
@@ -71,8 +72,8 @@ export function reactiveUmp<
   const conditionSignals = options?.conditions ?? {}
 
   // --- 3. Lazy proxy for fine-grained predicate tracking ---
-  function createValuesProxy(): InputValues {
-    return new Proxy({}, {
+  function createValuesProxy(): InputValues<F> {
+    return new Proxy({} as InputValues<F>, {
       get(_target, prop) {
         if (typeof prop !== 'string') return undefined
         const sig = fieldSignals.get(prop)
@@ -129,6 +130,7 @@ export function reactiveUmp<
     string,
     {
       enabled: { get(): boolean }
+      fair: { get(): boolean }
       required: { get(): boolean }
       reason: { get(): string | null }
       reasons: { get(): string[] }
@@ -138,6 +140,7 @@ export function reactiveUmp<
   for (const name of fieldNames) {
     fieldComputeds.set(name, {
       enabled: adapter.computed(() => availabilityComputed.get()[name].enabled),
+      fair: adapter.computed(() => availabilityComputed.get()[name].fair),
       required: adapter.computed(() => availabilityComputed.get()[name].required),
       reason: adapter.computed(() => availabilityComputed.get()[name].reason),
       reasons: adapter.computed(() => availabilityComputed.get()[name].reasons),
@@ -174,22 +177,22 @@ export function reactiveUmp<
     // signal dependencies), so it recomputes whenever field/condition signals
     // change — no version counter needed.
 
-    let beforeValues: InputValues = Object.fromEntries(
+    let beforeValues: InputValues<F> = Object.fromEntries(
       fieldNames.map((n) => [n, fieldSignals.get(n)!.get()]),
-    )
+    ) as InputValues<F>
     let beforeConditions: C = Object.fromEntries(
       Object.keys(conditionSignals).map((k) => [k, conditionSignals[k].get()]),
     ) as C
-    let lastValues: InputValues = { ...beforeValues }
+    let lastValues: InputValues<F> = { ...beforeValues }
     let lastConditions: C = { ...beforeConditions } as C
 
     let isFirstRun = true
 
     const dispose = adapter.effect(() => {
       // Read all field signals to register as dependencies
-      const currentVals: InputValues = {}
+      const currentVals = {} as InputValues<F>
       for (const name of fieldNames) {
-        currentVals[name] = fieldSignals.get(name)!.get()
+        currentVals[name] = fieldSignals.get(name)!.get() as InputValues<F>[typeof name]
       }
       const currentCond = {} as Record<string, unknown>
       for (const k of Object.keys(conditionSignals)) {
@@ -249,6 +252,9 @@ export function reactiveUmp<
       cached = {
         get enabled() {
           return computeds.enabled.get()
+        },
+        get fair() {
+          return computeds.fair.get()
         },
         get required() {
           return computeds.required.get()
