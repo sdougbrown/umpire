@@ -62,59 +62,78 @@ No extra effect system is needed.
 
 ```ts
 import { createStore } from 'zustand/vanilla'
-import { umpire, enabledWhen, requires } from '@umpire/core'
+import { disables, enabledWhen, requires, umpire } from '@umpire/core'
 import { fromStore } from '@umpire/zustand'
 
-// Define fields and rules — same as any umpire setup.
 const fields = {
-  email:       { required: true, isEmpty: (v: unknown) => !v },
-  password:    { required: true, isEmpty: (v: unknown) => !v },
-  companyName: { isEmpty: (v: unknown) => !v },
-  companySize: { isEmpty: (v: unknown) => !v },
+  printer:   { required: true, isEmpty: (v: unknown) => !v },
+  copies:    { required: true, isEmpty: (v: unknown) => !v },
+  colorMode: {},
+  duplex:    {},
+  bannerMode: {},
+  paperSize:  {},
+  collate:    {},
 }
 
-type Conditions = { plan: 'personal' | 'business' }
-
-const signupUmp = umpire<typeof fields, Conditions>({
+const printerUmp = umpire({
   fields,
   rules: [
-    enabledWhen('companyName', (_v, cond) => cond.plan === 'business', {
-      reason: 'business plan required',
+    // colorMode and duplex only available on the color laser
+    enabledWhen('colorMode', (v) => v.printer === 'colorLaser', {
+      reason: 'This printer has a fixed color mode',
     }),
-    enabledWhen('companySize', (_v, cond) => cond.plan === 'business', {
-      reason: 'business plan required',
+    enabledWhen('duplex', (v) => v.printer === 'colorLaser', {
+      reason: 'Only the color laser supports duplex',
     }),
-    requires('companySize', 'companyName'),
+    // bannerMode only on dot-matrix
+    enabledWhen('bannerMode', (v) => v.printer === 'dotMatrix', {
+      reason: 'Banner mode is only available on the dot-matrix',
+    }),
+    // bannerMode disables paperSize — continuous feed has no page boundaries
+    disables('bannerMode', ['paperSize'], {
+      reason: 'Banner mode uses continuous feed',
+    }),
+    // collate requires more than one copy
+    requires('collate', (v) => Number(v.copies) > 1, {
+      reason: 'Collation requires multiple copies',
+    }),
   ],
 })
 
-// Create a vanilla Zustand store — your form state lives here.
 const store = createStore(() => ({
-  email: '', password: '', companyName: '', companySize: '',
-  plan: 'personal' as Conditions['plan'],
+  printer:   'dotMatrix',
+  copies:    '1',
+  colorMode: 'bw',
+  duplex:    false,
+  bannerMode: false,
+  paperSize:  'letter',
+  collate:    false,
 }))
 
-// Wire umpire to the store. select() picks field values;
-// conditions() extracts external facts from the same store.
-const umpStore = fromStore(signupUmp, store, {
-  select: ({ email, password, companyName, companySize }) => ({
-    email, password, companyName, companySize,
+const umpStore = fromStore(printerUmp, store, {
+  select: (state) => ({
+    printer:   state.printer,
+    copies:    state.copies,
+    colorMode: state.colorMode,
+    duplex:    state.duplex || undefined,
+    bannerMode: state.bannerMode || undefined,
+    paperSize:  state.paperSize,
+    collate:    state.collate || undefined,
   }),
-  conditions: (state) => ({ plan: state.plan }),
 })
 
-// Subscribe to availability changes — runs on every store update.
 umpStore.subscribe((availability) => {
-  console.log(availability.companyName.enabled)  // false (personal plan)
-  console.log(availability.companyName.reason)    // 'business plan required'
-  console.log(umpStore.fouls)                     // reset recommendations
+  console.log(availability.colorMode.enabled)  // false — dot-matrix has fixed color mode
+  console.log(availability.colorMode.reason)   // 'This printer has a fixed color mode'
+  console.log(umpStore.fouls)                  // reset recommendations on printer switch
 })
 
-// Mutate the store — umpire reacts automatically.
-store.setState({ plan: 'business' })
-// → companyName.enabled becomes true
+// Switch to color laser — colorMode and duplex become available
+store.setState({ printer: 'colorLaser' })
 
-// Clean up when done.
+// Enable banner mode — paperSize becomes disabled
+store.setState({ printer: 'dotMatrix', bannerMode: true })
+
 umpStore.destroy()
 ```
 
@@ -127,16 +146,20 @@ import { useStore } from 'zustand'
 
 // Use the same vanilla store + fromStore setup from above.
 // Then subscribe React components with selectors:
-function CompanyField() {
-  const companyName = useStore(store, (s) => s.companyName)
-  const availability = umpStore.field('companyName')
+function PaperSizeControl() {
+  const paperSize = useStore(store, (s) => s.paperSize)
+  const availability = umpStore.field('paperSize')
 
   return (
-    <input
-      value={companyName}
+    <select
+      value={paperSize}
       disabled={!availability.enabled}
-      onChange={(e) => store.setState({ companyName: e.target.value })}
-    />
+      onChange={(e) => store.setState({ paperSize: e.target.value })}
+    >
+      <option value="letter">Letter</option>
+      <option value="legal">Legal</option>
+      <option value="4x6">4 x 6</option>
+    </select>
   )
 }
 ```
