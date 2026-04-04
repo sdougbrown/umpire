@@ -34,13 +34,19 @@ type Foul<F extends Record<string, FieldDef>> = {
 
 ## When A Recommendation Appears
 
-`play()` only returns a recommendation when all three conditions are true:
+`play()` produces a foul when a field holds a non-empty value that just fell out of play. There are two ways that can happen:
 
-1. The field was enabled in `before` and disabled in `after`.
+**Availability foul** — the field was enabled in `before` and is disabled in `after`.
+
+**Appropriateness foul** — the field is still enabled, but a `fairWhen` predicate that was passing in `before` is now failing in `after`. The value is present and the field is available, but the selection is no longer appropriate given the current form state.
+
+In both cases, a recommendation only appears when:
+
+1. The trigger above applies.
 2. The current value in `after` is still non-empty under that field’s `isEmpty` rules.
 3. The current value differs from the suggested reset value.
 
-Condition three matters for defaults. If a field is disabled while it already holds its default value, recommending that same value again would be a no-op.
+Condition three matters for defaults. If a field falls out of play while it already holds its default value, recommending that same value again would be a no-op.
 
 ## `suggestedValue`
 

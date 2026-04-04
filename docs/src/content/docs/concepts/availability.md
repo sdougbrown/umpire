@@ -27,6 +27,10 @@ Good Umpire rules describe field relationships:
 - `enabledWhen('companyName', (_v, cond) => cond.plan === 'business')` — company fields only appear for business accounts
 - `oneOf('subDayStrategy', { hourList: ['everyHour'], interval: ['startTime', 'endTime'] })` — pick one scheduling approach
 
+Also Umpire's job:
+
+- `fairWhen('motherboard', (mb, v) => socketFor(mb) === socketFor(v.cpu ?? ''))` — is this value still an appropriate selection?
+
 Not Umpire's job:
 
 - Syncing `endTime` after `startTime` changes (value coercion)
@@ -151,7 +155,7 @@ The adapter packages layer reactivity on top:
 
 ## Five Principles
 
-1. **Availability, not validation.** Should this field be in play right now? Not: is this value correct?
+1. **Availability and appropriateness, not validation.** Should this field be in play? Is its current value still a sensible selection? Not: is this value correct?
 2. **Recommendations, not mutations.** `play()` suggests resets. State ownership stays with the consumer.
 3. **Pure core, reactive adapters.** Core is framework-free. Adapters are thin.
 4. **Explainable.** Every disabled field has a `reason`. `challenge()` exposes the full dependency trace.

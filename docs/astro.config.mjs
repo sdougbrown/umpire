@@ -88,10 +88,12 @@ export default defineConfig({
           label: 'API Reference',
           items: [
             { label: 'umpire()', slug: 'api/umpire' },
+            { label: 'field<V>()', slug: 'api/field' },
             { label: 'Rules', collapsed: true, items: [
               { label: 'Overview', slug: 'api/rules' },
               { label: 'requires()', slug: 'api/rules/requires' },
               { label: 'enabledWhen()', slug: 'api/rules/enabled-when' },
+              { label: 'fairWhen()', slug: 'api/rules/fair-when' },
               { label: 'disables()', slug: 'api/rules/disables' },
               { label: 'oneOf()', slug: 'api/rules/one-of' },
               { label: 'anyOf()', slug: 'api/rules/any-of' },

@@ -75,6 +75,35 @@ const fouls = ump.play(
 
 If `weekdays` used `isEmpty: (value) => !Array.isArray(value) || value.length === 0`, then clearing it to `[]` is enough for the recommendation to disappear on the next pass.
 
+## Appropriateness
+
+Satisfaction answers "does this field have a value?" A related but separate question is: "is that value still the right selection given what else is in the form?"
+
+A DDR4 RAM kit is a satisfied field — it has a value, it's non-empty. But if the user just switched their motherboard to one that only supports DDR5, the RAM value is no longer appropriate. The field is still enabled, satisfaction hasn't changed. What changed is the relationship between that value and the rest of the form.
+
+`fairWhen` is the rule for declaring appropriateness:
+
+```ts
+fairWhen(ramField, (ram, values) =>
+  ramTypeFor(ram) === ramTypeFor(values.motherboard ?? ''), {
+  reason: 'RAM type no longer matches the selected motherboard',
+})
+```
+
+The three levels, in order:
+
+| Level | Question | Governed by |
+| --- | --- | --- |
+| Present | `value != null`? | — |
+| Satisfied | Is it a meaningful value? | `isEmpty`, `isSatisfied` |
+| Appropriate | Is it still the right selection? | `fairWhen` |
+
+`fairWhen` only evaluates when the field is already satisfied. There is no notion of appropriateness for an empty field. `check()` reports `fair: true` whenever the field has no value.
+
+`play()` surfaces an inappropriate value as a foul — same format as an availability foul, same convergence property.
+
+See [`fairWhen()`](/umpire/api/rules/fair-when/) for the full rule reference.
+
 ## Use Presence First, Validation Second
 
 If you need "present and valid", compose those ideas explicitly.

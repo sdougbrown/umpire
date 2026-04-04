@@ -9,6 +9,7 @@ Every rule helper returns a `Rule<F, C>` object. Rules are plain values — they
 |------|---------|
 | [`requires()`](/umpire/api/rules/requires/) | Field stays disabled until dependencies are satisfied and available |
 | [`enabledWhen()`](/umpire/api/rules/enabled-when/) | Field enabled only when a predicate returns true |
+| [`fairWhen()`](/umpire/api/rules/fair-when/) | Field's current value is appropriate only when a predicate returns true |
 | [`disables()`](/umpire/api/rules/disables/) | Active source disables target fields |
 | [`oneOf()`](/umpire/api/rules/one-of/) | Only one branch of fields is active at a time |
 | [`anyOf()`](/umpire/api/rules/any-of/) | OR logic — pass if any inner rule passes |
@@ -33,6 +34,21 @@ Dynamic reasons are useful when the UI should explain a specific plan tier, feat
 Rule factories have their own generic parameters, so TypeScript can't always infer your conditions type from the `umpire()` call. When a predicate receives `conditions`, it may be typed as `Record<string, unknown>` instead of your specific type.
 
 Two ways to fix this:
+
+### `field<V>()` for per-field type capture
+
+When a rule like `fairWhen` needs a typed `value` parameter, use a named [`field<V>()`](/umpire/api/field/) builder. It captures the value type for that field and flows it through to the predicate — no annotation needed.
+
+```ts
+const motherboard = field<string>('motherboard')
+
+fairWhen(motherboard, (mb, values) => {
+  //                   ^^ string, not unknown
+  return socketFor(mb) === socketFor(values.cpu ?? '')
+})
+```
+
+This is narrower than `createRules()` — it types one field at a time rather than the whole schema. Use `field<V>()` when you want typed predicates inline; use `createRules()` when many rules share the same field and condition types.
 
 ### Annotate the predicate
 

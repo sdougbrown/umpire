@@ -12,6 +12,7 @@ This page shows how to compose Umpire with validation libraries like Zod, Yup, o
 | Concern | Owner | Example |
 | --- | --- | --- |
 | Should this field be in play? | Umpire | `confirmPassword` disabled until `password` is present |
+| Is this value still an appropriate selection? | Umpire | `motherboard` inappropriate after CPU socket changes — `fairWhen` |
 | Is this value well-formed? | Validation library | `email` must match a pattern |
 | Is this value valid *and* should a dependent field become available? | Both, composed | `submit` requires a valid email — Umpire gates the field, `check()` bridges the validator |
 

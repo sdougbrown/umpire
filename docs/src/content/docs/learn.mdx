@@ -59,6 +59,38 @@ ump.check({ companyName: '' }, { plan: 'personal' }).companyName
   <EnabledWhenDemo client:load />
 </div>
 
+## `fairWhen()`
+
+Use `fairWhen()` when a field's current value might stop being an appropriate selection after something else changes. The field stays enabled — it just carries a value that no longer fits, and `play()` will recommend clearing it.
+
+```ts
+const motherboard = field<string>('motherboard')
+
+const ump = umpire({
+  fields: {
+    cpu:         { required: true, isEmpty: (v) => !v },
+    motherboard: field<string>('motherboard').required().isEmpty((v) => !v),
+  },
+  rules: [
+    requires('motherboard', 'cpu', { reason: 'Pick a CPU first' }),
+    fairWhen(motherboard, (mb, values) =>
+      socketFor(mb) === socketFor(values.cpu ?? ''), {
+      reason: 'Motherboard socket no longer matches the selected CPU',
+    }),
+  ],
+})
+
+// After switching cpu to a different socket family:
+ump.check({ cpu: 'amd-r7', motherboard: 'asus-z790' }, undefined).motherboard
+// { enabled: true, fair: false, reason: 'Motherboard socket no longer matches the selected CPU' }
+
+ump.play(
+  { values: { cpu: 'intel-i7', motherboard: 'asus-z790' } },
+  { values: { cpu: 'amd-r7',  motherboard: 'asus-z790' } },
+)
+// [{ field: 'motherboard', reason: 'Motherboard socket no longer matches the selected CPU', suggestedValue: undefined }]
+```
+
 ## `disables()`
 
 Use `disables()` when one active field should override another. Unlike `requires()`, it only cares that the source is active, not whether the target would otherwise be available.

@@ -26,6 +26,7 @@ ump.check(
 ```ts
 type FieldAvailability = {
   enabled: boolean
+  fair: boolean
   required: boolean
   reason: string | null
   reasons: string[]
@@ -38,9 +39,10 @@ type AvailabilityMap<F extends Record<string, FieldDef>> = {
 
 ## Semantics
 
-- `enabled` is the combined result of every rule targeting the field.
+- `enabled` is the combined result of every availability rule (`enabledWhen`, `requires`, `disables`, `oneOf`) targeting the field.
+- `fair` is `false` when a `fairWhen` predicate returns `false` on a non-empty value. Always `true` when the field has no value. `fairWhen` only runs when the field is enabled.
 - `required` is suppressed to `false` when the field is disabled, even if the field definition says `required: true`.
-- `reason` is the first failure in declaration order.
+- `reason` is the first failure in declaration order — from either an availability rule or a `fairWhen` rule.
 - `reasons` includes every failure in declaration order.
 
 ## Conditions

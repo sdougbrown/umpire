@@ -22,6 +22,12 @@ Here's what `@umpire/core` teaches your assistant:
 - requires checks both value satisfaction and availability.
 - disables and oneOf check source values only, not
   source availability.
+- Use fairWhen for relational value appropriateness —
+  when a field's current value may no longer fit given
+  upstream changes. Do not use enabledWhen with a
+  conditions boolean to fake this check.
+- field<V>('name') gives fairWhen predicates a typed
+  value parameter instead of unknown.
 ```
 
 And `@umpire/react`:
