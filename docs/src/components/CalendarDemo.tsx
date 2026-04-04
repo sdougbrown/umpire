@@ -535,7 +535,7 @@ export default function CalendarDemo() {
   const activeBaseDates = collectActiveDates(previewBaseMonth)
 
   return (
-    <div className="calendar-demo umpire-demo umpire-demo--styled">
+    <div className="calendar-demo umpire-demo">
       {fouls.length > 0 && (
         <div className="umpire-demo__fouls">
           <div className="umpire-demo__fouls-copy">
