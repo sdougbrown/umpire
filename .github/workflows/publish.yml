@@ -26,10 +26,16 @@ jobs:
       - name: Build
         run: yarn turbo run build
 
-      - name: Test
-        run: yarn turbo run test
+      - name: Test with coverage
+        run: yarn jest --coverage
         env:
           NODE_OPTIONS: '--experimental-vm-modules'
+
+      - name: Upload coverage to Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: coverage/lcov.info
 
   detect-version-changes:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
