@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { enabledWhen, fairWhen, requires, umpire, type Snapshot } from '@umpire/core'
+import { enabledWhen, requires, umpire, type Snapshot } from '@umpire/core'
 import { createCoach } from '../lib/createCoach.ts'
-import { createReadTable } from '../lib/createReadTable.ts'
+import { createReadTable, fairWhenRead } from '../lib/createReadTable.ts'
 import { createHintRuntime } from '../lib/createHintRuntime.ts'
 import { useHintRuntime, useResolvedHints } from '../lib/useHintRuntime.ts'
 import '../styles/pc-builder-demo.css'
@@ -410,25 +410,22 @@ const pcUmp = umpire<typeof pcFields, PcConditions>({
     requires('motherboard', 'cpu', {
       reason: 'Pick a CPU first',
     }),
-    fairWhen('motherboard', pcBuildReads.from('motherboardFair'), {
+    fairWhenRead('motherboard', 'motherboardFair', pcBuildReads, {
       reason: 'Selected motherboard no longer matches the CPU socket',
-      trace: pcBuildReads.trace('motherboardFair'),
     }),
 
     requires('ram', 'motherboard', {
       reason: 'Memory depends on an active motherboard selection',
     }),
-    fairWhen('ram', pcBuildReads.from('ramFair'), {
+    fairWhenRead('ram', 'ramFair', pcBuildReads, {
       reason: 'Selected memory no longer matches the motherboard RAM type',
-      trace: pcBuildReads.trace('ramFair'),
     }),
 
     requires('caseSize', 'motherboard', {
       reason: 'Pick a valid motherboard first to determine form factor',
     }),
-    fairWhen('caseSize', pcBuildReads.from('caseSizeFair'), {
+    fairWhenRead('caseSize', 'caseSizeFair', pcBuildReads, {
       reason: 'Selected case no longer fits the motherboard form factor',
-      trace: pcBuildReads.trace('caseSizeFair'),
     }),
   ],
 })

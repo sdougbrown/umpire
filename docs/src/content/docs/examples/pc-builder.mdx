@@ -119,9 +119,8 @@ const scorecard = coaching.scorecard
 Those same reads can also feed straight back into the form umpire with baked-in predicates:
 
 ```ts
-fairWhen('motherboard', pcBuildReads.from('motherboardFair'), {
+fairWhenRead('motherboard', 'motherboardFair', pcBuildReads, {
   reason: 'Selected motherboard no longer matches the CPU socket',
-  trace: pcBuildReads.trace('motherboardFair'),
 })
 ```
 
@@ -130,7 +129,8 @@ The remaining awkward part is really hint state: remembering milestone booleans 
 The demo now splits that into:
 
 - `createCoach(...)` for the domain-aware layer that consumes umpire plus reads
-- `createReadTable(...)` for named domain reads shared by rules, scorecard, and UI, with helpers like `.from(...)` for rule predicates
+- `createReadTable(...)` for named domain reads shared by rules, scorecard, and UI
+- `fairWhenRead(...)` / `enabledWhenRead(...)` as the read-backed adapters from read table to rule
 - `scorecard(...)` inside the coach layer for live field and transition facts
 - `createHintRuntime(...)` for latched markers plus prompt sequencing
 - `useHintRuntime(...)` as a thin React adapter over that runtime
@@ -189,7 +189,7 @@ The lookup tables still live in the UI:
 - RAM kits are filtered by the selected motherboard RAM type.
 - Cases are filtered by the selected motherboard form factor.
 
-That filtering logic is still not what Umpire is responsible for. The component keeps the product catalog in userland, but it now declares named build reads once and reuses them from `fairWhen()`, the scorecard, and render. The read table is starting to look less like a plain helper bag and more like a small constructed layer with its own baked-in helpers. Umpire owns the rule result and the cascade. The app still owns the catalog.
+That filtering logic is still not what Umpire is responsible for. The component keeps the product catalog in userland, but it now declares named build reads once and reuses them from `fairWhenRead()`, the scorecard, and render. The read table is starting to look less like a plain helper bag and more like a small constructed layer with its own baked-in helpers. Umpire owns the rule result and the cascade. The app still owns the catalog.
 
 ## What Umpire Doesn't Do
 

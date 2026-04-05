@@ -1,4 +1,12 @@
-import type { RuleTraceAttachment } from '@umpire/core'
+import { enabledWhen, fairWhen } from '@umpire/core'
+import type {
+  FieldDef,
+  FieldValues,
+  Rule,
+  RuleTraceAttachment,
+} from '@umpire/core'
+
+const READ_BRIDGES = Symbol('umpire.readBridges')
 
 type ReadContext<
   Input extends Record<string, unknown>,
@@ -19,6 +27,12 @@ export type PredicateReadKey<Reads extends Record<string, unknown>> = {
   [K in keyof Reads]-?: Reads[K] extends boolean ? K : never
 }[keyof Reads] & string
 
+export type ReadBridge<ReadId extends string = string> = {
+  type: 'enabledWhen' | 'fairWhen'
+  read: ReadId
+  field: string
+}
+
 export type ReadTableNode<
   Input extends Record<string, unknown>,
   Reads extends Record<string, unknown>,
@@ -34,12 +48,18 @@ export type ReadTableInspection<
   Input extends Record<string, unknown>,
   Reads extends Record<string, unknown>,
 > = {
+  bridges: ReadBridge<keyof Reads & string>[]
   graph: {
     edges: Array<
       | {
           from: keyof Reads & string
           to: keyof Reads & string
           type: 'read'
+        }
+      | {
+          from: keyof Reads & string
+          to: string
+          type: 'bridge'
         }
       | {
           from: keyof Input & string
@@ -77,6 +97,80 @@ export type ReadTable<
   ): RuleTraceAttachment<Input, C>
 } & {
   [K in keyof Reads]: (input: Input) => Reads[K]
+}
+
+type ReadTableInternal<
+  Input extends Record<string, unknown>,
+  Reads extends Record<string, unknown>,
+> = ReadTable<Input, Reads> & {
+  [READ_BRIDGES]: ReadBridge<keyof Reads & string>[]
+}
+
+type FairWhenReadField<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+> = Parameters<typeof fairWhen<F, C, unknown>>[0]
+
+type FairWhenReadOptions<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+> = Parameters<typeof fairWhen<F, C, unknown>>[2]
+
+type EnabledWhenReadField<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+> = Parameters<typeof enabledWhen<F, C>>[0]
+
+type EnabledWhenReadOptions<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+> = Parameters<typeof enabledWhen<F, C>>[2]
+
+function getReadBridgeStore<
+  Input extends Record<string, unknown>,
+  Reads extends Record<string, unknown>,
+>(table: ReadTable<Input, Reads>) {
+  return (table as ReadTableInternal<Input, Reads>)[READ_BRIDGES]
+}
+
+function registerReadBridge<
+  Input extends Record<string, unknown>,
+  Reads extends Record<string, unknown>,
+>(
+  table: ReadTable<Input, Reads>,
+  bridge: ReadBridge<keyof Reads & string>,
+) {
+  const bridges = getReadBridgeStore(table)
+
+  if (bridges.some((entry) =>
+    entry.type === bridge.type &&
+    entry.read === bridge.read &&
+    entry.field === bridge.field)) {
+    return
+  }
+
+  bridges.push(bridge)
+}
+
+function getReadRuleFieldName(field: unknown) {
+  if (typeof field === 'string') {
+    return field
+  }
+
+  if (typeof field === 'object' && field !== null && '__umpfield' in field) {
+    return String(field.__umpfield)
+  }
+
+  throw new Error('[reads] Named field required when using a read-backed rule')
+}
+
+function mergeReadTrace<T>(
+  trace: T,
+  existing: T | T[] | undefined,
+) {
+  return existing
+    ? [trace, ...(Array.isArray(existing) ? existing : [existing])]
+    : trace
 }
 
 export function fromRead<
@@ -121,6 +215,68 @@ export function fromRead<
   ) => table[key](values) as Reads[K]
 }
 
+export function fairWhenRead<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown> = Record<string, unknown>,
+  Reads extends Record<string, unknown> = Record<string, unknown>,
+  K extends PredicateReadKey<Reads> = PredicateReadKey<Reads>,
+>(
+  field: FairWhenReadField<F, C>,
+  key: K,
+  table: ReadTable<FieldValues<F>, Reads>,
+  options?: FairWhenReadOptions<F, C>,
+): Rule<F, C> {
+  const fieldName = getReadRuleFieldName(field)
+
+  registerReadBridge(table, {
+    type: 'fairWhen',
+    read: key,
+    field: fieldName,
+  })
+
+  const trace = table.trace<K, C>(key)
+  const mergedTrace = mergeReadTrace(trace, options?.trace)
+
+  const predicate = ((value: unknown, values: FieldValues<F>, conditions: C) =>
+    table.from(key)(value, values, conditions)) as Parameters<typeof fairWhen<F, C, unknown>>[1]
+
+  return fairWhen(field, predicate, {
+    ...options,
+    trace: mergedTrace,
+  })
+}
+
+export function enabledWhenRead<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown> = Record<string, unknown>,
+  Reads extends Record<string, unknown> = Record<string, unknown>,
+  K extends PredicateReadKey<Reads> = PredicateReadKey<Reads>,
+>(
+  field: EnabledWhenReadField<F, C>,
+  key: K,
+  table: ReadTable<FieldValues<F>, Reads>,
+  options?: EnabledWhenReadOptions<F, C>,
+): Rule<F, C> {
+  const fieldName = getReadRuleFieldName(field)
+
+  registerReadBridge(table, {
+    type: 'enabledWhen',
+    read: key,
+    field: fieldName,
+  })
+
+  const trace = table.trace<K, C>(key)
+  const mergedTrace = mergeReadTrace(trace, options?.trace)
+
+  const predicate = ((values: FieldValues<F>, _conditions: C) =>
+    table[key](values)) as Parameters<typeof enabledWhen<F, C>>[1]
+
+  return enabledWhen(field, predicate, {
+    ...options,
+    trace: mergedTrace,
+  })
+}
+
 export function createReadTable<
   Input extends Record<string, unknown>,
   Reads extends Record<string, unknown>,
@@ -128,6 +284,7 @@ export function createReadTable<
   resolvers: ReadResolvers<Input, Reads>,
 ): ReadTable<Input, Reads> {
   const keys = Object.keys(resolvers) as Array<keyof Reads & string>
+  const bridgeStore: ReadBridge<keyof Reads & string>[] = []
 
   function createSession(input: Input) {
     const cache = new Map<keyof Reads & string, Reads[keyof Reads & string]>()
@@ -206,20 +363,28 @@ export function createReadTable<
     return {
       values,
       nodes,
+      bridges: [...bridgeStore],
       graph: {
         nodes: [...keys],
-        edges: keys.flatMap((key) => ([
-          ...session.getReadDependencies(key).map((from) => ({
-            from,
-            to: key,
-            type: 'read' as const,
+        edges: [
+          ...keys.flatMap((key) => ([
+            ...session.getReadDependencies(key).map((from) => ({
+              from,
+              to: key,
+              type: 'read' as const,
+            })),
+            ...session.getFieldDependencies(key).map((from) => ({
+              from,
+              to: key,
+              type: 'field' as const,
+            })),
+          ])),
+          ...bridgeStore.map((bridge) => ({
+            from: bridge.read,
+            to: bridge.field,
+            type: 'bridge' as const,
           })),
-          ...session.getFieldDependencies(key).map((from) => ({
-            from,
-            to: key,
-            type: 'field' as const,
-          })),
-        ])),
+        ],
       },
     }
   }
@@ -275,6 +440,12 @@ export function createReadTable<
     resolve: resolveInput,
     trace: buildTrace,
   } as ReadTable<Input, Reads>
+
+  Object.defineProperty(table, READ_BRIDGES, {
+    enumerable: false,
+    value: bridgeStore,
+    writable: false,
+  })
 
   for (const key of keys) {
     table[key] = ((input: Input) => resolveRead(key, input)) as ReadTable<Input, Reads>[typeof key]
