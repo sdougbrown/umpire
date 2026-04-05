@@ -1,9 +1,9 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { enabledWhen, fairWhen, requires, umpire, type Snapshot } from '@umpire/core'
-import { createCoachRuntime } from '../lib/createCoachRuntime.ts'
+import { createCoach } from '../lib/createCoach.ts'
 import { createFactTable } from '../lib/createFactTable.ts'
-import { inspectUmpre } from '../lib/inspectUmpre.ts'
-import { useCoachRuntime, useResolvedCoachPrompts } from '../lib/useCoachRuntime.ts'
+import { createHintRuntime } from '../lib/createHintRuntime.ts'
+import { useHintRuntime, useResolvedHints } from '../lib/useHintRuntime.ts'
 import '../styles/pc-builder-demo.css'
 
 type Socket = 'LGA1700' | 'AM5'
@@ -155,23 +155,23 @@ const pcUmp = umpire<typeof pcFields, PcConditions>({
   ],
 })
 
-type CoachConditions = {
+type HintConditions = {
   cpuBrand?: CpuBrand
   hasRamSelection: boolean
   sawTransitiveCascade: boolean
   sawAppliedResets: boolean
 }
 
-type CoachPromptId = keyof typeof coachFields & string
+type HintId = keyof typeof hintFields & string
 
-const coachFields = {
+const hintFields = {
   promptSwitchCpu:   {},
   explainTransitive: {},
   celebrateComplete: {},
 }
 
-const coachUmp = umpire<typeof coachFields, CoachConditions>({
-  fields: coachFields,
+const hintUmp = umpire<typeof hintFields, HintConditions>({
+  fields: hintFields,
   rules: [
     enabledWhen('promptSwitchCpu', (_values, conditions) =>
       conditions.hasRamSelection && conditions.cpuBrand === 'intel', {
@@ -188,12 +188,12 @@ const coachUmp = umpire<typeof coachFields, CoachConditions>({
   ],
 })
 
-const coachRuntime = createCoachRuntime({
+const hintRuntime = createHintRuntime({
   facts: [
     'sawTransitiveCascade',
     'sawAppliedResets',
   ] as const,
-  prompts: [
+  hints: [
     { id: 'promptSwitchCpu' },
     { id: 'explainTransitive' },
     { id: 'celebrateComplete' },
@@ -202,7 +202,7 @@ const coachRuntime = createCoachRuntime({
 
 type PcValues = ReturnType<typeof pcUmp.init>
 type PcCheck = ReturnType<typeof pcUmp.check>
-type CoachCheck = ReturnType<typeof coachUmp.check>
+type HintCheck = ReturnType<typeof hintUmp.check>
 type PcSnapshot = Snapshot<typeof pcFields, PcConditions>
 
 type StepDefinition = {
@@ -483,6 +483,16 @@ function describePcField(field: PcField, facts: PcDerivedFacts) {
   return undefined
 }
 
+const pcCoach = createCoach({
+  ump: pcUmp,
+  fields: pcFields,
+  facts: pcBuildFacts,
+  getFactInput: (snapshot: PcSnapshot) => snapshot.values,
+  describeField(field, context) {
+    return describePcField(field, context.factTable.values)
+  },
+})
+
 function SelectField({
   id,
   label,
@@ -561,7 +571,7 @@ function SelectField({
   )
 }
 
-function CoachCallout({
+function HintCallout({
   title,
   copy,
 }: {
@@ -569,19 +579,27 @@ function CoachCallout({
   copy: string
 }) {
   return (
-    <div className="pc-builder__coach">
-      <div className="pc-builder__coach-kicker">{title}</div>
-      <p className="pc-builder__coach-copy">{copy}</p>
+    <div className="pc-builder__hint">
+      <div className="pc-builder__hint-kicker">{title}</div>
+      <p className="pc-builder__hint-copy">{copy}</p>
     </div>
   )
 }
 
 export default function PcBuilderDemo() {
   const [values, setValues] = useState<PcValues>(() => pcUmp.init())
-  const coach = useCoachRuntime(coachRuntime)
+  const hints = useHintRuntime(hintRuntime)
   const [currentStep, setCurrentStep] = useState(0)
   const [lastTransition, setLastTransition] = useState<{ before: PcSnapshot } | null>(null)
-  const buildFacts = useMemo(() => pcBuildFacts.resolve(values), [values])
+  const coaching = useMemo(() => pcCoach.inspect({
+    values,
+  }, {
+    before: lastTransition?.before,
+  }), [
+    values,
+    lastTransition,
+  ])
+  const buildFacts = coaching.factTable.values
   const {
     ids: {
       cpu: cpuId,
@@ -608,14 +626,6 @@ export default function PcBuilderDemo() {
     compatibleCases,
     psuRecommendation,
   } = buildFacts
-  const fieldFacts = useMemo(() => ({
-    cpu: describePcField('cpu', buildFacts),
-    motherboard: describePcField('motherboard', buildFacts),
-    ram: describePcField('ram', buildFacts),
-    gpu: describePcField('gpu', buildFacts),
-    storage: describePcField('storage', buildFacts),
-    caseSize: describePcField('caseSize', buildFacts),
-  }), [buildFacts])
 
   const motherboardChoices = buildChoices(
     compatibleMotherboards.map((board) => ({
@@ -647,19 +657,7 @@ export default function PcBuilderDemo() {
     Boolean(caseId && !caseSizeFair),
   )
 
-  const inspection = useMemo(() => inspectUmpre(pcUmp, {
-    values,
-  }, {
-    before: lastTransition?.before,
-    facts: buildFacts,
-    fieldFacts,
-    fields: pcFields,
-  }), [
-    values,
-    lastTransition,
-    buildFacts,
-    fieldFacts,
-  ])
+  const inspection = coaching.ump
   const { check } = inspection
   const fouls = inspection.transition.fouls
   const foulsByField = inspection.transition.foulsByField
@@ -668,32 +666,32 @@ export default function PcBuilderDemo() {
     inspection.transition.cascadingFields.includes('ram')
   )
 
-  // COACH NOTE: The seam is a tiny bit of remembered history, updated only
+  // HINT NOTE: The seam is a tiny bit of remembered history, updated only
   // when a transition happens. Rendering still just reads live facts + memory.
-  const coachConditions = useMemo<CoachConditions>(() => ({
+  const hintConditions = useMemo<HintConditions>(() => ({
     cpuBrand: inspection.fields.cpu.facts?.brand as CpuBrand | undefined,
     hasRamSelection: inspection.fields.ram.satisfied,
-    sawTransitiveCascade: coach.facts.sawTransitiveCascade || hasLiveTransitiveCascade,
-    sawAppliedResets: coach.facts.sawAppliedResets,
+    sawTransitiveCascade: hints.facts.sawTransitiveCascade || hasLiveTransitiveCascade,
+    sawAppliedResets: hints.facts.sawAppliedResets,
   }), [
-    coach.facts,
+    hints.facts,
     inspection,
     hasLiveTransitiveCascade,
   ])
 
-  const coachCheck = useMemo<CoachCheck>(
-    () => coachUmp.check(coachUmp.init(), coachConditions),
-    [coachConditions],
+  const hintCheck = useMemo<HintCheck>(
+    () => hintUmp.check(hintUmp.init(), hintConditions),
+    [hintConditions],
   )
 
-  const coachPrompts = useResolvedCoachPrompts(
-    coachRuntime,
-    coach.state,
+  const hintPrompts = useResolvedHints(
+    hintRuntime,
+    hints.state,
     {
-      celebrateComplete: coachCheck.celebrateComplete.enabled,
-      explainTransitive: coachCheck.explainTransitive.enabled,
-      promptSwitchCpu: coachCheck.promptSwitchCpu.enabled,
-    } satisfies Partial<Record<CoachPromptId, boolean>>,
+      celebrateComplete: hintCheck.celebrateComplete.enabled,
+      explainTransitive: hintCheck.explainTransitive.enabled,
+      promptSwitchCpu: hintCheck.promptSwitchCpu.enabled,
+    } satisfies Partial<Record<HintId, boolean>>,
   )
 
   function updateField<K extends PcField>(field: K, nextValue: PcValues[K]) {
@@ -715,7 +713,7 @@ export default function PcBuilderDemo() {
       before: { values },
     })
     setValues(nextValues)
-    coach.rememberFacts({
+    hints.rememberFacts({
       sawTransitiveCascade: hasTransitiveCascade(nextFouls),
     })
   }
@@ -741,7 +739,7 @@ export default function PcBuilderDemo() {
       before: { values },
     })
     setValues(nextValues)
-    coach.rememberFacts({
+    hints.rememberFacts({
       sawTransitiveCascade: hasLiveTransitiveCascade,
       sawAppliedResets: true,
     })
@@ -987,31 +985,31 @@ export default function PcBuilderDemo() {
     )
   }
 
-  // COACH NOTE: The coach rules only decide visibility. Step placement, ordering,
+  // HINT NOTE: The hint rules only decide visibility. Step placement, ordering,
   // and copy still live in the component, which is workable but manual.
-  function renderCoachCallout(step: StepDefinition) {
-    if (step.index === 1 && coachPrompts.prompts.explainTransitive.active) {
+  function renderHintCallout(step: StepDefinition) {
+    if (step.index === 1 && hintPrompts.hints.explainTransitive.active) {
       return (
-        <CoachCallout
-          title="Coach Call"
+        <HintCallout
+          title="Hint"
           copy="The CPU switch only directly broke the motherboard. RAM fell with it because requires() follows dependency availability, so the stale upstream board shut Memory down too."
         />
       )
     }
 
-    if (step.index === 2 && coachPrompts.prompts.promptSwitchCpu.active) {
+    if (step.index === 2 && hintPrompts.hints.promptSwitchCpu.active) {
       return (
-        <CoachCallout
-          title="Coach Call"
+        <HintCallout
+          title="Hint"
           copy="You have an Intel board and matching RAM. Jump back to Platform and switch to AMD now. Watch Motherboard, Memory, and Case all get called for stale state."
         />
       )
     }
 
-    if (step.index === 4 && coachPrompts.prompts.celebrateComplete.active) {
+    if (step.index === 4 && hintPrompts.hints.celebrateComplete.active) {
       return (
-        <CoachCallout
-          title="Coach Call"
+        <HintCallout
+          title="Hint"
           copy="That was the whole trick: filtering stayed in the UI, but play() still turned stale downstream state into guided reset recommendations."
         />
       )
@@ -1105,7 +1103,7 @@ export default function PcBuilderDemo() {
                   </div>
                 )}
 
-                {renderCoachCallout(step)}
+                {renderHintCallout(step)}
               </section>
             )
           })}

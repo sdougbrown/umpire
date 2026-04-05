@@ -127,7 +127,7 @@
 .pc-builder__field-label,
 .pc-builder__summary-step,
 .pc-builder__metric-label,
-.pc-builder__coach-kicker,
+.pc-builder__hint-kicker,
 .pc-builder__insight-kicker {
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: 0.12em;
@@ -165,7 +165,7 @@
 .pc-builder__field-detail,
 .pc-builder__field-note,
 .pc-builder__summary-copy,
-.pc-builder__coach-copy,
+.pc-builder__hint-copy,
 .pc-builder__insight-copy {
   color: var(--umpire-demo-text-dim);
 }
@@ -174,7 +174,7 @@
 .pc-builder__field-detail,
 .pc-builder__field-note,
 .pc-builder__summary-copy,
-.pc-builder__coach-copy,
+.pc-builder__hint-copy,
 .pc-builder__insight-copy {
   font-size: 0.84rem;
 }
@@ -281,7 +281,7 @@
 
 .pc-builder__field-detail,
 .pc-builder__field-note,
-.pc-builder__coach-copy,
+.pc-builder__hint-copy,
 .pc-builder__insight-copy {
   margin: 0;
 }
@@ -353,7 +353,7 @@
 }
 
 .pc-builder__insight,
-.pc-builder__coach {
+.pc-builder__hint {
   border-radius: 0.95rem;
 }
 
@@ -366,7 +366,7 @@
 }
 
 .pc-builder__insight-kicker,
-.pc-builder__coach-kicker,
+.pc-builder__hint-kicker,
 .pc-builder__eyebrow,
 .pc-builder__panel-accent,
 .pc-builder__metric-label,
@@ -384,7 +384,7 @@
   font-size: 1.05rem;
 }
 
-.pc-builder__coach {
+.pc-builder__hint {
   margin: 0 1rem 1rem;
   padding: 0.9rem 1rem;
   border: 1px dashed rgba(107, 254, 156, 0.3);
@@ -393,7 +393,7 @@
     rgba(255, 255, 255, 0.025);
 }
 
-.pc-builder__coach-kicker,
+.pc-builder__hint-kicker,
 .pc-builder__eyebrow {
   color: rgba(107, 254, 156, 0.72);
 }

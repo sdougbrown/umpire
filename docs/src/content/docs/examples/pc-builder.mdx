@@ -63,17 +63,17 @@ const pcUmp = umpire({
 })
 ```
 
-The second umpire is still just a coach. It does not control the form. It decides when to surface teaching callouts:
+The second umpire is now just a hint umpire. It does not control the form. It decides when to surface teaching hints:
 
 ```ts
-type CoachConditions = {
+type HintConditions = {
   cpuBrand?: 'intel' | 'amd'
   hasRamSelection: boolean
   sawTransitiveCascade: boolean
   sawAppliedResets: boolean
 }
 
-const coachUmp = umpire({
+const hintUmp = umpire({
   fields: {
     promptSwitchCpu:   {},
     explainTransitive: {},
@@ -96,24 +96,45 @@ const coachUmp = umpire({
 })
 ```
 
-The awkward part turned out not to be the second umpire itself. The awkward part was remembering milestone booleans like “the transitive cascade has happened at least once,” plus tracking which coach prompt is currently active and whether it has already been shown.
+The actual coach layer is now separate from those visible hints. It composes the umpire plus named domain facts:
+
+```ts
+const pcCoach = createCoach({
+  ump: pcUmp,
+  facts: pcBuildFacts,
+  getFactInput: (snapshot) => snapshot.values,
+  describeField(field, context) {
+    return describePcField(field, context.factTable.values)
+  },
+})
+
+const coaching = pcCoach.inspect({ values }, {
+  before: lastTransition?.before,
+})
+
+const buildFacts = coaching.factTable.values
+const inspection = coaching.ump
+```
+
+The remaining awkward part is really hint state: remembering milestone booleans like “the transitive cascade has happened at least once,” plus tracking which hint is currently active and whether it has already been shown.
 
 The demo now splits that into:
 
+- `createCoach(...)` for the domain-aware layer that consumes umpire plus facts
 - `createFactTable(...)` for named domain facts shared by rules, inspection, and UI
-- `inspectUmpre(...)` for live field and transition facts
-- `createCoachRuntime(...)` for latched facts plus prompt sequencing
-- `useCoachRuntime(...)` as a thin React adapter over that runtime
+- `inspectUmpre(...)` inside the coach layer for live field and transition facts
+- `createHintRuntime(...)` for latched facts plus prompt sequencing
+- `useHintRuntime(...)` as a thin React adapter over that runtime
 
 The runtime stays non-React:
 
 ```ts
-const coachRuntime = createCoachRuntime({
+const hintRuntime = createHintRuntime({
   facts: [
     'sawTransitiveCascade',
     'sawAppliedResets',
   ] as const,
-  prompts: [
+  hints: [
     { id: 'promptSwitchCpu' },
     { id: 'explainTransitive' },
     { id: 'celebrateComplete' },
@@ -124,49 +145,32 @@ const coachRuntime = createCoachRuntime({
 And React just holds the runtime state:
 
 ```ts
-const coach = useCoachRuntime(coachRuntime)
+const hints = useHintRuntime(hintRuntime)
 
-const coachConditions = {
+const hintConditions = {
   cpuBrand: inspection.fields.cpu.facts?.brand,
   hasRamSelection: inspection.fields.ram.satisfied,
-  sawTransitiveCascade: coach.facts.sawTransitiveCascade || hasLiveTransitiveCascade,
-  sawAppliedResets: coach.facts.sawAppliedResets,
+  sawTransitiveCascade: hints.facts.sawTransitiveCascade || hasLiveTransitiveCascade,
+  sawAppliedResets: hints.facts.sawAppliedResets,
 }
 
-const coachPromptState = useResolvedCoachPrompts(
-  coachRuntime,
-  coach.state,
+const hintState = useResolvedHints(
+  hintRuntime,
+  hints.state,
   {
-    promptSwitchCpu: coachCheck.promptSwitchCpu.enabled,
-    explainTransitive: coachCheck.explainTransitive.enabled,
-    celebrateComplete: coachCheck.celebrateComplete.enabled,
+    promptSwitchCpu: hintCheck.promptSwitchCpu.enabled,
+    explainTransitive: hintCheck.explainTransitive.enabled,
+    celebrateComplete: hintCheck.celebrateComplete.enabled,
   },
 )
 
 // inside a transition handler
-coach.rememberFacts({
+hints.rememberFacts({
   sawTransitiveCascade: hasTransitiveCascade(nextFouls),
 })
 ```
 
-That feels like a better extraction seam than the earlier history-flags helper. The reusable part is not rendering. It is “latch facts from transitions, sequence coach prompts, and feed live facts plus remembered facts into another umpire.” React can wrap that with a hook, but prompt selection itself stays derived instead of syncing through an effect.
-
-The next prototype step is an inspection helper:
-
-```ts
-const buildFacts = pcBuildFacts.resolve(values)
-
-const inspection = inspectUmpre(pcUmp, {
-  values,
-}, {
-  before: lastTransition?.before,
-  facts: buildFacts,
-  fieldFacts,
-  fields: pcFields,
-})
-```
-
-That helper is where the structure starts to matter. It can use `graph()` and `play()` by default, and `challenge()` only when a richer debugger view wants it, to produce a value tree with field state, fouls, and transition cascades while still letting userland attach domain facts like “selected CPU socket” or “compatible motherboard count.”
+That feels like a better extraction seam than the earlier history-flags helper. The reusable part is not rendering. It is “compose umpire state with domain facts, then let hints consume that richer inspection.” React can wrap the hint runtime with a hook, but hint selection itself stays derived instead of syncing through an effect.
 
 ## The Compatibility Layer
 
