@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { requires, umpire, type Snapshot } from '@umpire/core'
 import { createCoach } from '../lib/createCoach.ts'
-import { createReadTable, enabledWhenRead, fairWhenRead } from '../lib/createReadTable.ts'
+import { createReadTable, enabledWhenRead, fairWhenRead, ReadInputType } from '../lib/createReadTable.ts'
 import { createHintRuntime } from '../lib/createHintRuntime.ts'
 import { useHintRuntime, useResolvedHints } from '../lib/useHintRuntime.ts'
 import '../styles/pc-builder-demo.css'
@@ -129,7 +129,7 @@ type PcDerivedReads = {
 
 type PcConditions = Record<string, never>
 
-type HintConditions = {
+type HintInput = {
   cpuBrand?: CpuBrand
   hasRamSelection: boolean
   sawTransitiveCascade: boolean
@@ -150,25 +150,25 @@ const hintFields = {
   celebrateComplete: {},
 }
 
-const hintReads = createReadTable<HintConditions, HintReads>({
+const hintReads = createReadTable<HintInput, HintReads>({
   canPromptSwitchCpu: ({ input }) => input.hasRamSelection && input.cpuBrand === 'intel',
   canExplainTransitive: ({ input }) => input.sawTransitiveCascade,
   canCelebrateComplete: ({ input }) => input.sawTransitiveCascade && input.sawAppliedResets,
 })
 
-const hintUmp = umpire<typeof hintFields, HintConditions>({
+const hintUmp = umpire<typeof hintFields, HintInput>({
   fields: hintFields,
   rules: [
     enabledWhenRead('promptSwitchCpu', 'canPromptSwitchCpu', hintReads, {
-      selectInput: (_values, conditions) => conditions,
+      inputType: ReadInputType.CONDITIONS,
       reason: 'Complete steps 1-3 with Intel first',
     }),
     enabledWhenRead('explainTransitive', 'canExplainTransitive', hintReads, {
-      selectInput: (_values, conditions) => conditions,
+      inputType: ReadInputType.CONDITIONS,
       reason: 'Trigger the transitive cascade first',
     }),
     enabledWhenRead('celebrateComplete', 'canCelebrateComplete', hintReads, {
-      selectInput: (_values, conditions) => conditions,
+      inputType: ReadInputType.CONDITIONS,
       reason: 'Apply the suggested resets first',
     }),
   ],
@@ -442,67 +442,11 @@ const pcUmp = umpire<typeof pcFields, PcConditions>({
   ],
 })
 
-function describePcField(field: PcField, reads: PcDerivedReads) {
-  if (field === 'cpu' && reads.selections.cpu) {
-    return {
-      brand: reads.selections.cpu.brand,
-      socket: reads.selections.cpu.socket,
-      tier: reads.selections.cpu.tier,
-    }
-  }
-
-  if (field === 'motherboard') {
-    return {
-      compatible: reads.motherboardFair,
-      choiceCount: reads.compatibleMotherboards.length,
-      selectedSocket: reads.selections.motherboard?.socket,
-      selectedFormFactor: reads.selections.motherboard?.formFactor,
-      selectedRamType: reads.selections.motherboard?.ramType,
-      expectedSocket: reads.selections.cpu?.socket,
-    }
-  }
-
-  if (field === 'ram') {
-    return {
-      compatible: reads.ramFair,
-      choiceCount: reads.compatibleRamKits.length,
-      selectedType: reads.selections.ram?.type,
-      expectedType: reads.activeMotherboard?.ramType,
-    }
-  }
-
-  if (field === 'caseSize') {
-    return {
-      compatible: reads.caseSizeFair,
-      choiceCount: reads.compatibleCases.length,
-      selectedFits: reads.selections.caseSize?.fits,
-      expectedFormFactor: reads.activeMotherboard?.formFactor,
-    }
-  }
-
-  if (field === 'gpu' && reads.selections.gpu) {
-    return {
-      tier: reads.selections.gpu.tier,
-    }
-  }
-
-  if (field === 'storage' && reads.selections.storage) {
-    return {
-      label: reads.selections.storage.label,
-    }
-  }
-
-  return undefined
-}
-
 const pcCoach = createCoach({
   ump: pcUmp,
   fields: pcFields,
   reads: pcBuildReads,
   getReadInput: (snapshot: PcSnapshot) => snapshot.values,
-  describeField(field, context) {
-    return describePcField(field, context.readTable.values)
-  },
 })
 
 function SelectField({
@@ -678,22 +622,20 @@ export default function PcBuilderDemo() {
     scorecard.transition.cascadingFields.includes('ram')
   )
 
-  // HINT NOTE: The seam is a tiny bit of remembered history, updated only
-  // when a transition happens. Rendering still just reads live reads + memory.
-  const hintConditions = useMemo<HintConditions>(() => ({
-    cpuBrand: scorecard.fields.cpu.reads?.brand as CpuBrand | undefined,
-    hasRamSelection: scorecard.fields.ram.satisfied,
-    sawTransitiveCascade: hints.markers.sawTransitiveCascade || hasLiveTransitiveCascade,
-    sawAppliedResets: hints.markers.sawAppliedResets,
-  }), [
-    hints.markers,
-    scorecard,
-    hasLiveTransitiveCascade,
-  ])
+  const cpuBrand = selectedCpu?.brand
+  const hasRamSelection = scorecard.fields.ram.satisfied
+  const sawTransitiveCascade = hints.markers.sawTransitiveCascade || hasLiveTransitiveCascade
+  const sawAppliedResets = hints.markers.sawAppliedResets
+  const hintInput: HintInput = {
+    cpuBrand,
+    hasRamSelection,
+    sawTransitiveCascade,
+    sawAppliedResets,
+  }
 
   const hintCheck = useMemo<HintCheck>(
-    () => hintUmp.check(hintUmp.init(), hintConditions),
-    [hintConditions],
+    () => hintUmp.check(hintUmp.init(), hintInput),
+    [cpuBrand, hasRamSelection, sawTransitiveCascade, sawAppliedResets],
   )
 
   const hintPrompts = useResolvedHints(

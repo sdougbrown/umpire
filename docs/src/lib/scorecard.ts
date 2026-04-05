@@ -8,9 +8,6 @@ import type {
   Umpire,
 } from '@umpire/core'
 
-type FieldReads<F extends Record<string, FieldDef>> = Partial<
-  Record<keyof F & string, Record<string, unknown> | undefined>
->
 type InspectFieldDefs<F extends Record<string, FieldDef>> = Partial<Record<keyof F & string, FieldDef>>
 
 export type ScorecardField<F extends Record<string, FieldDef>> = {
@@ -29,7 +26,6 @@ export type ScorecardField<F extends Record<string, FieldDef>> = {
   incoming: Array<{ field: string; type: string }>
   outgoing: Array<{ field: string; type: string }>
   trace?: ChallengeTrace
-  reads?: Record<string, unknown>
 }
 
 export type ScorecardResult<
@@ -81,7 +77,6 @@ export function scorecard<
   options: {
     before?: Snapshot<F, C>
     reads?: Reads
-    fieldReads?: FieldReads<F>
     fields?: InspectFieldDefs<F>
     includeChallenge?: boolean
   } = {},
@@ -89,7 +84,6 @@ export function scorecard<
   const {
     before,
     reads,
-    fieldReads,
     fields: fieldDefs,
     includeChallenge = false,
   } = options
@@ -151,7 +145,6 @@ export function scorecard<
           trace: includeChallenge
             ? ump.challenge(field, snapshot.values, snapshot.conditions, before?.values)
             : undefined,
-          reads: fieldReads?.[field],
         },
       ]
     }),

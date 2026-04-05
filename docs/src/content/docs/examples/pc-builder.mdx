@@ -66,14 +66,14 @@ const pcUmp = umpire({
 The second umpire is now just a hint umpire. It does not control the form. It decides when to surface teaching hints:
 
 ```ts
-type HintConditions = {
+type HintInput = {
   cpuBrand?: 'intel' | 'amd'
   hasRamSelection: boolean
   sawTransitiveCascade: boolean
   sawAppliedResets: boolean
 }
 
-const hintReads = createReadTable<HintConditions>({
+const hintReads = createReadTable<HintInput>({
   canPromptSwitchCpu: ({ input }) =>
     input.hasRamSelection && input.cpuBrand === 'intel',
   canExplainTransitive: ({ input }) =>
@@ -90,15 +90,15 @@ const hintUmp = umpire({
   },
   rules: [
     enabledWhenRead('promptSwitchCpu', 'canPromptSwitchCpu', hintReads, {
-      selectInput: (_values, conditions) => conditions,
+      inputType: ReadInputType.CONDITIONS,
       reason: 'Complete steps 1-3 with Intel first',
     }),
     enabledWhenRead('explainTransitive', 'canExplainTransitive', hintReads, {
-      selectInput: (_values, conditions) => conditions,
+      inputType: ReadInputType.CONDITIONS,
       reason: 'Trigger the transitive cascade first',
     }),
     enabledWhenRead('celebrateComplete', 'canCelebrateComplete', hintReads, {
-      selectInput: (_values, conditions) => conditions,
+      inputType: ReadInputType.CONDITIONS,
       reason: 'Apply the suggested resets first',
     }),
   ],
@@ -112,9 +112,6 @@ const pcCoach = createCoach({
   ump: pcUmp,
   reads: pcBuildReads,
   getReadInput: (snapshot) => snapshot.values,
-  describeField(field, context) {
-    return describePcField(field, context.readTable.values)
-  },
 })
 
 const coaching = pcCoach.inspect({ values }, {
@@ -160,13 +157,13 @@ const hintRuntime = createHintRuntime({
 })
 ```
 
-And React just holds the runtime state:
+And React just holds the runtime state while the hint input is powered by coach output:
 
 ```ts
 const hints = useHintRuntime(hintRuntime)
 
-const hintConditions = {
-  cpuBrand: scorecard.fields.cpu.reads?.brand,
+const hintInput = {
+  cpuBrand: buildReads.selections.cpu?.brand,
   hasRamSelection: scorecard.fields.ram.satisfied,
   sawTransitiveCascade: hints.markers.sawTransitiveCascade || hasLiveTransitiveCascade,
   sawAppliedResets: hints.markers.sawAppliedResets,

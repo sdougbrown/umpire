@@ -8,6 +8,13 @@ import type {
 
 const READ_BRIDGES = Symbol('umpire.readBridges')
 
+export const ReadInputType = {
+  VALUES: 'values',
+  CONDITIONS: 'conditions',
+} as const
+
+export type ReadInputTypeValue = typeof ReadInputType[keyof typeof ReadInputType]
+
 type ReadContext<
   Input extends Record<string, unknown>,
   Reads extends Record<string, unknown>,
@@ -139,6 +146,7 @@ type FairWhenReadConfig<
   C extends Record<string, unknown>,
   Input extends Record<string, unknown>,
 > = FairWhenReadOptions<F, C> & {
+  inputType?: ReadInputTypeValue
   selectInput: ReadRuleInputSelector<F, C, Input>
 }
 
@@ -147,7 +155,22 @@ type EnabledWhenReadConfig<
   C extends Record<string, unknown>,
   Input extends Record<string, unknown>,
 > = EnabledWhenReadOptions<F, C> & {
+  inputType?: ReadInputTypeValue
   selectInput: ReadRuleInputSelector<F, C, Input>
+}
+
+type FairWhenReadInputTypeConfig<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+> = FairWhenReadOptions<F, C> & {
+  inputType: ReadInputTypeValue
+}
+
+type EnabledWhenReadInputTypeConfig<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+> = EnabledWhenReadOptions<F, C> & {
+  inputType: ReadInputTypeValue
 }
 
 type ReadRuleInputSelector<
@@ -267,6 +290,19 @@ export function fairWhenRead<
   field: FairWhenReadField<F, C>,
   key: K,
   table: ReadTable<Input, Reads>,
+  options: FairWhenReadInputTypeConfig<F, C>,
+): Rule<F, C>
+
+export function fairWhenRead<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown> = Record<string, unknown>,
+  Input extends Record<string, unknown> = Record<string, unknown>,
+  Reads extends Record<string, unknown> = Record<string, unknown>,
+  K extends PredicateReadKey<Reads> = PredicateReadKey<Reads>,
+>(
+  field: FairWhenReadField<F, C>,
+  key: K,
+  table: ReadTable<Input, Reads>,
   options: FairWhenReadConfig<F, C, Input>,
 ): Rule<F, C>
 export function fairWhenRead<
@@ -279,10 +315,31 @@ export function fairWhenRead<
   field: FairWhenReadField<F, C>,
   key: K,
   table: ReadTable<Input, Reads>,
-  options?: FairWhenReadOptions<F, C> | FairWhenReadConfig<F, C, Input>,
+  options?:
+    | FairWhenReadOptions<F, C>
+    | FairWhenReadInputTypeConfig<F, C>
+    | FairWhenReadConfig<F, C, Input>,
 ): Rule<F, C> {
   const fieldName = getReadRuleFieldName(field)
+  const inputType = (
+    options as { inputType?: ReadInputTypeValue } | undefined
+  )?.inputType ?? ReadInputType.VALUES
   const selectInput = options && 'selectInput' in options ? options.selectInput : undefined
+  const resolveInput = (
+    values: FieldValues<F>,
+    conditions: C,
+    prev?: FieldValues<F>,
+  ) => {
+    if (selectInput) {
+      return selectInput(values, conditions, prev)
+    }
+
+    if (inputType === ReadInputType.CONDITIONS) {
+      return conditions as unknown as Input
+    }
+
+    return values as unknown as Input
+  }
 
   registerReadBridge(table, {
     type: 'fairWhen',
@@ -290,22 +347,24 @@ export function fairWhenRead<
     field: fieldName,
   })
 
-  const trace = (
-    selectInput
-      ? table.trace<K, FieldValues<F>, C>(key, selectInput)
-      : table.trace<K, C>(key)
-  ) as RuleTraceAttachment<FieldValues<F>, C>
+  const trace = ((selectInput || inputType === ReadInputType.CONDITIONS)
+    ? table.trace<K, FieldValues<F>, C>(key, resolveInput)
+    : table.trace<K, C>(key)) as RuleTraceAttachment<FieldValues<F>, C>
   const mergedTrace = mergeReadTrace(trace, options?.trace)
+  const {
+    inputType: _inputType,
+    selectInput: _selectInput,
+    ...ruleOptions
+  } = (options ?? {}) as FairWhenReadOptions<F, C> & {
+    inputType?: ReadInputTypeValue
+    selectInput?: ReadRuleInputSelector<F, C, Input>
+  }
 
   const predicate = ((_value: unknown, values: FieldValues<F>, conditions: C) =>
-    table[key](
-      selectInput
-        ? selectInput(values, conditions)
-        : values as unknown as Input,
-    )) as Parameters<typeof fairWhen<F, C, unknown>>[1]
+    table[key](resolveInput(values, conditions))) as Parameters<typeof fairWhen<F, C, unknown>>[1]
 
   return fairWhen(field, predicate, {
-    ...options,
+    ...ruleOptions,
     trace: mergedTrace,
   })
 }
@@ -332,6 +391,19 @@ export function enabledWhenRead<
   field: EnabledWhenReadField<F, C>,
   key: K,
   table: ReadTable<Input, Reads>,
+  options: EnabledWhenReadInputTypeConfig<F, C>,
+): Rule<F, C>
+
+export function enabledWhenRead<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown> = Record<string, unknown>,
+  Input extends Record<string, unknown> = Record<string, unknown>,
+  Reads extends Record<string, unknown> = Record<string, unknown>,
+  K extends PredicateReadKey<Reads> = PredicateReadKey<Reads>,
+>(
+  field: EnabledWhenReadField<F, C>,
+  key: K,
+  table: ReadTable<Input, Reads>,
   options: EnabledWhenReadConfig<F, C, Input>,
 ): Rule<F, C>
 export function enabledWhenRead<
@@ -344,10 +416,31 @@ export function enabledWhenRead<
   field: EnabledWhenReadField<F, C>,
   key: K,
   table: ReadTable<Input, Reads>,
-  options?: EnabledWhenReadOptions<F, C> | EnabledWhenReadConfig<F, C, Input>,
+  options?:
+    | EnabledWhenReadOptions<F, C>
+    | EnabledWhenReadInputTypeConfig<F, C>
+    | EnabledWhenReadConfig<F, C, Input>,
 ): Rule<F, C> {
   const fieldName = getReadRuleFieldName(field)
+  const inputType = (
+    options as { inputType?: ReadInputTypeValue } | undefined
+  )?.inputType ?? ReadInputType.VALUES
   const selectInput = options && 'selectInput' in options ? options.selectInput : undefined
+  const resolveInput = (
+    values: FieldValues<F>,
+    conditions: C,
+    prev?: FieldValues<F>,
+  ) => {
+    if (selectInput) {
+      return selectInput(values, conditions, prev)
+    }
+
+    if (inputType === ReadInputType.CONDITIONS) {
+      return conditions as unknown as Input
+    }
+
+    return values as unknown as Input
+  }
 
   registerReadBridge(table, {
     type: 'enabledWhen',
@@ -355,20 +448,24 @@ export function enabledWhenRead<
     field: fieldName,
   })
 
-  const trace = (
-    selectInput
-      ? table.trace<K, FieldValues<F>, C>(key, selectInput)
-      : table.trace<K, C>(key)
-  ) as RuleTraceAttachment<FieldValues<F>, C>
+  const trace = ((selectInput || inputType === ReadInputType.CONDITIONS)
+    ? table.trace<K, FieldValues<F>, C>(key, resolveInput)
+    : table.trace<K, C>(key)) as RuleTraceAttachment<FieldValues<F>, C>
   const mergedTrace = mergeReadTrace(trace, options?.trace)
+  const {
+    inputType: _inputType,
+    selectInput: _selectInput,
+    ...ruleOptions
+  } = (options ?? {}) as EnabledWhenReadOptions<F, C> & {
+    inputType?: ReadInputTypeValue
+    selectInput?: ReadRuleInputSelector<F, C, Input>
+  }
 
-  const predicate = ((values: FieldValues<F>, _conditions: C) =>
-    selectInput
-      ? table[key](selectInput(values, _conditions))
-      : table[key](values as unknown as Input)) as Parameters<typeof enabledWhen<F, C>>[1]
+  const predicate = ((values: FieldValues<F>, conditions: C, prev?: FieldValues<F>) =>
+    table[key](resolveInput(values, conditions, prev))) as Parameters<typeof enabledWhen<F, C>>[1]
 
   return enabledWhen(field, predicate, {
-    ...options,
+    ...ruleOptions,
     trace: mergedTrace,
   })
 }
