@@ -106,6 +106,12 @@ export default defineConfig({
           ],
         },
         {
+          label: 'Extensions',
+          items: [
+            { label: 'Reads', slug: 'extensions/reads' },
+          ],
+        },
+        {
           label: 'Adapters',
           items: [
             { label: 'Signals', slug: 'adapters/signals' },
