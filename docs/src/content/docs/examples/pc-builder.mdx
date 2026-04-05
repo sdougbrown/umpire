@@ -96,30 +96,59 @@ const coachUmp = umpire({
 })
 ```
 
-The awkward part turned out not to be the second umpire itself. The awkward part was remembering milestone booleans like “the transitive cascade has happened at least once.” The demo now handles that with a tiny non-React helper:
+The awkward part turned out not to be the second umpire itself. The awkward part was remembering milestone booleans like “the transitive cascade has happened at least once,” plus tracking which coach prompt is currently active and whether it has already been shown.
+
+The demo now splits that into:
+
+- `inspectUmpre(...)` for live field and transition facts
+- `createCoachRuntime(...)` for latched facts plus prompt sequencing
+- `useCoachRuntime(...)` as a thin React adapter over that runtime
+
+The runtime stays non-React:
 
 ```ts
-const coachHistory = createHistoryFlags([
-  'sawTransitiveCascade',
-  'sawAppliedResets',
-] as const)
-
-const [coachMemory, setCoachMemory] = useState(() => coachHistory.init())
-
-const coachConditions = {
-  cpuBrand: selectedCpu?.brand,
-  hasRamSelection: Boolean(ramId),
-  sawTransitiveCascade: coachMemory.sawTransitiveCascade || hasLiveTransitiveCascade,
-  sawAppliedResets: coachMemory.sawAppliedResets,
-}
-
-// inside a transition handler
-setCoachMemory((current) => coachHistory.remember(current, {
-  sawTransitiveCascade: hasTransitiveCascade(nextFouls),
-}))
+const coachRuntime = createCoachRuntime({
+  facts: [
+    'sawTransitiveCascade',
+    'sawAppliedResets',
+  ] as const,
+  prompts: [
+    { id: 'promptSwitchCpu' },
+    { id: 'explainTransitive' },
+    { id: 'celebrateComplete' },
+  ] as const,
+})
 ```
 
-That is the extraction seam. The reusable part is not rendering. It is “remember some history across transitions, then feed live facts plus memory into another umpire.” That could live inside a package without saying anything about React components at all. A dedicated `@umpire/coach` package still only starts making sense if copy sequencing, richer event helpers, or authoring ergonomics need to become first-class too.
+And React just holds the runtime state:
+
+```ts
+const coach = useCoachRuntime(coachRuntime)
+
+const coachConditions = {
+  cpuBrand: inspection.fields.cpu.facts?.brand,
+  hasRamSelection: inspection.fields.ram.satisfied,
+  sawTransitiveCascade: coach.facts.sawTransitiveCascade || hasLiveTransitiveCascade,
+  sawAppliedResets: coach.facts.sawAppliedResets,
+}
+
+const coachPromptState = useResolvedCoachPrompts(
+  coachRuntime,
+  coach.state,
+  {
+    promptSwitchCpu: coachCheck.promptSwitchCpu.enabled,
+    explainTransitive: coachCheck.explainTransitive.enabled,
+    celebrateComplete: coachCheck.celebrateComplete.enabled,
+  },
+)
+
+// inside a transition handler
+coach.rememberFacts({
+  sawTransitiveCascade: hasTransitiveCascade(nextFouls),
+})
+```
+
+That feels like a better extraction seam than the earlier history-flags helper. The reusable part is not rendering. It is “latch facts from transitions, sequence coach prompts, and feed live facts plus remembered facts into another umpire.” React can wrap that with a hook, but prompt selection itself stays derived instead of syncing through an effect.
 
 The next prototype step is an inspection helper:
 

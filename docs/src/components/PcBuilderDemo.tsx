@@ -1,7 +1,8 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { enabledWhen, fairWhen, requires, umpire, type Snapshot } from '@umpire/core'
-import { createHistoryFlags } from '../lib/createHistoryFlags.ts'
+import { createCoachRuntime } from '../lib/createCoachRuntime.ts'
 import { inspectUmpre } from '../lib/inspectUmpre.ts'
+import { useCoachRuntime, useResolvedCoachPrompts } from '../lib/useCoachRuntime.ts'
 import '../styles/pc-builder-demo.css'
 
 type Socket = 'LGA1700' | 'AM5'
@@ -159,6 +160,8 @@ type CoachConditions = {
   sawAppliedResets: boolean
 }
 
+type CoachPromptId = keyof typeof coachFields & string
+
 const coachFields = {
   promptSwitchCpu:   {},
   explainTransitive: {},
@@ -181,6 +184,18 @@ const coachUmp = umpire<typeof coachFields, CoachConditions>({
       reason: 'Apply the suggested resets first',
     }),
   ],
+})
+
+const coachRuntime = createCoachRuntime({
+  facts: [
+    'sawTransitiveCascade',
+    'sawAppliedResets',
+  ] as const,
+  prompts: [
+    { id: 'promptSwitchCpu' },
+    { id: 'explainTransitive' },
+    { id: 'celebrateComplete' },
+  ] as const,
 })
 
 type PcValues = ReturnType<typeof pcUmp.init>
@@ -252,11 +267,6 @@ const ramById = indexById(ramKits)
 const gpuById = indexById(gpus)
 const storageById = indexById(storageOptions)
 const caseById = indexById(caseOptions)
-const coachHistory = createHistoryFlags([
-  'sawTransitiveCascade',
-  'sawAppliedResets',
-] as const)
-
 function cls(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(' ')
 }
@@ -539,7 +549,7 @@ function CoachCallout({
 
 export default function PcBuilderDemo() {
   const [values, setValues] = useState<PcValues>(() => pcUmp.init())
-  const [coachMemory, setCoachMemory] = useState(() => coachHistory.init())
+  const coach = useCoachRuntime(coachRuntime)
   const [currentStep, setCurrentStep] = useState(0)
   const [lastTransition, setLastTransition] = useState<{ before: PcSnapshot } | null>(null)
   const catalogFacts = useMemo(() => resolvePcCatalog(values), [values])
@@ -630,17 +640,27 @@ export default function PcBuilderDemo() {
   const coachConditions = useMemo<CoachConditions>(() => ({
     cpuBrand: inspection.fields.cpu.facts?.brand as CpuBrand | undefined,
     hasRamSelection: inspection.fields.ram.satisfied,
-    sawTransitiveCascade: coachMemory.sawTransitiveCascade || hasLiveTransitiveCascade,
-    sawAppliedResets: coachMemory.sawAppliedResets,
+    sawTransitiveCascade: coach.facts.sawTransitiveCascade || hasLiveTransitiveCascade,
+    sawAppliedResets: coach.facts.sawAppliedResets,
   }), [
+    coach.facts,
     inspection,
     hasLiveTransitiveCascade,
-    coachMemory,
   ])
 
   const coachCheck = useMemo<CoachCheck>(
     () => coachUmp.check(coachUmp.init(), coachConditions),
     [coachConditions],
+  )
+
+  const coachPrompts = useResolvedCoachPrompts(
+    coachRuntime,
+    coach.state,
+    {
+      celebrateComplete: coachCheck.celebrateComplete.enabled,
+      explainTransitive: coachCheck.explainTransitive.enabled,
+      promptSwitchCpu: coachCheck.promptSwitchCpu.enabled,
+    } satisfies Partial<Record<CoachPromptId, boolean>>,
   )
 
   function updateField<K extends PcField>(field: K, nextValue: PcValues[K]) {
@@ -662,9 +682,9 @@ export default function PcBuilderDemo() {
       before: { values },
     })
     setValues(nextValues)
-    setCoachMemory((current) => coachHistory.remember(current, {
+    coach.rememberFacts({
       sawTransitiveCascade: hasTransitiveCascade(nextFouls),
-    }))
+    })
   }
 
   function updateSelectField(field: PcField, nextValue: string) {
@@ -688,10 +708,10 @@ export default function PcBuilderDemo() {
       before: { values },
     })
     setValues(nextValues)
-    setCoachMemory((current) => coachHistory.remember(current, {
+    coach.rememberFacts({
       sawTransitiveCascade: hasLiveTransitiveCascade,
       sawAppliedResets: true,
-    }))
+    })
     setCurrentStep(getStepIndexForField(resetTargets[0].field as PcField))
   }
 
@@ -936,8 +956,8 @@ export default function PcBuilderDemo() {
 
   // COACH NOTE: The coach rules only decide visibility. Step placement, ordering,
   // and copy still live in the component, which is workable but manual.
-  function renderCoachCallout(step: StepDefinition, coachAvailability: CoachCheck) {
-    if (step.index === 1 && coachAvailability.explainTransitive.enabled) {
+  function renderCoachCallout(step: StepDefinition) {
+    if (step.index === 1 && coachPrompts.prompts.explainTransitive.active) {
       return (
         <CoachCallout
           title="Coach Call"
@@ -946,7 +966,7 @@ export default function PcBuilderDemo() {
       )
     }
 
-    if (step.index === 2 && coachAvailability.promptSwitchCpu.enabled) {
+    if (step.index === 2 && coachPrompts.prompts.promptSwitchCpu.active) {
       return (
         <CoachCallout
           title="Coach Call"
@@ -955,7 +975,7 @@ export default function PcBuilderDemo() {
       )
     }
 
-    if (step.index === 4 && coachAvailability.celebrateComplete.enabled) {
+    if (step.index === 4 && coachPrompts.prompts.celebrateComplete.active) {
       return (
         <CoachCallout
           title="Coach Call"
@@ -1052,7 +1072,7 @@ export default function PcBuilderDemo() {
                   </div>
                 )}
 
-                {renderCoachCallout(step, coachCheck)}
+                {renderCoachCallout(step)}
               </section>
             )
           })}
