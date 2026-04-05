@@ -1863,6 +1863,14 @@ __metadata:
   languageName: node
   linkType: soft
 
+"@umpire/reads@portal:../packages/reads::locator=umpire-docs%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@umpire/reads@portal:../packages/reads::locator=umpire-docs%40workspace%3A."
+  dependencies:
+    "@umpire/core": "workspace:^"
+  languageName: node
+  linkType: soft
+
 "@umpire/signals@portal:../packages/signals::locator=umpire-docs%40workspace%3A.":
   version: 0.0.0-use.local
   resolution: "@umpire/signals@portal:../packages/signals::locator=umpire-docs%40workspace%3A."
@@ -5768,6 +5776,7 @@ __metadata:
     "@types/react-dom": "npm:^19.2.3"
     "@umpire/core": "portal:../packages/core"
     "@umpire/react": "portal:../packages/react"
+    "@umpire/reads": "portal:../packages/reads"
     "@umpire/signals": "portal:../packages/signals"
     "@umpire/zod": "portal:../packages/zod"
     "@umpire/zustand": "portal:../packages/zustand"
