@@ -150,12 +150,45 @@ const hintFields = {
   celebrateComplete: {},
 }
 
+// --- hintReads + hintUmp ----------------------------------------------------
+//
+// The hint system is a second, independent umpire instance that drives
+// progressive disclosure of explanatory callouts. It is entirely separate from
+// pcUmp — it has its own fields, rules, and read table.
+//
+// HintInput is not the raw field values. It is a set of derived boolean markers
+// that the component accumulates over time (sawTransitiveCascade, sawAppliedResets)
+// or computes on-the-fly (hasRamSelection, cpuBrand). These markers are the
+// "conditions" for the hint umpire, passed via ReadInputType.CONDITIONS below.
+//
+// The reads here are simple boolean predicates. They could be written inline as
+// plain `enabledWhen()` predicates instead — but using reads makes the gate
+// logic named and inspectable: hintReads.inspect(input) shows exactly which
+// markers each hint depends on and what they evaluated to.
+
 const hintReads = createReads<HintInput, HintReads>({
+  // Fires once the user has a CPU *and* RAM selected. Brand-agnostic — the
+  // previous version gated on cpuBrand === 'intel', which meant AMD-first
+  // builders never saw this hint. !!cpuBrand is sufficient: any selection
+  // means there is an opposite to suggest.
   canPromptSwitchCpu: ({ input }) => input.hasRamSelection && !!input.cpuBrand,
+
+  // Fires after the user has triggered the transitive cascade at least once:
+  // CPU changed → motherboard stale → RAM stale. Tracked as a sticky marker so
+  // the hint persists even after the user resolves the cascade.
   canExplainTransitive: ({ input }) => input.sawTransitiveCascade,
+
+  // Fires only after *both* the cascade was triggered and the reset banner was
+  // acted on. This is the "completion" hint — it only makes sense to show it
+  // after the user has experienced the full demo flow.
   canCelebrateComplete: ({ input }) => input.sawTransitiveCascade && input.sawAppliedResets,
 })
 
+// enabledWhenRead wires each read to a hint field and registers the bridge so
+// hintReads.inspect() and challenge() can trace the full gate logic. The
+// `inputType: ReadInputType.CONDITIONS` tells the rule factory to pass the
+// hint umpire's *conditions* (i.e. HintInput) into the reads rather than the
+// raw field values — because that is what hintReads was designed to consume.
 const hintUmp = umpire<typeof hintFields, HintInput>({
   fields: hintFields,
   rules: [
@@ -332,7 +365,32 @@ function resolveActiveHint(check: HintCheck): HintId | null {
   return eligibleHints.at(-1) ?? null
 }
 
+// --- pcBuildReads -----------------------------------------------------------
+//
+// All derived state for the PC builder lives here. Reads compose via `read()`,
+// which is memoized per evaluation — each resolver runs at most once per call
+// to pcBuildReads.resolve() or pcBuildReads.inspect(). Field accesses on
+// `input` are tracked automatically through a Proxy, so dependency edges are
+// captured without any manual annotation.
+//
+// The ordering of declarations does NOT matter. createReads() evaluates lazily
+// and resolves dependencies on demand (with circular-cycle detection).
+//
+// Three of these reads — motherboardFair, ramFair, caseSizeFair — are wired
+// into umpire rules below via fairWhenRead(). That registration is what creates
+// the bridge edges visible in pcBuildReads.inspect() and the challenge() trace.
+// Without fairWhenRead(), the reads and the rules would be disconnected: the
+// read would still run, but umpire would have no visibility into *why* a field
+// was called fair or foul.
+
 const pcBuildReads = createReads<PcBuildInput, PcDerivedReads>({
+  // ids: raw string coercion of every field value.
+  //
+  // Field values arrive as `unknown` from umpire's loosely-typed input. This
+  // read is a single normalization point so every downstream resolver can work
+  // with plain strings instead of sprinkling `asString()` calls everywhere.
+  // `input` is a Proxy — each property access here registers a dependency edge
+  // (e.g. input.cpu → 'ids') in the inspection graph.
   ids: ({ input }) => ({
     cpu: asString(input.cpu),
     motherboard: asString(input.motherboard),
@@ -341,6 +399,14 @@ const pcBuildReads = createReads<PcBuildInput, PcDerivedReads>({
     storage: asString(input.storage),
     caseSize: asString(input.caseSize),
   }),
+
+  // selections: catalog objects resolved from the string IDs above.
+  //
+  // This is the canonical "what has the user actually selected?" read.
+  // Downstream reads call `read('selections')` instead of doing their own
+  // catalog lookups, so the lookup logic lives in exactly one place. `read()`
+  // is memoized — 'ids' and 'selections' are each computed once regardless of
+  // how many resolvers call them.
   selections: ({ read }) => {
     const ids = read('ids')
 
@@ -353,6 +419,13 @@ const pcBuildReads = createReads<PcBuildInput, PcDerivedReads>({
       caseSize: caseById[ids.caseSize],
     }
   },
+
+  // motherboardFair: is the selected motherboard socket-compatible with the CPU?
+  //
+  // Guard: returns true (fair) when no motherboard is selected yet, so umpire
+  // does not call an empty field foul for a constraint that cannot be violated.
+  // This read is wired to the 'motherboard' field via fairWhenRead() below,
+  // which is what makes the bridge — and the challenge() trace — visible.
   motherboardFair: ({ read }) => {
     const { motherboard } = read('ids')
 
@@ -368,11 +441,26 @@ const pcBuildReads = createReads<PcBuildInput, PcDerivedReads>({
       selectedMotherboard.socket === cpu.socket,
     )
   },
+
+  // activeMotherboard: the currently selected motherboard, or undefined if it
+  // is socket-mismatched (i.e. fair === false).
+  //
+  // Downstream reads (ramFair, caseSizeFair, compatibleRamKits, compatibleCases)
+  // use this instead of selections.motherboard directly. The key invariant: if
+  // the motherboard is stale, the downstream constraints collapse cleanly rather
+  // than reasoning against a board that umpire has already called foul.
   activeMotherboard: ({ read }) => (
     read('motherboardFair')
       ? read('selections').motherboard
       : undefined
   ),
+
+  // ramFair: is the selected RAM kit compatible with the active motherboard's
+  // RAM type (DDR4 vs DDR5)?
+  //
+  // Same guard pattern as motherboardFair. Depends on activeMotherboard (not
+  // raw selections.motherboard) so that a socket-mismatched board never causes
+  // this read to return a false positive.
   ramFair: ({ read }) => {
     const { ram } = read('ids')
 
@@ -389,6 +477,11 @@ const pcBuildReads = createReads<PcBuildInput, PcDerivedReads>({
       selectedRam.type === activeMotherboard.ramType,
     )
   },
+
+  // caseSizeFair: does the selected case fit the active motherboard's form factor?
+  //
+  // Same guard/activeMotherboard pattern as ramFair. This is the third leg of
+  // the transitive cascade: CPU change → motherboard stale → ram stale + case stale.
   caseSizeFair: ({ read }) => {
     const { caseSize } = read('ids')
 
@@ -405,6 +498,15 @@ const pcBuildReads = createReads<PcBuildInput, PcDerivedReads>({
       fitsFormFactor(selectedCase.fits, activeMotherboard.formFactor),
     )
   },
+
+  // compatibleMotherboards / compatibleRamKits / compatibleCases:
+  // filtered catalog lists used to populate the select dropdowns in the UI.
+  //
+  // These are pure UI-support reads — they do not feed any umpire rules. Their
+  // value is that the filtering logic lives here, named and shared, rather than
+  // duplicated across render functions or scattered into useEffect/useMemo calls.
+  // challenge() traces will show these reads when they appear in an inspect()
+  // call, even though no fairWhenRead bridge connects them to a rule.
   compatibleMotherboards: ({ read }) => {
     const { cpu } = read('selections')
 
@@ -426,24 +528,58 @@ const pcBuildReads = createReads<PcBuildInput, PcDerivedReads>({
       ? caseOptions.filter((size) => fitsFormFactor(size.fits, activeMotherboard.formFactor))
       : []
   },
+
+  // oppositeCpuSuggestion: the same-tier CPU from the other brand.
+  //
+  // Admittedly contrived — in real code this would be a one-liner in the render
+  // function. It's here to demonstrate the "hoist from render" pattern: logic
+  // that *could* live inline in JSX is instead named, centrally located, and
+  // automatically dependency-tracked. The hint copy that references this read
+  // never needs to repeat the brand-flip logic; it just calls
+  // `buildReads.oppositeCpuSuggestion`. If the catalog shape changed, there is
+  // exactly one place to update.
   oppositeCpuSuggestion: ({ read }) => {
     const cpu = read('selections').cpu
     if (!cpu) return undefined
     const oppositeBrand = cpu.brand === 'intel' ? 'amd' : 'intel'
     return cpus.find((c) => c.brand === oppositeBrand && c.tier === cpu.tier)
   },
+
+  // psuRecommendation: a display string derived from CPU + GPU tier.
+  //
+  // Another pure UI-support read. The PSU wattage estimate is not a field umpire
+  // manages — it is just a convenience label. Keeping it here means the
+  // calculation is memoized alongside everything else, and the render function
+  // stays declarative.
   psuRecommendation: ({ read }) => {
     const { cpu, gpu } = read('selections')
     return getPsuRecommendation(cpu?.tier, gpu?.tier)
   },
 })
 
+// --- pcUmp ------------------------------------------------------------------
+//
+// The umpire instance for the PC build form. Rules are declared here; the
+// predicate logic lives entirely in pcBuildReads above.
+//
+// fairWhenRead() does two things that a plain fairWhen() would not:
+//   1. It calls the named read to evaluate the fairness predicate, sharing the
+//      result with any other rule or render consumer that reads the same key.
+//   2. It registers a bridge edge on pcBuildReads so that inspect() and
+//      challenge() can trace the full dependency path — field value → read →
+//      umpire rule — rather than stopping at the rule boundary.
+//
+// The three fairWhenRead rules here cover the transitive cascade: a CPU change
+// can stale motherboard (socket), which stales RAM (DDR type), which stales
+// caseSize (form factor). Each fairness check reads from activeMotherboard,
+// which gates on motherboardFair, so the cascade collapses deterministically.
 const pcUmp = umpire<typeof pcFields, PcConditions>({
   fields: pcFields,
   rules: [
     requires('motherboard', 'cpu', {
       reason: 'Pick a CPU first',
     }),
+    // Bridge: motherboardFair read → 'motherboard' field in pcBuildReads.inspect()
     fairWhenRead('motherboard', 'motherboardFair', pcBuildReads, {
       reason: 'Selected motherboard no longer matches the CPU socket',
     }),
@@ -451,6 +587,8 @@ const pcUmp = umpire<typeof pcFields, PcConditions>({
     requires('ram', 'motherboard', {
       reason: 'Memory depends on an active motherboard selection',
     }),
+    // Bridge: ramFair read → 'ram' field. ramFair depends on activeMotherboard,
+    // so a socket mismatch cascades here without any explicit wiring.
     fairWhenRead('ram', 'ramFair', pcBuildReads, {
       reason: 'Selected memory no longer matches the motherboard RAM type',
     }),
@@ -458,12 +596,20 @@ const pcUmp = umpire<typeof pcFields, PcConditions>({
     requires('caseSize', 'motherboard', {
       reason: 'Pick a valid motherboard first to determine form factor',
     }),
+    // Bridge: caseSizeFair read → 'caseSize' field. Same cascade as ramFair.
     fairWhenRead('caseSize', 'caseSizeFair', pcBuildReads, {
       reason: 'Selected case no longer fits the motherboard form factor',
     }),
   ],
 })
 
+// --- pcCoach ----------------------------------------------------------------
+//
+// createCoach() composes pcUmp.scorecard() with pcBuildReads.inspect() into a
+// single call. The render function calls pcCoach.inspect(snapshot) to get both
+// the structural field analysis (which fields are present/satisfied/fair, which
+// are cascading vs directly foul) and the full read table (compatibility lists,
+// PSU recommendation, fairness booleans) in one pass.
 const pcCoach = createCoach({
   ump: pcUmp,
   reads: pcBuildReads,
