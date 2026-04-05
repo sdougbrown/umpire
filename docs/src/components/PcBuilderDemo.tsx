@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { requires, umpire, type Snapshot } from '@umpire/core'
+import { createReads, enabledWhenRead, fairWhenRead, ReadInputType } from '@umpire/reads'
 import { createCoach } from '../lib/createCoach.ts'
-import { createReadTable, enabledWhenRead, fairWhenRead, ReadInputType } from '../lib/createReadTable.ts'
 import '../styles/pc-builder-demo.css'
 
 type Socket = 'LGA1700' | 'AM5'
@@ -149,7 +149,7 @@ const hintFields = {
   celebrateComplete: {},
 }
 
-const hintReads = createReadTable<HintInput, HintReads>({
+const hintReads = createReads<HintInput, HintReads>({
   canPromptSwitchCpu: ({ input }) => input.hasRamSelection && input.cpuBrand === 'intel',
   canExplainTransitive: ({ input }) => input.sawTransitiveCascade,
   canCelebrateComplete: ({ input }) => input.sawTransitiveCascade && input.sawAppliedResets,
@@ -331,7 +331,7 @@ function resolveActiveHint(check: HintCheck): HintId | null {
   return eligibleHints.at(-1) ?? null
 }
 
-const pcBuildReads = createReadTable<PcBuildInput, PcDerivedReads>({
+const pcBuildReads = createReads<PcBuildInput, PcDerivedReads>({
   ids: ({ input }) => ({
     cpu: asString(input.cpu),
     motherboard: asString(input.motherboard),

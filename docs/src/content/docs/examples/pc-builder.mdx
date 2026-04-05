@@ -73,7 +73,7 @@ type HintInput = {
   sawAppliedResets: boolean
 }
 
-const hintReads = createReadTable<HintInput>({
+const hintReads = createReads<HintInput>({
   canPromptSwitchCpu: ({ input }) =>
     input.hasRamSelection && input.cpuBrand === 'intel',
   canExplainTransitive: ({ input }) =>
@@ -135,7 +135,7 @@ The only stateful part left is marker memory: remembering milestone booleans lik
 The demo now splits that into:
 
 - `createCoach(...)` for the domain-aware layer that consumes umpire plus reads
-- `createReadTable(...)` for named domain reads shared by rules, scorecard, and UI
+- `createReads(...)` for named domain reads shared by rules, scorecard, and UI
 - `fairWhenRead(...)` / `enabledWhenRead(...)` as the read-backed adapters from read table to rule
 - `scorecard(...)` inside the coach layer for live field and transition facts
 - local marker memory for milestone history

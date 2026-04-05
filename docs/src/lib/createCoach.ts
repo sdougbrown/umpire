@@ -1,5 +1,5 @@
 import { scorecard, type FieldDef, type ScorecardResult, type Snapshot, type Umpire } from '@umpire/core'
-import type { ReadTable, ReadTableInspection } from './createReadTable.ts'
+import type { ReadTable, ReadTableInspection } from '@umpire/reads'
 
 export type CoachInspection<
   F extends Record<string, FieldDef>,

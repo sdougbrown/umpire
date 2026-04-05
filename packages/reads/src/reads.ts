@@ -470,7 +470,7 @@ export function enabledWhenRead<
   })
 }
 
-export function createReadTable<
+export function createReads<
   Input extends Record<string, unknown>,
   Reads extends Record<string, unknown>,
 >(
@@ -514,7 +514,7 @@ export function createReadTable<
 
       if (stack.includes(key)) {
         const cycle = [...stack, key].map(String).join(' -> ')
-        throw new Error(`createReadTable circular dependency: ${cycle}`)
+        throw new Error(`createReads circular dependency: ${cycle}`)
       }
 
       stack.push(key)

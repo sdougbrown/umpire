@@ -1168,6 +1168,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@umpire/reads@workspace:packages/reads":
+  version: 0.0.0-use.local
+  resolution: "@umpire/reads@workspace:packages/reads"
+  dependencies:
+    "@umpire/core": "workspace:^"
+  languageName: unknown
+  linkType: soft
+
 "@umpire/signals@workspace:packages/signals":
   version: 0.0.0-use.local
   resolution: "@umpire/signals@workspace:packages/signals"
