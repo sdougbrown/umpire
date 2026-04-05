@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useDebugValue, useMemo, useRef } from 'react'
 import type {
   AvailabilityMap,
   FieldDef,
@@ -36,6 +36,16 @@ export function useUmpire<
 
   // Update prev ref after computing check and fouls
   prevRef.current = { values, conditions }
+
+  useDebugValue({ check, fouls }, ({ check, fouls }) => ({
+    enabled: Object.entries(check)
+      .filter(([, v]) => v.enabled)
+      .map(([k]) => k),
+    disabled: Object.entries(check)
+      .filter(([, v]) => !v.enabled)
+      .map(([k]) => k),
+    fouls: fouls.map((f) => f.field),
+  }))
 
   return { check, fouls }
 }
