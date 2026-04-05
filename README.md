@@ -8,6 +8,8 @@ Forms are the most common use case, but Umpire works anywhere state fits a plain
 
 [Docs](https://sdougbrown.github.io/umpire/) • [GitHub](https://github.com/sdougbrown/umpire)
 
+[![Coverage Status](https://coveralls.io/repos/github/sdougbrown/umpire/badge.svg?branch=main)](https://coveralls.io/github/sdougbrown/umpire?branch=main)
+
 ## Quick Example
 
 ```ts
