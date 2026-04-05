@@ -6,23 +6,28 @@ This file is the canonical project instruction source for the repo. `AGENTS.md` 
 
 Umpire (`@umpire/*`) is a declarative field-availability engine for any state with interdependent options — forms, game boards, config panels, permission matrices, anything that fits a plain object with fields and rules.
 
-Monorepo packages:
+Packages and apps:
 - `@umpire/core` - pure logic, zero dependencies
 - `@umpire/signals` - signal adapter via `SignalProtocol`, wraps any signal library
 - `@umpire/react` - `useUmpire` hook, thin wrapper using `useMemo` + `useRef`
 - `@umpire/zustand` - `fromStore` adapter, uses Zustand's native `subscribe(next, prev)`
+- `@umpire/zod` - Zod-backed rule helpers/integration
+- `docs/` - Astro/Starlight docs app with interactive demos; not part of the root Yarn workspaces/turbo pipeline
 
 Tooling:
-- Yarn 4 workspaces with `turbo`
+- Yarn 4 with `turbo` for workspace packages
 - TypeScript only, compiled with `tsc` (no bundler)
 - ESM-only packages
 - Jest + `ts-jest`
+- Astro/Starlight for the docs app
 
 ## Commands
 
 ```bash
 yarn install
 yarn build          # tsc via turbo
+yarn docs           # Astro dev server in /docs
+yarn docs:build     # Astro production build in /docs
 yarn test           # jest via turbo
 yarn typecheck      # tsc --noEmit via turbo
 ```
@@ -30,6 +35,7 @@ yarn typecheck      # tsc --noEmit via turbo
 ## Package Manager
 
 - Use Yarn 4 with `nodeLinker: node-modules`
+- Root workspaces are `packages/*`; `docs/` is a separate package/app
 - Never use `npm`
 
 ## Architecture
@@ -38,6 +44,8 @@ yarn typecheck      # tsc --noEmit via turbo
 - `@umpire/signals` adapts Umpire to a signal implementation through `SignalProtocol`
 - `@umpire/react` exposes the `useUmpire` hook with minimal React-specific state handling
 - `@umpire/zustand` connects a store through selectors and native previous-state subscriptions
+- `@umpire/zod` provides schema-oriented rule helpers for Zod users
+- `docs/` consumes packages via local portal dependencies and is the main place prototype flows and examples are exercised
 
 ## Key Concepts
 
@@ -60,6 +68,8 @@ yarn typecheck      # tsc --noEmit via turbo
 - ESM test mode requires `NODE_OPTIONS='--experimental-vm-modules'`
 - Tests live in `__tests__/*.test.ts` within each package
 - `yarn test` runs all package test suites from the repo root through `turbo`
+- For docs changes, `cd docs && npx astro build` is the practical end-to-end validation pass
+- Strict docs `tsc` has known unrelated noise from React/Preact coexistence; when validating docs edits, prefer a focused filtered `tsc --noEmit` check on the touched files rather than treating whole-program docs `tsc` output as gating
 
 ## Code Style
 
