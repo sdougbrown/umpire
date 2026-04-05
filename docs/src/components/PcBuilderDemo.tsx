@@ -129,32 +129,6 @@ type PcDerivedReads = {
 
 type PcConditions = Record<string, never>
 
-const pcUmp = umpire<typeof pcFields, PcConditions>({
-  fields: pcFields,
-  rules: [
-    requires('motherboard', 'cpu', {
-      reason: 'Pick a CPU first',
-    }),
-    fairWhen('motherboard', (_value, values) => pcBuildReads.motherboardFair(values), {
-      reason: 'Selected motherboard no longer matches the CPU socket',
-    }),
-
-    requires('ram', 'motherboard', {
-      reason: 'Memory depends on an active motherboard selection',
-    }),
-    fairWhen('ram', (_value, values) => pcBuildReads.ramFair(values), {
-      reason: 'Selected memory no longer matches the motherboard RAM type',
-    }),
-
-    requires('caseSize', 'motherboard', {
-      reason: 'Pick a valid motherboard first to determine form factor',
-    }),
-    fairWhen('caseSize', (_value, values) => pcBuildReads.caseSizeFair(values), {
-      reason: 'Selected case no longer fits the motherboard form factor',
-    }),
-  ],
-})
-
 type HintConditions = {
   cpuBrand?: CpuBrand
   hasRamSelection: boolean
@@ -428,6 +402,32 @@ const pcBuildReads = createReadTable<PcBuildInput, PcDerivedReads>({
     const { cpu, gpu } = read('selections')
     return getPsuRecommendation(cpu?.tier, gpu?.tier)
   },
+})
+
+const pcUmp = umpire<typeof pcFields, PcConditions>({
+  fields: pcFields,
+  rules: [
+    requires('motherboard', 'cpu', {
+      reason: 'Pick a CPU first',
+    }),
+    fairWhen('motherboard', pcBuildReads.from('motherboardFair'), {
+      reason: 'Selected motherboard no longer matches the CPU socket',
+    }),
+
+    requires('ram', 'motherboard', {
+      reason: 'Memory depends on an active motherboard selection',
+    }),
+    fairWhen('ram', pcBuildReads.from('ramFair'), {
+      reason: 'Selected memory no longer matches the motherboard RAM type',
+    }),
+
+    requires('caseSize', 'motherboard', {
+      reason: 'Pick a valid motherboard first to determine form factor',
+    }),
+    fairWhen('caseSize', pcBuildReads.from('caseSizeFair'), {
+      reason: 'Selected case no longer fits the motherboard form factor',
+    }),
+  ],
 })
 
 function describePcField(field: PcField, reads: PcDerivedReads) {

@@ -13,6 +13,10 @@ type ReadResolvers<
   [K in keyof Reads]: (context: ReadContext<Input, Reads>) => Reads[K]
 }
 
+export type PredicateReadKey<Reads extends Record<string, unknown>> = {
+  [K in keyof Reads]-?: Reads[K] extends boolean ? K : never
+}[keyof Reads] & string
+
 export type ReadTableNode<
   Input extends Record<string, unknown>,
   Reads extends Record<string, unknown>,
@@ -53,10 +57,63 @@ export type ReadTable<
   Input extends Record<string, unknown>,
   Reads extends Record<string, unknown>,
 > = {
+  from<K extends PredicateReadKey<Reads>>(
+    key: K,
+  ): (
+    value: unknown,
+    values: Input,
+    conditions?: unknown,
+  ) => Reads[K]
+  from<K extends PredicateReadKey<Reads>, Args extends unknown[]>(
+    key: K,
+    selectInput: (...args: Args) => Input,
+  ): (...args: Args) => Reads[K]
   inspect(input: Input): ReadTableInspection<Input, Reads>
   resolve(input: Input): Reads
 } & {
   [K in keyof Reads]: (input: Input) => Reads[K]
+}
+
+export function fromRead<
+  Input extends Record<string, unknown>,
+  Reads extends Record<string, unknown>,
+  K extends PredicateReadKey<Reads>,
+>(
+  table: ReadTable<Input, Reads>,
+  key: K,
+): (
+  value: unknown,
+  values: Input,
+  conditions?: unknown,
+) => Reads[K]
+export function fromRead<
+  Input extends Record<string, unknown>,
+  Reads extends Record<string, unknown>,
+  K extends PredicateReadKey<Reads>,
+  Args extends unknown[],
+>(
+  table: ReadTable<Input, Reads>,
+  key: K,
+  selectInput: (...args: Args) => Input,
+): (...args: Args) => Reads[K]
+export function fromRead<
+  Input extends Record<string, unknown>,
+  Reads extends Record<string, unknown>,
+  K extends PredicateReadKey<Reads>,
+>(
+  table: ReadTable<Input, Reads>,
+  key: K,
+  selectInput?: (...args: unknown[]) => Input,
+) {
+  if (selectInput) {
+    return (...args: unknown[]) => table[key](selectInput(...args)) as Reads[K]
+  }
+
+  return (
+    _value: unknown,
+    values: Input,
+    _conditions?: unknown,
+  ) => table[key](values) as Reads[K]
 }
 
 export function createReadTable<
@@ -124,6 +181,14 @@ export function createReadTable<
   }
 
   const table = {
+    from(key: PredicateReadKey<Reads>, selectInput?: (...args: unknown[]) => Input) {
+      if (selectInput) {
+        return fromRead(table, key, selectInput)
+      }
+
+      return fromRead(table, key)
+    },
+
     inspect(input: Input) {
       const session = createSession(input)
       const values = Object.fromEntries(
