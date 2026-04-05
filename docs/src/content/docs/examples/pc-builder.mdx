@@ -100,6 +100,7 @@ The awkward part turned out not to be the second umpire itself. The awkward part
 
 The demo now splits that into:
 
+- `createFactTable(...)` for named domain facts shared by rules, inspection, and UI
 - `inspectUmpre(...)` for live field and transition facts
 - `createCoachRuntime(...)` for latched facts plus prompt sequencing
 - `useCoachRuntime(...)` as a thin React adapter over that runtime
@@ -153,11 +154,13 @@ That feels like a better extraction seam than the earlier history-flags helper. 
 The next prototype step is an inspection helper:
 
 ```ts
+const buildFacts = pcBuildFacts.resolve(values)
+
 const inspection = inspectUmpre(pcUmp, {
   values,
 }, {
   before: lastTransition?.before,
-  facts: catalogFacts,
+  facts: buildFacts,
   fieldFacts,
   fields: pcFields,
 })
@@ -173,7 +176,7 @@ The lookup tables still live in the UI:
 - RAM kits are filtered by the selected motherboard RAM type.
 - Cases are filtered by the selected motherboard form factor.
 
-That filtering logic is still not what Umpire is responsible for. The component keeps the product catalog in userland, and `fairWhen()` uses that userland knowledge to judge whether a current selection is still coherent. Umpire owns the rule result and the cascade. The app still owns the catalog.
+That filtering logic is still not what Umpire is responsible for. The component keeps the product catalog in userland, but it now declares named build facts once and reuses them from `fairWhen()`, inspection, and render. Umpire owns the rule result and the cascade. The app still owns the catalog.
 
 ## What Umpire Doesn't Do
 

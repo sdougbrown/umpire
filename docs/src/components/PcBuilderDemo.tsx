@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { enabledWhen, fairWhen, requires, umpire, type Snapshot } from '@umpire/core'
 import { createCoachRuntime } from '../lib/createCoachRuntime.ts'
+import { createFactTable } from '../lib/createFactTable.ts'
 import { inspectUmpre } from '../lib/inspectUmpre.ts'
 import { useCoachRuntime, useResolvedCoachPrompts } from '../lib/useCoachRuntime.ts'
 import '../styles/pc-builder-demo.css'
@@ -87,6 +88,13 @@ const caseOptions = [
   fits: FormFactor[]
 }>
 
+type Cpu = (typeof cpus)[number]
+type Motherboard = (typeof motherboards)[number]
+type RamKit = (typeof ramKits)[number]
+type Gpu = (typeof gpus)[number]
+type StorageOption = (typeof storageOptions)[number]
+type CaseOption = (typeof caseOptions)[number]
+
 const pcFields = {
   cpu:         { required: true, isEmpty: (value: unknown) => !value },
   motherboard: { required: true, isEmpty: (value: unknown) => !value },
@@ -97,6 +105,27 @@ const pcFields = {
 }
 
 type PcField = keyof typeof pcFields
+type PcBuildInput = Partial<Record<PcField, unknown>>
+type PcSelections = {
+  cpu?: Cpu
+  motherboard?: Motherboard
+  ram?: RamKit
+  gpu?: Gpu
+  storage?: StorageOption
+  caseSize?: CaseOption
+}
+type PcDerivedFacts = {
+  ids: Record<PcField, string>
+  selections: PcSelections
+  motherboardFair: boolean
+  activeMotherboard?: Motherboard
+  ramFair: boolean
+  caseSizeFair: boolean
+  compatibleMotherboards: readonly Motherboard[]
+  compatibleRamKits: readonly RamKit[]
+  compatibleCases: readonly CaseOption[]
+  psuRecommendation: string
+}
 
 type PcConditions = Record<string, never>
 
@@ -106,48 +135,21 @@ const pcUmp = umpire<typeof pcFields, PcConditions>({
     requires('motherboard', 'cpu', {
       reason: 'Pick a CPU first',
     }),
-    fairWhen('motherboard', (value, values) => {
-      const selectedCpu = cpuById[asString(values.cpu)]
-      const selectedMotherboard = motherboardById[asString(value)]
-
-      return Boolean(
-        selectedCpu &&
-        selectedMotherboard &&
-        selectedMotherboard.socket === selectedCpu.socket,
-      )
-    }, {
+    fairWhen('motherboard', (_value, values) => pcBuildFacts.motherboardFair(values), {
       reason: 'Selected motherboard no longer matches the CPU socket',
     }),
 
     requires('ram', 'motherboard', {
       reason: 'Memory depends on an active motherboard selection',
     }),
-    fairWhen('ram', (value, values) => {
-      const selectedMotherboard = motherboardById[asString(values.motherboard)]
-      const selectedRam = ramById[asString(value)]
-
-      return Boolean(
-        selectedMotherboard &&
-        selectedRam &&
-        selectedRam.type === selectedMotherboard.ramType,
-      )
-    }, {
+    fairWhen('ram', (_value, values) => pcBuildFacts.ramFair(values), {
       reason: 'Selected memory no longer matches the motherboard RAM type',
     }),
 
     requires('caseSize', 'motherboard', {
       reason: 'Pick a valid motherboard first to determine form factor',
     }),
-    fairWhen('caseSize', (value, values) => {
-      const selectedMotherboard = motherboardById[asString(values.motherboard)]
-      const selectedCase = caseById[asString(value)]
-
-      return Boolean(
-        selectedMotherboard &&
-        selectedCase &&
-        fitsFormFactor(selectedCase.fits, selectedMotherboard.formFactor),
-      )
-    }, {
+    fairWhen('caseSize', (_value, values) => pcBuildFacts.caseSizeFair(values), {
       reason: 'Selected case no longer fits the motherboard form factor',
     }),
   ],
@@ -323,131 +325,158 @@ function getPsuRecommendation(cpuTier?: CpuTier, gpuTier?: GpuTier) {
   return '650W'
 }
 
-function resolvePcCatalog(values: PcValues) {
-  const cpuId = asString(values.cpu)
-  const motherboardId = asString(values.motherboard)
-  const ramId = asString(values.ram)
-  const gpuId = asString(values.gpu)
-  const storageId = asString(values.storage)
-  const caseId = asString(values.caseSize)
-
-  const selectedCpu = cpuById[cpuId]
-  const selectedMotherboard = motherboardById[motherboardId]
-  const selectedRam = ramById[ramId]
-  const selectedGpu = gpuById[gpuId]
-  const selectedStorage = storageById[storageId]
-  const selectedCase = caseById[caseId]
-
-  const motherboardCompatible = !motherboardId || Boolean(
-    selectedCpu &&
-    selectedMotherboard &&
-    selectedMotherboard.socket === selectedCpu.socket,
-  )
-
-  const activeMotherboard = motherboardCompatible ? selectedMotherboard : undefined
-
-  const ramCompatible = !ramId || Boolean(
-    activeMotherboard &&
-    selectedRam &&
-    selectedRam.type === activeMotherboard.ramType,
-  )
-
-  const caseCompatible = !caseId || Boolean(
-    activeMotherboard &&
-    selectedCase &&
-    fitsFormFactor(selectedCase.fits, activeMotherboard.formFactor),
-  )
-
-  const compatibleMotherboards = selectedCpu
-    ? motherboards.filter((board) => board.socket === selectedCpu.socket)
-    : []
-
-  const compatibleRamKits = activeMotherboard
-    ? ramKits.filter((kit) => kit.type === activeMotherboard.ramType)
-    : []
-
-  const compatibleCases = activeMotherboard
-    ? caseOptions.filter((size) => fitsFormFactor(size.fits, activeMotherboard.formFactor))
-    : []
-
-  return {
-    cpuId,
-    motherboardId,
-    ramId,
-    gpuId,
-    storageId,
-    caseId,
-    selectedCpu,
-    selectedMotherboard,
-    selectedRam,
-    selectedGpu,
-    selectedStorage,
-    selectedCase,
-    motherboardCompatible,
-    activeMotherboard,
-    ramCompatible,
-    caseCompatible,
-    compatibleMotherboards,
-    compatibleRamKits,
-    compatibleCases,
-    psuRecommendation: getPsuRecommendation(selectedCpu?.tier, selectedGpu?.tier),
-  }
-}
-
 function hasTransitiveCascade(fouls: Array<{ field: string }>) {
   const foulFields = new Set(fouls.map((foul) => foul.field))
   return foulFields.has('motherboard') && foulFields.has('ram')
 }
 
-type PcCatalogFacts = ReturnType<typeof resolvePcCatalog>
+const pcBuildFacts = createFactTable<PcBuildInput, PcDerivedFacts>({
+  ids: ({ input }) => ({
+    cpu: asString(input.cpu),
+    motherboard: asString(input.motherboard),
+    ram: asString(input.ram),
+    gpu: asString(input.gpu),
+    storage: asString(input.storage),
+    caseSize: asString(input.caseSize),
+  }),
+  selections: ({ select }) => {
+    const ids = select('ids')
 
-function describePcField(field: PcField, facts: PcCatalogFacts) {
-  if (field === 'cpu' && facts.selectedCpu) {
     return {
-      brand: facts.selectedCpu.brand,
-      socket: facts.selectedCpu.socket,
-      tier: facts.selectedCpu.tier,
+      cpu: cpuById[ids.cpu],
+      motherboard: motherboardById[ids.motherboard],
+      ram: ramById[ids.ram],
+      gpu: gpuById[ids.gpu],
+      storage: storageById[ids.storage],
+      caseSize: caseById[ids.caseSize],
+    }
+  },
+  motherboardFair: ({ select }) => {
+    const { motherboard } = select('ids')
+
+    if (!motherboard) {
+      return true
+    }
+
+    const { cpu, motherboard: selectedMotherboard } = select('selections')
+
+    return Boolean(
+      cpu &&
+      selectedMotherboard &&
+      selectedMotherboard.socket === cpu.socket,
+    )
+  },
+  activeMotherboard: ({ select }) => (
+    select('motherboardFair')
+      ? select('selections').motherboard
+      : undefined
+  ),
+  ramFair: ({ select }) => {
+    const { ram } = select('ids')
+
+    if (!ram) {
+      return true
+    }
+
+    const activeMotherboard = select('activeMotherboard')
+    const { ram: selectedRam } = select('selections')
+
+    return Boolean(
+      activeMotherboard &&
+      selectedRam &&
+      selectedRam.type === activeMotherboard.ramType,
+    )
+  },
+  caseSizeFair: ({ select }) => {
+    const { caseSize } = select('ids')
+
+    if (!caseSize) {
+      return true
+    }
+
+    const activeMotherboard = select('activeMotherboard')
+    const { caseSize: selectedCase } = select('selections')
+
+    return Boolean(
+      activeMotherboard &&
+      selectedCase &&
+      fitsFormFactor(selectedCase.fits, activeMotherboard.formFactor),
+    )
+  },
+  compatibleMotherboards: ({ select }) => {
+    const { cpu } = select('selections')
+
+    return cpu
+      ? motherboards.filter((board) => board.socket === cpu.socket)
+      : []
+  },
+  compatibleRamKits: ({ select }) => {
+    const activeMotherboard = select('activeMotherboard')
+
+    return activeMotherboard
+      ? ramKits.filter((kit) => kit.type === activeMotherboard.ramType)
+      : []
+  },
+  compatibleCases: ({ select }) => {
+    const activeMotherboard = select('activeMotherboard')
+
+    return activeMotherboard
+      ? caseOptions.filter((size) => fitsFormFactor(size.fits, activeMotherboard.formFactor))
+      : []
+  },
+  psuRecommendation: ({ select }) => {
+    const { cpu, gpu } = select('selections')
+    return getPsuRecommendation(cpu?.tier, gpu?.tier)
+  },
+})
+
+function describePcField(field: PcField, facts: PcDerivedFacts) {
+  if (field === 'cpu' && facts.selections.cpu) {
+    return {
+      brand: facts.selections.cpu.brand,
+      socket: facts.selections.cpu.socket,
+      tier: facts.selections.cpu.tier,
     }
   }
 
   if (field === 'motherboard') {
     return {
-      compatible: facts.motherboardCompatible,
+      compatible: facts.motherboardFair,
       choiceCount: facts.compatibleMotherboards.length,
-      selectedSocket: facts.selectedMotherboard?.socket,
-      selectedFormFactor: facts.selectedMotherboard?.formFactor,
-      selectedRamType: facts.selectedMotherboard?.ramType,
-      expectedSocket: facts.selectedCpu?.socket,
+      selectedSocket: facts.selections.motherboard?.socket,
+      selectedFormFactor: facts.selections.motherboard?.formFactor,
+      selectedRamType: facts.selections.motherboard?.ramType,
+      expectedSocket: facts.selections.cpu?.socket,
     }
   }
 
   if (field === 'ram') {
     return {
-      compatible: facts.ramCompatible,
+      compatible: facts.ramFair,
       choiceCount: facts.compatibleRamKits.length,
-      selectedType: facts.selectedRam?.type,
+      selectedType: facts.selections.ram?.type,
       expectedType: facts.activeMotherboard?.ramType,
     }
   }
 
   if (field === 'caseSize') {
     return {
-      compatible: facts.caseCompatible,
+      compatible: facts.caseSizeFair,
       choiceCount: facts.compatibleCases.length,
-      selectedFits: facts.selectedCase?.fits,
+      selectedFits: facts.selections.caseSize?.fits,
       expectedFormFactor: facts.activeMotherboard?.formFactor,
     }
   }
 
-  if (field === 'gpu' && facts.selectedGpu) {
+  if (field === 'gpu' && facts.selections.gpu) {
     return {
-      tier: facts.selectedGpu.tier,
+      tier: facts.selections.gpu.tier,
     }
   }
 
-  if (field === 'storage' && facts.selectedStorage) {
+  if (field === 'storage' && facts.selections.storage) {
     return {
-      label: facts.selectedStorage.label,
+      label: facts.selections.storage.label,
     }
   }
 
@@ -552,37 +581,41 @@ export default function PcBuilderDemo() {
   const coach = useCoachRuntime(coachRuntime)
   const [currentStep, setCurrentStep] = useState(0)
   const [lastTransition, setLastTransition] = useState<{ before: PcSnapshot } | null>(null)
-  const catalogFacts = useMemo(() => resolvePcCatalog(values), [values])
+  const buildFacts = useMemo(() => pcBuildFacts.resolve(values), [values])
   const {
-    cpuId,
-    motherboardId,
-    ramId,
-    gpuId,
-    storageId,
-    caseId,
-    selectedCpu,
-    selectedMotherboard,
-    selectedRam,
-    selectedGpu,
-    selectedStorage,
-    selectedCase,
-    motherboardCompatible,
+    ids: {
+      cpu: cpuId,
+      motherboard: motherboardId,
+      ram: ramId,
+      gpu: gpuId,
+      storage: storageId,
+      caseSize: caseId,
+    },
+    selections: {
+      cpu: selectedCpu,
+      motherboard: selectedMotherboard,
+      ram: selectedRam,
+      gpu: selectedGpu,
+      storage: selectedStorage,
+      caseSize: selectedCase,
+    },
+    motherboardFair,
     activeMotherboard,
-    ramCompatible,
-    caseCompatible,
+    ramFair,
+    caseSizeFair,
     compatibleMotherboards,
     compatibleRamKits,
     compatibleCases,
     psuRecommendation,
-  } = catalogFacts
+  } = buildFacts
   const fieldFacts = useMemo(() => ({
-    cpu: describePcField('cpu', catalogFacts),
-    motherboard: describePcField('motherboard', catalogFacts),
-    ram: describePcField('ram', catalogFacts),
-    gpu: describePcField('gpu', catalogFacts),
-    storage: describePcField('storage', catalogFacts),
-    caseSize: describePcField('caseSize', catalogFacts),
-  }), [catalogFacts])
+    cpu: describePcField('cpu', buildFacts),
+    motherboard: describePcField('motherboard', buildFacts),
+    ram: describePcField('ram', buildFacts),
+    gpu: describePcField('gpu', buildFacts),
+    storage: describePcField('storage', buildFacts),
+    caseSize: describePcField('caseSize', buildFacts),
+  }), [buildFacts])
 
   const motherboardChoices = buildChoices(
     compatibleMotherboards.map((board) => ({
@@ -591,7 +624,7 @@ export default function PcBuilderDemo() {
     })),
     motherboardId,
     selectedMotherboard?.label,
-    Boolean(motherboardId && !motherboardCompatible),
+    Boolean(motherboardId && !motherboardFair),
   )
 
   const ramChoices = buildChoices(
@@ -601,7 +634,7 @@ export default function PcBuilderDemo() {
     })),
     ramId,
     selectedRam?.label,
-    Boolean(ramId && !ramCompatible),
+    Boolean(ramId && !ramFair),
   )
 
   const caseChoices = buildChoices(
@@ -611,20 +644,20 @@ export default function PcBuilderDemo() {
     })),
     caseId,
     selectedCase?.label,
-    Boolean(caseId && !caseCompatible),
+    Boolean(caseId && !caseSizeFair),
   )
 
   const inspection = useMemo(() => inspectUmpre(pcUmp, {
     values,
   }, {
     before: lastTransition?.before,
-    facts: catalogFacts,
+    facts: buildFacts,
     fieldFacts,
     fields: pcFields,
   }), [
     values,
     lastTransition,
-    catalogFacts,
+    buildFacts,
     fieldFacts,
   ])
   const { check } = inspection
@@ -770,13 +803,13 @@ export default function PcBuilderDemo() {
 
     if (step.index === 1) {
       return selectedMotherboard
-        ? `${selectedMotherboard.label}${motherboardId && !motherboardCompatible ? ' (stale)' : ''}`
+        ? `${selectedMotherboard.label}${motherboardId && !motherboardFair ? ' (stale)' : ''}`
         : 'No motherboard selected yet'
     }
 
     if (step.index === 2) {
       return selectedRam
-        ? `${selectedRam.label}${ramId && !ramCompatible ? ' (stale)' : ''}`
+        ? `${selectedRam.label}${ramId && !ramFair ? ' (stale)' : ''}`
         : 'No memory selected yet'
     }
 
@@ -787,7 +820,7 @@ export default function PcBuilderDemo() {
     }
 
     return selectedCase
-      ? `${selectedCase.label}${caseId && !caseCompatible ? ' (stale)' : ''}`
+      ? `${selectedCase.label}${caseId && !caseSizeFair ? ' (stale)' : ''}`
       : 'No case selected yet'
   }
 
