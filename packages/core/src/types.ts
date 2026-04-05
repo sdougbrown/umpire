@@ -40,22 +40,61 @@ export type Foul<F extends Record<string, FieldDef>> = {
   suggestedValue: unknown
 }
 
+export type RuleTraceDependency = {
+  kind: string
+  id: string
+}
+
+export type RuleTraceReason = {
+  code: string
+  data?: Record<string, unknown>
+}
+
+export type RuleTraceAttachmentResult = {
+  value?: unknown
+  reason?: string | null
+  reasons?: RuleTraceReason[]
+  dependencies?: RuleTraceDependency[]
+  [key: string]: unknown
+}
+
+export type RuleTraceAttachment<
+  Values extends Record<string, unknown> = Record<string, unknown>,
+  C extends Record<string, unknown> = Record<string, unknown>,
+> = {
+  kind: string
+  id: string
+  inspect(
+    values: Values,
+    conditions: C,
+    prev?: Values,
+  ): RuleTraceAttachmentResult | null | undefined
+}
+
+export type ChallengeTraceAttachment = RuleTraceAttachmentResult & {
+  kind: string
+  id: string
+}
+
+export type ChallengeDirectReason = {
+  rule: string
+  reason: string | null
+  passed: boolean
+  trace?: ChallengeTraceAttachment[]
+  [key: string]: unknown
+}
+
 export type ChallengeTrace = {
   field: string
   enabled: boolean
   fair: boolean
-  directReasons: Array<{
-    rule: string
-    reason: string | null
-    passed: boolean
-    [key: string]: unknown
-  }>
+  directReasons: ChallengeDirectReason[]
   transitiveDeps: Array<{
     field: string
     enabled: boolean
     fair: boolean
     reason: string | null
-    causedBy: Array<{ rule: string; [key: string]: unknown }>
+    causedBy: Array<Omit<ChallengeDirectReason, 'passed'>>
   }>
   oneOfResolution: {
     group: string

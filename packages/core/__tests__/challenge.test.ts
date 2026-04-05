@@ -1,4 +1,4 @@
-import { anyOf, check, disables, enabledWhen, oneOf, requires } from '../src/rules.js'
+import { anyOf, check, disables, enabledWhen, fairWhen, oneOf, requires } from '../src/rules.js'
 import { umpire } from '../src/umpire.js'
 
 type TestFields = {
@@ -317,6 +317,60 @@ describe('challenge', () => {
         sourceValue: ['2026-04-01'],
         sourceSatisfied: true,
         passed: false,
+      }),
+    ])
+  })
+
+  test('includes custom trace attachments from rule options', () => {
+    const ump = umpire<{
+      cpu: {}
+      motherboard: {}
+    }>({
+      fields: {
+        cpu: {},
+        motherboard: {},
+      },
+      rules: [
+        fairWhen('motherboard', (value, values) => value === values.cpu, {
+          reason: 'Selected motherboard no longer matches the CPU socket',
+          trace: {
+            kind: 'read',
+            id: 'motherboardFair',
+            inspect(values) {
+              return {
+                value: values.motherboard === values.cpu,
+                dependencies: [
+                  { kind: 'field', id: 'cpu' },
+                  { kind: 'field', id: 'motherboard' },
+                ],
+              }
+            },
+          },
+        }),
+      ],
+    })
+
+    const challenge = ump.challenge('motherboard', {
+      cpu: 'amd-r7',
+      motherboard: 'intel-z790',
+    })
+
+    expect(challenge.directReasons).toEqual([
+      expect.objectContaining({
+        rule: 'fair',
+        passed: false,
+        reason: 'Selected motherboard no longer matches the CPU socket',
+        trace: [
+          {
+            kind: 'read',
+            id: 'motherboardFair',
+            value: false,
+            dependencies: [
+              { kind: 'field', id: 'cpu' },
+              { kind: 'field', id: 'motherboard' },
+            ],
+          },
+        ],
       }),
     ])
   })

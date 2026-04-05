@@ -1,6 +1,12 @@
 import { getFieldBuilderName } from './field.js'
 import { isSatisfied } from './satisfaction.js'
-import type { FieldDef, FieldValues, Rule, RuleEvaluation } from './types.js'
+import type {
+  FieldDef,
+  FieldValues,
+  Rule,
+  RuleEvaluation,
+  RuleTraceAttachment,
+} from './types.js'
 
 type RuleResult = RuleEvaluation
 
@@ -21,6 +27,7 @@ type RuleOptions<
   C extends Record<string, unknown>,
 > = {
   reason?: ReasonOption<F, C>
+  trace?: RuleTraceAttachment<FieldValues<F>, C> | RuleTraceAttachment<FieldValues<F>, C>[]
 }
 
 type FieldSelector<
@@ -111,6 +118,11 @@ export type InternalRuleMetadata<
       rules: Rule<F, C>[]
       constraint: 'enabled' | 'fair'
     }
+
+type InternalRuleMetadataWithOptions<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+> = Exclude<InternalRuleMetadata<F, C>, { kind: 'anyOf' }>
 
 type InternalRuleCarrier<
   F extends Record<string, FieldDef>,
@@ -216,6 +228,19 @@ export function getInternalRuleMetadata<
   return (rule as InternalRuleCarrier<F, C>)._umpire
 }
 
+export function getInternalRuleOptions<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(
+  metadata: InternalRuleMetadata<F, C> | undefined,
+): InternalRuleMetadataWithOptions<F, C>['options'] | undefined {
+  if (!metadata || !('options' in metadata)) {
+    return undefined
+  }
+
+  return metadata.options
+}
+
 export function getGraphSourceInfo<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
@@ -302,11 +327,11 @@ function isSourceActive<F extends Record<string, FieldDef>, C extends Record<str
   return source(values, conditions)
 }
 
-function isReasonOptions<
+function isRuleOptions<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
 >(value: unknown): value is RuleOptions<F, C> {
-  return typeof value === 'object' && value !== null && 'reason' in value
+  return typeof value === 'object' && value !== null && ('reason' in value || 'trace' in value)
 }
 
 function uniqueFields<F extends Record<string, FieldDef>>(
@@ -599,7 +624,7 @@ export function requires<
 ): Rule<F, C> {
   const target = getFieldNameOrThrow(field)
   const maybeOptions = deps[deps.length - 1]
-  const options = isReasonOptions<F, C>(maybeOptions) ? maybeOptions : undefined
+  const options = isRuleOptions<F, C>(maybeOptions) ? maybeOptions : undefined
   const dependencies = (options ? deps.slice(0, -1) : deps) as Array<Source<F, C>>
 
   if (dependencies.length === 0) {

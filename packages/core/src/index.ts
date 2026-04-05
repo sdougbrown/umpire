@@ -8,7 +8,13 @@ export type {
   Snapshot,
   Foul,
   ChallengeTrace,
+  ChallengeDirectReason,
+  ChallengeTraceAttachment,
   Rule,
+  RuleTraceAttachment,
+  RuleTraceAttachmentResult,
+  RuleTraceDependency,
+  RuleTraceReason,
   Umpire,
 } from './types.js'
 export type { FieldBuilder, FieldInput, FieldRef, NormalizeField, NormalizeFields } from './field.js'

@@ -1,9 +1,11 @@
+import type { RuleTraceAttachment } from '@umpire/core'
+
 type ReadContext<
   Input extends Record<string, unknown>,
   Reads extends Record<string, unknown>,
 > = {
   input: Input
-  read<K extends keyof Reads>(key: K): Reads[K]
+  read<K extends keyof Reads & string>(key: K): Reads[K]
 }
 
 type ReadResolvers<
@@ -70,6 +72,9 @@ export type ReadTable<
   ): (...args: Args) => Reads[K]
   inspect(input: Input): ReadTableInspection<Input, Reads>
   resolve(input: Input): Reads
+  trace<K extends keyof Reads & string, C extends Record<string, unknown> = Record<string, unknown>>(
+    key: K,
+  ): RuleTraceAttachment<Input, C>
 } & {
   [K in keyof Reads]: (input: Input) => Reads[K]
 }
@@ -122,15 +127,15 @@ export function createReadTable<
 >(
   resolvers: ReadResolvers<Input, Reads>,
 ): ReadTable<Input, Reads> {
-  const keys = Object.keys(resolvers) as Array<keyof Reads>
+  const keys = Object.keys(resolvers) as Array<keyof Reads & string>
 
   function createSession(input: Input) {
-    const cache = new Map<keyof Reads, Reads[keyof Reads]>()
-    const stack: Array<keyof Reads> = []
-    const readDependencies = new Map<keyof Reads, Set<keyof Reads>>(
-      keys.map((key) => [key, new Set<keyof Reads>()]),
+    const cache = new Map<keyof Reads & string, Reads[keyof Reads & string]>()
+    const stack: Array<keyof Reads & string> = []
+    const readDependencies = new Map<keyof Reads & string, Set<keyof Reads & string>>(
+      keys.map((key) => [key, new Set<keyof Reads & string>()]),
     )
-    const fieldDependencies = new Map<keyof Reads, Set<keyof Input & string>>(
+    const fieldDependencies = new Map<keyof Reads & string, Set<keyof Input & string>>(
       keys.map((key) => [key, new Set<keyof Input & string>()]),
     )
 
@@ -146,7 +151,7 @@ export function createReadTable<
       },
     })
 
-    function read<K extends keyof Reads>(key: K): Reads[K] {
+    function read<K extends keyof Reads & string>(key: K): Reads[K] {
       const current = stack.at(-1)
 
       if (current && current !== key) {
@@ -170,75 +175,109 @@ export function createReadTable<
     }
 
     return {
-      getReadDependencies(key: keyof Reads) {
+      getReadDependencies(key: keyof Reads & string) {
         return [...(readDependencies.get(key) ?? [])]
       },
-      getFieldDependencies(key: keyof Reads) {
+      getFieldDependencies(key: keyof Reads & string) {
         return [...(fieldDependencies.get(key) ?? [])]
       },
       read,
     }
   }
 
-  const table = {
-    from(key: PredicateReadKey<Reads>, selectInput?: (...args: unknown[]) => Input) {
-      if (selectInput) {
-        return fromRead(table, key, selectInput)
-      }
+  function inspectInput(input: Input): ReadTableInspection<Input, Reads> {
+    const session = createSession(input)
+    const values = Object.fromEntries(
+      keys.map((key) => [key, session.read(key)]),
+    ) as Reads
 
-      return fromRead(table, key)
-    },
-
-    inspect(input: Input) {
-      const session = createSession(input)
-      const values = Object.fromEntries(
-        keys.map((key) => [key, session.read(key)]),
-      ) as Reads
-
-      const nodes = Object.fromEntries(
-        keys.map((key) => [
-          key,
-          {
-            id: key,
-            value: values[key],
-            dependsOnReads: session.getReadDependencies(key),
-            dependsOnFields: session.getFieldDependencies(key),
-          },
-        ]),
-      ) as ReadTableInspection<Input, Reads>['nodes']
-
-      return {
-        values,
-        nodes,
-        graph: {
-          nodes: [...keys],
-          edges: keys.flatMap((key) => ([
-            ...session.getReadDependencies(key).map((from) => ({
-              from,
-              to: key,
-              type: 'read' as const,
-            })),
-            ...session.getFieldDependencies(key).map((from) => ({
-              from,
-              to: key,
-              type: 'field' as const,
-            })),
-          ])),
+    const nodes = Object.fromEntries(
+      keys.map((key) => [
+        key,
+        {
+          id: key,
+          value: values[key],
+          dependsOnReads: session.getReadDependencies(key),
+          dependsOnFields: session.getFieldDependencies(key),
         },
-      }
-    },
+      ]),
+    ) as ReadTableInspection<Input, Reads>['nodes']
 
-    resolve(input: Input) {
-      const session = createSession(input)
+    return {
+      values,
+      nodes,
+      graph: {
+        nodes: [...keys],
+        edges: keys.flatMap((key) => ([
+          ...session.getReadDependencies(key).map((from) => ({
+            from,
+            to: key,
+            type: 'read' as const,
+          })),
+          ...session.getFieldDependencies(key).map((from) => ({
+            from,
+            to: key,
+            type: 'field' as const,
+          })),
+        ])),
+      },
+    }
+  }
 
-      return Object.fromEntries(
-        keys.map((key) => [key, session.read(key)]),
-      ) as Reads
-    },
+  function resolveInput(input: Input): Reads {
+    return inspectInput(input).values
+  }
+
+  function resolveRead<K extends keyof Reads>(key: K, input: Input): Reads[K] {
+    return resolveInput(input)[key]
+  }
+
+  function buildPredicate<K extends PredicateReadKey<Reads>>(
+    key: K,
+    selectInput?: (...args: unknown[]) => Input,
+  ) {
+    if (selectInput) {
+      return (...args: unknown[]) => resolveRead(key, selectInput(...args))
+    }
+
+    return (
+      _value: unknown,
+      values: Input,
+      _conditions?: unknown,
+    ) => resolveRead(key, values)
+  }
+
+  function buildTrace<
+    K extends keyof Reads & string,
+    C extends Record<string, unknown> = Record<string, unknown>,
+  >(key: K): RuleTraceAttachment<Input, C> {
+    return {
+      kind: 'read',
+      id: key,
+      inspect(values: Input) {
+        const inspected = inspectInput(values)
+        const node = inspected.nodes[key]
+
+        return {
+          value: node.value,
+          dependencies: [
+            ...node.dependsOnFields.map((id) => ({ kind: 'field', id })),
+            ...node.dependsOnReads.map((id) => ({ kind: 'read', id })),
+          ],
+        }
+      },
+    }
+  }
+
+  const table = {
+    from: buildPredicate,
+    inspect: inspectInput,
+    resolve: resolveInput,
+    trace: buildTrace,
   } as ReadTable<Input, Reads>
 
   for (const key of keys) {
-    table[key] = ((input: Input) => createSession(input).read(key)) as ReadTable<Input, Reads>[typeof key]
+    table[key] = ((input: Input) => resolveRead(key, input)) as ReadTable<Input, Reads>[typeof key]
   }
 
   return table

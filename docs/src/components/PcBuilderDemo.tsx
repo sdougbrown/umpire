@@ -412,6 +412,7 @@ const pcUmp = umpire<typeof pcFields, PcConditions>({
     }),
     fairWhen('motherboard', pcBuildReads.from('motherboardFair'), {
       reason: 'Selected motherboard no longer matches the CPU socket',
+      trace: pcBuildReads.trace('motherboardFair'),
     }),
 
     requires('ram', 'motherboard', {
@@ -419,6 +420,7 @@ const pcUmp = umpire<typeof pcFields, PcConditions>({
     }),
     fairWhen('ram', pcBuildReads.from('ramFair'), {
       reason: 'Selected memory no longer matches the motherboard RAM type',
+      trace: pcBuildReads.trace('ramFair'),
     }),
 
     requires('caseSize', 'motherboard', {
@@ -426,6 +428,7 @@ const pcUmp = umpire<typeof pcFields, PcConditions>({
     }),
     fairWhen('caseSize', pcBuildReads.from('caseSizeFair'), {
       reason: 'Selected case no longer fits the motherboard form factor',
+      trace: pcBuildReads.trace('caseSizeFair'),
     }),
   ],
 })

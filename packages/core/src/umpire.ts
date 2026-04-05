@@ -12,6 +12,8 @@ import {
   fairWhen,
   getGraphSourceInfo,
   getInternalRuleMetadata,
+  getInternalRuleOptions,
+  type InternalRuleMetadata,
   getSourceField,
   requires,
   resolveOneOfState,
@@ -19,18 +21,82 @@ import {
 import { isSatisfied } from './satisfaction.js'
 import type {
   AvailabilityMap,
+  ChallengeDirectReason,
   ChallengeTrace,
+  ChallengeTraceAttachment,
   FieldDef,
   FieldValues,
   Foul,
   InputValues,
   Rule,
   RuleEvaluation,
+  RuleTraceAttachment,
   Umpire,
 } from './types.js'
 
 function createEmptyConditions<C extends Record<string, unknown>>(conditions: C | undefined): C {
   return (conditions ?? ({} as C)) as C
+}
+
+function getRuleTraceAttachments<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(
+  metadata: InternalRuleMetadata<F, C> | undefined,
+): RuleTraceAttachment<FieldValues<F>, C>[] {
+  const trace = getInternalRuleOptions(metadata)?.trace
+
+  if (!trace) {
+    return []
+  }
+
+  return Array.isArray(trace) ? trace : [trace]
+}
+
+function inspectRuleTraceAttachments<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(
+  attachments: RuleTraceAttachment<FieldValues<F>, C>[],
+  values: FieldValues<F>,
+  conditions: C,
+  prev: FieldValues<F> | undefined,
+): ChallengeTraceAttachment[] | undefined {
+  const trace = attachments.flatMap((attachment) => {
+    const result = attachment.inspect(values, conditions, prev)
+
+    if (!result) {
+      return []
+    }
+
+    return [{
+      kind: attachment.kind,
+      id: attachment.id,
+      ...result,
+    }]
+  })
+
+  return trace.length > 0 ? trace : undefined
+}
+
+function withRuleTrace<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(
+  entry: ChallengeDirectReason,
+  metadata: InternalRuleMetadata<F, C> | undefined,
+  values: FieldValues<F>,
+  conditions: C,
+  prev: FieldValues<F> | undefined,
+): ChallengeDirectReason {
+  const trace = inspectRuleTraceAttachments(
+    getRuleTraceAttachments(metadata),
+    values,
+    conditions,
+    prev,
+  )
+
+  return trace ? { ...entry, trace } : entry
 }
 
 function normalizeConfig<
@@ -128,14 +194,14 @@ function describeRuleForField<
   if (metadata?.kind === 'enabledWhen') {
     const source = getSourceField(metadata.predicate)
 
-    return {
+    return withRuleTrace({
       rule: 'enabledWhen',
       passed: evaluation.enabled,
       reason: evaluation.reason,
       predicate: metadata.predicate.toString(),
       source,
       sourceValue: source ? values[source] : undefined,
-    }
+    }, metadata, values, conditions, prev)
   }
 
   if (metadata?.kind === 'disables') {
@@ -146,24 +212,24 @@ function describeRuleForField<
         : metadata.source(values, conditions)
     const source = sourceField ?? metadata.source.toString()
 
-    return {
+    return withRuleTrace({
       rule: 'disables',
       passed: evaluation.enabled,
       reason: evaluation.reason,
       source,
       sourceValue: sourceField ? values[sourceField] : sourceSatisfied,
       sourceSatisfied,
-    }
+    }, metadata, values, conditions, prev)
   }
 
   if (metadata?.kind === 'fairWhen') {
-    return {
+    return withRuleTrace({
       rule: 'fair',
       passed: evaluation.fair !== false,
       reason: evaluation.reason,
       predicate: metadata.predicate.toString(),
       value: values[field],
-    }
+    }, metadata, values, conditions, prev)
   }
 
   if (metadata?.kind === 'requires') {
@@ -186,7 +252,7 @@ function describeRuleForField<
       }
     })
 
-    return {
+    return withRuleTrace({
       rule: 'requires',
       passed: evaluation.enabled,
       reason: evaluation.reason,
@@ -196,7 +262,7 @@ function describeRuleForField<
       dependencyEnabled: dependencies[0]?.dependencyEnabled,
       dependencyFair: dependencies[0]?.dependencyFair,
       dependencies,
-    }
+    }, metadata, values, conditions, prev)
   }
 
   if (metadata?.kind === 'oneOf') {
@@ -212,14 +278,14 @@ function describeRuleForField<
     const thisBranch =
       Object.entries(metadata.branches).find(([, branchFields]) => branchFields.includes(field))?.[0] ?? null
 
-    return {
+    return withRuleTrace({
       rule: 'oneOf',
       passed: evaluation.enabled,
       reason: evaluation.reason,
       group: metadata.groupName,
       activeBranch: resolution.activeBranch,
       thisBranch,
-    }
+    }, metadata, values, conditions, prev)
   }
 
   if (metadata?.kind === 'anyOf') {
@@ -244,11 +310,11 @@ function describeRuleForField<
     }
   }
 
-  return {
+  return withRuleTrace({
     rule: rule.type,
     passed: evaluation.enabled,
     reason: evaluation.reason,
-  }
+  }, metadata, values, conditions, prev)
 }
 
 function collectFailedDependenciesForRule<

@@ -1,4 +1,4 @@
-import type { FieldDef, InputValues } from './types.js'
+import type { FieldDef, InputValues, RuleTraceAttachment } from './types.js'
 
 const FIELD_BUILDER = Symbol('umpire.fieldBuilder')
 const FIELD_STATE = Symbol('umpire.fieldState')
@@ -13,6 +13,7 @@ type RuleOptions<
   C extends Record<string, unknown>,
 > = {
   reason?: ReasonOption<F, C>
+  trace?: RuleTraceAttachment<InputValues<F>, C> | RuleTraceAttachment<InputValues<F>, C>[]
 }
 
 type Predicate<

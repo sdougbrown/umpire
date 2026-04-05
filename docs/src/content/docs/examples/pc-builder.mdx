@@ -121,6 +121,7 @@ Those same reads can also feed straight back into the form umpire with baked-in 
 ```ts
 fairWhen('motherboard', pcBuildReads.from('motherboardFair'), {
   reason: 'Selected motherboard no longer matches the CPU socket',
+  trace: pcBuildReads.trace('motherboardFair'),
 })
 ```
 
