@@ -58,7 +58,9 @@ See [Selection](/umpire/concepts/selection/) for the full breakdown of patterns.
 
 - `@umpire/zustand` is a zero-shim re-export because Zustand already satisfies `(next, prev)`.
 - `@umpire/redux` tracks previous state internally and delegates here.
+- `@umpire/pinia` snapshots previous `$state` and delegates here.
 - `@umpire/tanstack-store` snapshots previous `.state` and delegates here.
+- `@umpire/vuex` snapshots previous `state` and delegates here.
 
 ## Signal-Based Stores
 

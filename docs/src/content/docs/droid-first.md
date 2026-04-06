@@ -62,8 +62,10 @@ These are the exact mistakes that are easy to make and hard to debug. The per-pa
 | `@umpire/store` | `.claude/rules/umpire-store.md` | Strict `fromStore()` contract, `select()` as the aggregation point, no loose subscribe signatures |
 | `@umpire/react` | `.claude/rules/umpire-react.md` | `useUmpire` hook, no `useEffect`, snapshot tracking is internal |
 | `@umpire/redux` | `.claude/rules/umpire-redux.md` | `fromReduxStore()`, internal `prevState` tracking, same `UmpireStore` surface |
+| `@umpire/pinia` | `.claude/rules/umpire-pinia.md` | `fromPiniaStore()`, shallow `$state` snapshots, same `select()` pattern |
 | `@umpire/signals` | `.claude/rules/umpire-signals.md` | `reactiveUmp()`, no spread on proxy, `effect()` required for fouls |
 | `@umpire/tanstack-store` | `.claude/rules/umpire-tanstack-store.md` | `fromTanStackStore()`, previous `.state` snapshots, same `select()` pattern |
+| `@umpire/vuex` | `.claude/rules/umpire-vuex.md` | `fromVuexStore()`, previous state snapshots, same `select()` pattern |
 | `@umpire/zustand` | `.claude/rules/umpire-zustand.md` | `fromStore()`, native `subscribe(next, prev)`, no manual prev tracking |
 
 ## For contributors

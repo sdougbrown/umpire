@@ -1,0 +1,43 @@
+{
+  "name": "@umpire/vuex",
+  "version": "0.1.0-alpha.8",
+  "description": "Vuex adapter for @umpire/core built on @umpire/store",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "typecheck": "tsc --noEmit"
+  },
+  "files": [
+    "dist",
+    ".claude"
+  ],
+  "dependencies": {
+    "@umpire/core": "workspace:^",
+    "@umpire/store": "workspace:^"
+  },
+  "peerDependencies": {
+    "vuex": "^4.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sdougbrown/umpire.git",
+    "directory": "packages/vuex"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "vue": "^3.5.32",
+    "vuex": "^4.1.0"
+  }
+}

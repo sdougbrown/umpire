@@ -125,7 +125,9 @@ export default defineConfig({
           items: [
             { label: 'Store', slug: 'adapters/store' },
             { label: 'Redux', slug: 'adapters/redux' },
+            { label: 'Pinia', slug: 'adapters/pinia' },
             { label: 'TanStack Store', slug: 'adapters/tanstack-store' },
+            { label: 'Vuex', slug: 'adapters/vuex' },
             { label: 'Signals', slug: 'adapters/signals' },
             { label: 'React', slug: 'adapters/react' },
             { label: 'Zustand', slug: 'adapters/zustand' },

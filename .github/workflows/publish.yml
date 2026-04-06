@@ -47,7 +47,9 @@ jobs:
       signals_changed: ${{ steps.versions.outputs.signals_changed }}
       react_changed: ${{ steps.versions.outputs.react_changed }}
       redux_changed: ${{ steps.versions.outputs.redux_changed }}
+      pinia_changed: ${{ steps.versions.outputs.pinia_changed }}
       tanstack_store_changed: ${{ steps.versions.outputs.tanstack_store_changed }}
+      vuex_changed: ${{ steps.versions.outputs.vuex_changed }}
       zustand_changed: ${{ steps.versions.outputs.zustand_changed }}
       zod_changed: ${{ steps.versions.outputs.zod_changed }}
     steps:
@@ -71,7 +73,7 @@ jobs:
 
           const before = process.env.BEFORE_SHA;
           const isZeroSha = !before || /^0+$/.test(before);
-          const packages = ['core', 'store', 'signals', 'react', 'redux', 'tanstack-store', 'zustand', 'zod'];
+          const packages = ['core', 'store', 'signals', 'react', 'redux', 'pinia', 'tanstack-store', 'vuex', 'zustand', 'zod'];
 
           const readCurrentVersion = (pkg) => {
             const packageJson = path.join('packages', pkg, 'package.json');
@@ -101,12 +103,13 @@ jobs:
             const current = readCurrentVersion(pkg);
             const previous = readPreviousVersion(pkg);
             const changed = previous === null || current !== previous;
+            const outputKey = pkg.replace(/-/g, '_');
 
             if (changed) {
               anyChanged = true;
             }
 
-            console.log(`${pkg}_changed=${changed}`);
+            console.log(`${outputKey}_changed=${changed}`);
           }
 
           console.log(`any_changed=${anyChanged}`);
@@ -187,9 +190,29 @@ jobs:
           yarn pack -o package.tgz
           npm publish package.tgz --provenance --access public --tag "$TAG"
 
+      - name: Publish @umpire/pinia
+        if: needs.detect-version-changes.outputs.pinia_changed == 'true'
+        working-directory: packages/pinia
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="latest"
+          if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
+          yarn pack -o package.tgz
+          npm publish package.tgz --provenance --access public --tag "$TAG"
+
       - name: Publish @umpire/tanstack-store
         if: needs.detect-version-changes.outputs.tanstack_store_changed == 'true'
         working-directory: packages/tanstack-store
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="latest"
+          if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
+          yarn pack -o package.tgz
+          npm publish package.tgz --provenance --access public --tag "$TAG"
+
+      - name: Publish @umpire/vuex
+        if: needs.detect-version-changes.outputs.vuex_changed == 'true'
+        working-directory: packages/vuex
         run: |
           VERSION=$(node -p "require('./package.json').version")
           TAG="latest"

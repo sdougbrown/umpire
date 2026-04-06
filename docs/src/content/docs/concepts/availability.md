@@ -153,7 +153,7 @@ The adapter packages layer reactivity on top:
 - `@umpire/signals` — signal-backed availability with fine-grained proxy tracking
 - `@umpire/store` — strict store adapter foundation for `getState()` + `subscribe((next, prev) => ...)`
 - `@umpire/zustand` — zero-shim entry point over `@umpire/store`
-- `@umpire/redux` and `@umpire/tanstack-store` — thin shims that normalize their subscription APIs into the same contract
+- `@umpire/redux`, `@umpire/pinia`, `@umpire/tanstack-store`, and `@umpire/vuex` — thin shims that normalize their subscription APIs into the same contract
 
 ## Five Principles
 

@@ -1,0 +1,122 @@
+---
+title: '@umpire/vuex'
+description: Vuex 4 integration for Umpire — transition-aware foul detection for Vue 3 stores.
+---
+
+`@umpire/vuex` is the Vuex 4 integration for Umpire. It bridges Vuex's `subscribe()` API into the shared `@umpire/store` adapter so you get the same availability map and foul detection as any other Umpire integration.
+
+## Install
+
+```bash
+yarn add @umpire/core @umpire/vuex vuex
+```
+
+## `fromVuexStore()`
+
+```ts
+function fromVuexStore<
+  S,
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown> = Record<string, unknown>,
+>(
+  ump: Umpire<F, C>,
+  store: {
+    state: S
+    subscribe(listener: (mutation: unknown, state: S) => void): () => void
+  },
+  options: {
+    select: (state: S) => InputValues<F>
+    conditions?: (state: S) => C
+  },
+): UmpireStore<F>
+```
+
+## Mapping Your Store with `select()`
+
+`select` maps your Vuex state to the flat `{ [fieldName]: value }` shape Umpire expects. If your store uses modules, the full state tree is available — reach into any module you need:
+
+```ts
+fromVuexStore(ump, store, {
+  select: (state) => ({
+    email:       state.profile.email,
+    teamSize:    state.team.size,
+  }),
+  conditions: (state) => ({
+    plan: state.billing.plan,
+  }),
+})
+```
+
+See [Selection](/umpire/concepts/selection/) for the full breakdown of patterns.
+
+## Why Vuex Needs a Shim
+
+Vuex's `subscribe((mutation, state) => void)` fires after every committed mutation and passes the new state, but not the previous one. Umpire uses the previous snapshot to detect transitions — which fields just became disabled, which values to recommend clearing. This adapter saves a reference to state before each mutation fires and supplies it as the previous state.
+
+Note: `subscribe()` fires on mutations only. If your app dispatches actions that commit mutations, those mutations will still trigger the subscriber — but direct action dispatches without a corresponding mutation will not. In practice, all state changes in a well-structured Vuex app go through mutations, so this is rarely an issue.
+
+## Example
+
+```ts
+import { createStore } from 'vuex'
+import { enabledWhen, requires, umpire } from '@umpire/core'
+import { fromVuexStore } from '@umpire/vuex'
+
+const store = createStore({
+  state: {
+    email: '',
+    shippingAddress: '',
+    billingAddress: '',
+    sameAsShipping: false,
+  },
+  mutations: {
+    patch(state, payload) {
+      Object.assign(state, payload)
+    },
+  },
+})
+
+const checkoutUmp = umpire({
+  fields: {
+    email:           { required: true, isEmpty: (v) => !v },
+    shippingAddress: { required: true, isEmpty: (v) => !v },
+    billingAddress:  {},
+    sameAsShipping:  {},
+  },
+  rules: [
+    enabledWhen('billingAddress', (v) => !v.sameAsShipping, {
+      reason: 'billing address copied from shipping',
+    }),
+    requires('billingAddress', (v) => !v.sameAsShipping),
+  ],
+})
+
+const umpStore = fromVuexStore(checkoutUmp, store, {
+  select: (state) => ({
+    email:           state.email,
+    shippingAddress: state.shippingAddress,
+    billingAddress:  state.billingAddress,
+    sameAsShipping:  state.sameAsShipping || undefined,
+  }),
+})
+
+umpStore.subscribe((availability) => {
+  console.log(availability.billingAddress.enabled)
+  console.log(umpStore.fouls)
+})
+
+// Toggle sameAsShipping — billingAddress becomes disabled
+store.commit('patch', { sameAsShipping: true })
+
+umpStore.destroy()
+```
+
+## Cleanup
+
+Call `destroy()` when the component unmounts so the adapter unsubscribes from the Vuex store. In a Vue component, call it in `onUnmounted`:
+
+```ts
+import { onUnmounted } from 'vue'
+
+onUnmounted(() => umpStore.destroy())
+```

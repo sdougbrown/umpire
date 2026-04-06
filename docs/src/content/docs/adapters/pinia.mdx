@@ -1,0 +1,120 @@
+---
+title: '@umpire/pinia'
+description: Pinia integration for Umpire — transition-aware foul detection for Vue 3 stores.
+---
+
+`@umpire/pinia` is the Pinia integration for Umpire. It bridges Pinia's `$subscribe()` API into the shared `@umpire/store` adapter so you get the same availability map and foul detection as any other Umpire integration.
+
+## Install
+
+```bash
+yarn add @umpire/core @umpire/pinia pinia
+```
+
+## `fromPiniaStore()`
+
+```ts
+function fromPiniaStore<
+  S,
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown> = Record<string, unknown>,
+>(
+  ump: Umpire<F, C>,
+  store: {
+    $state: S
+    $subscribe(listener: (mutation: unknown, state: S) => void): () => void
+  },
+  options: {
+    select: (state: S) => InputValues<F>
+    conditions?: (state: S) => C
+  },
+): UmpireStore<F>
+```
+
+## Mapping Your Store with `select()`
+
+`select` maps your Pinia state to the flat `{ [fieldName]: value }` shape Umpire expects. If your fields are spread across multiple stores or nested inside sub-objects, this is where you pull them together.
+
+```ts
+fromPiniaStore(ump, store, {
+  select: (state) => ({
+    email:       state.profile.email,
+    displayName: state.profile.displayName,
+  }),
+  conditions: (state) => ({
+    plan: state.billing.plan,
+  }),
+})
+```
+
+See [Selection](/umpire/concepts/selection/) for the full breakdown of patterns.
+
+## Why Pinia Needs a Shim
+
+Pinia's `$subscribe((mutation, state) => void)` passes the new state but not the previous one. Umpire uses the previous snapshot to detect transitions — which fields just became disabled, which values to recommend clearing. This adapter keeps a snapshot of `$state` before each update and supplies it as the previous state.
+
+The snapshot is a shallow copy. Pinia's `$state` is a Vue reactive proxy, so without copying, both `prev` and `next` would point at the same live object.
+
+## Example
+
+```ts
+import { defineStore } from 'pinia'
+import { enabledWhen, requires, umpire } from '@umpire/core'
+import { fromPiniaStore } from '@umpire/pinia'
+
+const useCheckoutStore = defineStore('checkout', {
+  state: () => ({
+    email: '',
+    shippingAddress: '',
+    billingAddress: '',
+    sameAsShipping: false,
+  }),
+})
+
+const checkoutUmp = umpire({
+  fields: {
+    email:           { required: true, isEmpty: (v) => !v },
+    shippingAddress: { required: true, isEmpty: (v) => !v },
+    billingAddress:  {},
+    sameAsShipping:  {},
+  },
+  rules: [
+    enabledWhen('billingAddress', (v) => !v.sameAsShipping, {
+      reason: 'billing address copied from shipping',
+    }),
+    requires('billingAddress', (v) => !v.sameAsShipping),
+  ],
+})
+
+// In a Vue component setup():
+const store = useCheckoutStore()
+
+const umpStore = fromPiniaStore(checkoutUmp, store, {
+  select: (state) => ({
+    email:           state.email,
+    shippingAddress: state.shippingAddress,
+    billingAddress:  state.billingAddress,
+    sameAsShipping:  state.sameAsShipping || undefined,
+  }),
+})
+
+umpStore.subscribe((availability) => {
+  console.log(availability.billingAddress.enabled)
+  console.log(umpStore.fouls)
+})
+
+// Toggle sameAsShipping — billingAddress becomes disabled
+store.$patch({ sameAsShipping: true })
+
+umpStore.destroy()
+```
+
+## Cleanup
+
+Call `destroy()` when the component unmounts so the adapter unsubscribes from the Pinia store. In a Vue component, call it in `onUnmounted`:
+
+```ts
+import { onUnmounted } from 'vue'
+
+onUnmounted(() => umpStore.destroy())
+```

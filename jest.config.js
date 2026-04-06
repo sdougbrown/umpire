@@ -105,8 +105,46 @@ export default {
       collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts'],
     },
     {
+      displayName: 'pinia',
+      rootDir: 'packages/pinia',
+      watchman: false,
+      extensionsToTreatAsEsm: ['.ts'],
+      moduleNameMapper: workspaceModuleNameMapper,
+      transform: {
+        '^.+\\.ts$': [
+          'ts-jest',
+          {
+            useESM: true,
+            tsconfig: '<rootDir>/tsconfig.json',
+          },
+        ],
+      },
+      testEnvironment: 'node',
+      testMatch: ['<rootDir>/__tests__/**/*.test.ts'],
+      collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts'],
+    },
+    {
       displayName: 'tanstack-store',
       rootDir: 'packages/tanstack-store',
+      watchman: false,
+      extensionsToTreatAsEsm: ['.ts'],
+      moduleNameMapper: workspaceModuleNameMapper,
+      transform: {
+        '^.+\\.ts$': [
+          'ts-jest',
+          {
+            useESM: true,
+            tsconfig: '<rootDir>/tsconfig.json',
+          },
+        ],
+      },
+      testEnvironment: 'node',
+      testMatch: ['<rootDir>/__tests__/**/*.test.ts'],
+      collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts'],
+    },
+    {
+      displayName: 'vuex',
+      rootDir: 'packages/vuex',
       watchman: false,
       extensionsToTreatAsEsm: ['.ts'],
       moduleNameMapper: workspaceModuleNameMapper,

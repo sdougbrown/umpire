@@ -56,6 +56,6 @@ const umpStore = fromStore(accountUmp, store, {
 ## For Other Store Libraries
 
 - `@umpire/zustand` re-exports `fromStore()` directly because Zustand already supplies `(next, prev)`.
-- `@umpire/redux` and `@umpire/tanstack-store` normalize their subscription APIs, then delegate here.
+- `@umpire/redux`, `@umpire/pinia`, `@umpire/tanstack-store`, and `@umpire/vuex` normalize their subscription APIs, then delegate here.
 
 Signal-based stores like Jotai, Valtio, MobX, and Preact signals are not covered by this package. Those fit `@umpire/signals` more naturally and need a separate bridge story.
