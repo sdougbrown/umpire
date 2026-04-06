@@ -5,9 +5,9 @@ description: Zustand's zero-shim entry point for the generic @umpire/store adapt
 
 import ZustandAdapterDemo from '../../../components/ZustandAdapterDemo.tsx'
 
-`@umpire/zustand` keeps the ecosystem-specific import path for Zustand users, but the underlying implementation now lives in [`@umpire/store`](/umpire/adapters/store/). Zustand already satisfies the strict `(next, prev)` contract, so this package is a zero-shim re-export.
+`@umpire/zustand` is the Zustand integration for Umpire. Zustand passes both current and previous state to subscribers out of the box, which means transition-aware foul detection just works — no extra bookkeeping required.
 
-The demo below is still a print-dialog simulator built with pure DOM helpers, a vanilla Zustand store, and `fromStore()`.
+The demo below is a print-dialog simulator built with a vanilla Zustand store and `fromStore()`.
 
 <div class="zustand-demo umpire-demo">
   <ZustandAdapterDemo client:load />
@@ -53,14 +53,9 @@ interface UmpireStore<F extends Record<string, FieldDef>> {
 
 ## Why Zustand Fits Well
 
-Zustand's `subscribe()` already passes both `next` and `prev` state. That gives the adapter:
+Zustand's `subscribe()` passes both current and previous state to every listener. Umpire uses the previous snapshot to detect transitions — which fields just became stale, which values should be cleared. Most stores require a shim to provide this; Zustand doesn't.
 
-- previous values for `oneOf()` resolution
-- previous and next snapshots for `play()`
-
-No extra effect system is needed.
-
-If you want the generic contract, docs for shim packages, or the split-state `select()` pattern, start with [`@umpire/store`](/umpire/adapters/store/).
+For the split-state `select()` pattern or docs on other store adapters, see [`@umpire/store`](/umpire/adapters/store/).
 
 ## Example
 

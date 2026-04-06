@@ -3,7 +3,7 @@ title: '@umpire/tanstack-store'
 description: TanStack Store adapter that snapshots previous state for @umpire/store.
 ---
 
-`@umpire/tanstack-store` is a thin shim over `@umpire/store`. TanStack Store subscriptions notify on change, but they do not hand previous state to the listener, so this adapter snapshots the last `.state` value before delegating to the shared store implementation.
+`@umpire/tanstack-store` is the TanStack Store integration for Umpire. TanStack Store notifies subscribers on change but doesn't carry previous state, so this adapter tracks it on your behalf. Everything else — `select()`, `conditions`, the `UmpireStore` surface — works the same as `@umpire/zustand`.
 
 ## Install
 
@@ -64,4 +64,4 @@ const umpStore = fromTanStackStore(ump, store, {
 
 - `select()` is still the aggregation point for cross-slice state.
 - The returned surface matches `@umpire/store`.
-- Zustand users should prefer `@umpire/zustand`, which re-exports the generic adapter directly.
+- Zustand users should use `@umpire/zustand` instead.

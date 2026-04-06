@@ -3,7 +3,7 @@ title: '@umpire/redux'
 description: Redux adapter that normalizes subscribe() into the @umpire/store contract.
 ---
 
-`@umpire/redux` is a thin shim over `@umpire/store`. Redux subscriptions do not provide previous state, so the adapter snapshots `prevState` internally before delegating to the shared `fromStore()` implementation.
+`@umpire/redux` is the Redux integration for Umpire. Redux's subscribe callback doesn't carry previous state, so this adapter tracks it on your behalf. Everything else — `select()`, `conditions`, the `UmpireStore` surface — works the same as `@umpire/zustand`.
 
 ## Install
 
@@ -67,4 +67,4 @@ const umpStore = fromReduxStore(ump, store, {
 
 - `select()` still solves split state. Pull from as many reducer slices as you need.
 - The returned `UmpireStore` surface is the same as `@umpire/store`.
-- If your store already provides `(next, prev)`, use `@umpire/store` or `@umpire/zustand` directly instead.
+- If your store already passes previous state to subscribers, use `@umpire/zustand` or `@umpire/store` directly instead.
