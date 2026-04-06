@@ -1853,6 +1853,20 @@ __metadata:
   languageName: node
   linkType: soft
 
+"@umpire/devtools@portal:../packages/devtools::locator=umpire-docs%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@umpire/devtools@portal:../packages/devtools::locator=umpire-docs%40workspace%3A."
+  dependencies:
+    "@umpire/core": "workspace:^"
+    "@umpire/reads": "workspace:^"
+  peerDependencies:
+    preact: ">=10"
+  peerDependenciesMeta:
+    preact:
+      optional: true
+  languageName: node
+  linkType: soft
+
 "@umpire/react@portal:../packages/react::locator=umpire-docs%40workspace%3A.":
   version: 0.0.0-use.local
   resolution: "@umpire/react@portal:../packages/react::locator=umpire-docs%40workspace%3A."
@@ -5775,6 +5789,7 @@ __metadata:
     "@types/react": "npm:^19.2.14"
     "@types/react-dom": "npm:^19.2.3"
     "@umpire/core": "portal:../packages/core"
+    "@umpire/devtools": "portal:../packages/devtools"
     "@umpire/react": "portal:../packages/react"
     "@umpire/reads": "portal:../packages/reads"
     "@umpire/signals": "portal:../packages/signals"

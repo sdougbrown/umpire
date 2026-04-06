@@ -71,12 +71,9 @@ export function getRuleTone(rule: string) {
 export function tabStyle(active: boolean): JSX.CSSProperties {
   return {
     appearance: 'none',
-    background: active ? theme.accent : theme.surfaceMuted,
-    border: `1px solid ${active ? theme.accent : theme.border}`,
-    borderRadius: active ? '12px 0 0 12px' : 10,
-    clipPath: active
-      ? 'polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%)'
-      : undefined,
+    background: active ? theme.accent : 'transparent',
+    border: 'none',
+    borderRadius: 6,
     color: active ? theme.bg : theme.fgMuted,
     cursor: 'pointer',
     fontFamily,
@@ -84,9 +81,9 @@ export function tabStyle(active: boolean): JSX.CSSProperties {
     fontWeight: 700,
     letterSpacing: '0.08em',
     lineHeight: 1,
-    padding: '10px 16px 10px 12px',
+    padding: '6px 10px',
     textTransform: 'uppercase',
-    transition: 'background 140ms ease, color 140ms ease, border-color 140ms ease',
+    transition: 'background 140ms ease, color 140ms ease',
   }
 }
 

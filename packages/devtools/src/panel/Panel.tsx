@@ -20,9 +20,12 @@ type Props = {
 function useRegistryEntries() {
   const [entries, setEntries] = useState(() => snapshot())
 
-  useEffect(() => subscribe(() => {
+  useEffect(() => {
+    // Re-sync on mount: registry may have changed between initial render and
+    // this effect firing (e.g. React Strict Mode cleanup, or island hydration order).
     setEntries(snapshot())
-  }), [])
+    return subscribe(() => setEntries(snapshot()))
+  }, [])
 
   return entries
 }
@@ -176,10 +179,10 @@ export function Panel({ options }: Props) {
             fontFamily,
             gridTemplateRows: 'auto auto auto minmax(0, 1fr)',
             height: 'min(480px, calc(100vh - 96px))',
-            maxWidth: 'min(360px, calc(100vw - 32px))',
+            maxWidth: 'min(520px, calc(100vw - 32px))',
             overflow: 'hidden',
             pointerEvents: 'auto',
-            width: 'min(360px, calc(100vw - 32px))',
+            width: 'min(520px, calc(100vw - 32px))',
           }}
         >
           <div

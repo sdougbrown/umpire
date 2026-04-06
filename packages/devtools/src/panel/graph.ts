@@ -31,7 +31,7 @@ export type GraphLayout = {
   width: number
 }
 
-const nodeWidth = 108
+const nodeWidth = 148
 const nodeHeight = 34
 const columnGap = 56
 const rowGap = 18

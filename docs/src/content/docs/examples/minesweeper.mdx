@@ -3,10 +3,12 @@ title: Minesweeper
 description: A playable minefield — 64 fields, 192 rules, zero forms.
 ---
 
+import DevtoolsPanel from '../../../components/DevtoolsPanel.tsx'
 import MinesweeperDemo from '../../../components/MinesweeperDemo.tsx'
 
 Not a form. Not a signup flow. This is a minefield — 64 cells modeled as Umpire fields, game state as conditions, and reasons as machine-readable enums the UI switches on. Same engine, different domain.
 
+<DevtoolsPanel defaultTab="graph" client:only="react" />
 <MinesweeperDemo client:load />
 
 ## What this demonstrates

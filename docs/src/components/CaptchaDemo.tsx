@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { umpire, enabledWhen, check } from '@umpire/core'
+import { register } from '@umpire/devtools/slim'
 
 // --- Umpire setup ---
 
@@ -49,6 +50,9 @@ export default function CaptchaDemo() {
 
   const values = { email, password, submit: undefined }
   const conditions: LoginConditions = { captchaToken: captchaSolved ? 'cf-turnstile-demo' : null }
+  // Devtools-only: this powers the optional inspector in the docs site and is
+  // not required for the actual Umpire setup.
+  register('captcha', loginUmp, values, conditions)
   const availability = loginUmp.check(values, conditions)
 
   const submitAv = availability.submit

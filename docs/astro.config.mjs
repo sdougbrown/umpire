@@ -10,6 +10,9 @@ export default defineConfig({
     define: {
       'process.env.UMPIRE_INTERNAL': JSON.stringify('true'),
     },
+    optimizeDeps: {
+      exclude: ['@umpire/devtools'],
+    },
     server: {
       watch: {
         // Force polling — native FSEvents may not be propagating changes

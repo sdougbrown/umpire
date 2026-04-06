@@ -33,8 +33,10 @@ export function GraphTab({ onSelectField, scorecard, selectedField }: Props) {
 
       <div style={{ overflow: 'auto' }}>
         <svg
-          viewBox={`0 0 ${layout.width} ${layout.height}`}
-          style={{ display: 'block', minHeight: 220, minWidth: '100%', width: Math.max(layout.width, 320) }}
+          viewBox={`0 0 ${layout.width * 1.5} ${layout.height * 1.5}`}
+          width={layout.width}
+          height={layout.height}
+          style={{ display: 'block' }}
         >
           <defs>
             {edgeTypes.map((type) => {
@@ -104,12 +106,13 @@ export function GraphTab({ onSelectField, scorecard, selectedField }: Props) {
                   y={node.y}
                 />
                 <text
+                  dominantBaseline="central"
                   fill={theme.fg}
                   fontFamily="JetBrains Mono, monospace"
-                  fontSize="11"
-                  textAnchor="middle"
-                  x={node.x + node.width / 2}
-                  y={node.y + node.height / 2 + 4}
+                  fontSize="8"
+                  textAnchor="start"
+                  x={node.x + 6}
+                  y={node.y + (node.height / 2) + 4}
                 >
                   {node.field}
                 </text>

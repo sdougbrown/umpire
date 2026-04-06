@@ -3,8 +3,10 @@ title: PC Builder Wizard
 description: Five steps. One CPU change. Three cascading fouls.
 ---
 
+import DevtoolsPanel from '../../../components/DevtoolsPanel.tsx'
 import PcBuilderDemo from '../../../components/PcBuilderDemo.tsx'
 
+<DevtoolsPanel defaultTab="reads" client:only="react" />
 <PcBuilderDemo client:load />
 
 A wizard-style PC configurator where the interesting part is not the filtering. The interesting part is what happens after the user has already made a coherent build, then jumps back to Step 1 and changes the platform underneath it.

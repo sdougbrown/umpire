@@ -3,9 +3,11 @@ title: Signup Form + Zod Validation
 description: Availability and validation composed — Umpire decides which fields are in play, Zod validates the ones that are.
 ---
 
+import DevtoolsPanel from '../../../components/DevtoolsPanel.tsx'
 import SignupDemo from '../../../components/SignupDemo.tsx'
 
 <div class="umpire-demo">
+  <DevtoolsPanel defaultTab="matrix" client:only="react" />
   <SignupDemo client:load />
 </div>
 

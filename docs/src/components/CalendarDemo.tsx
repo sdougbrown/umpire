@@ -2,7 +2,9 @@ import { useState } from 'react'
 import type { DateRange, Month } from '@neo-reckoning/core'
 import { useCalendar } from '@neo-reckoning/react'
 import { disables, enabledWhen, oneOf, requires, umpire } from '@umpire/core'
-import { useUmpire } from '@umpire/react'
+// Swap back to `@umpire/react` and remove the leading devtools id from the
+// hook call below if you want the plain React adapter again.
+import { useUmpireWithDevtools as useUmpire } from '@umpire/devtools/react'
 import '../styles/calendar-demo.css'
 
 const calendarFields = {
@@ -326,7 +328,7 @@ export default function CalendarDemo() {
   const [exceptDateDraft, setExceptDateDraft] = useState('2026-04-12')
   const [everyDateDraft, setEveryDateDraft] = useState('')
 
-  const { check, fouls } = useUmpire(calendarUmp, values)
+  const { check, fouls } = useUmpire('calendar', calendarUmp, values)
 
   function updateField<K extends CalendarField>(field: K, nextValue: CalendarValues[K]) {
     setValues((current) => {

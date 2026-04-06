@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { requires, umpire, type Snapshot } from '@umpire/core'
+import { register } from '@umpire/devtools/slim'
 import { createReads, enabledWhenRead, fairWhenRead, ReadInputType } from '@umpire/reads'
 import { createCoach } from '../lib/createCoach.ts'
 import '../styles/pc-builder-demo.css'
@@ -808,6 +809,13 @@ export default function PcBuilderDemo() {
     [cpuBrand, hasRamSelection, sawTransitiveCascade, sawAppliedResets],
   )
   const activeHint = resolveActiveHint(hintCheck)
+
+  // Devtools-only: these registrations drive the optional docs inspector and
+  // are not required for the coach, reads, or hint flow itself.
+  register('pc-builder', pcUmp, values, undefined, {
+    reads: pcBuildReads,
+  })
+  register('pc-builder/hints', hintUmp, hintUmp.init(), hintInput)
 
   function updateField<K extends PcField>(field: K, nextValue: PcValues[K]) {
     if (Object.is(values[field], nextValue)) {

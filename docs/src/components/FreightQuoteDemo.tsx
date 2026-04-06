@@ -1,5 +1,6 @@
 import { useRef } from 'preact/hooks'
 import { enabledWhen, oneOf, requires, umpire } from '@umpire/core'
+import { register } from '@umpire/devtools/slim'
 import { reactiveUmp, type ReactiveUmpire, type SignalProtocol } from '@umpire/signals'
 import { computed, effect, signal } from '@preact/signals'
 import '../styles/freight-demo.css'
@@ -440,6 +441,10 @@ export default function FreightQuoteDemo() {
   }
   const values = reactive.values
   const fouls = reactive.fouls
+
+  // Devtools-only: this feeds the optional docs inspector and is not required
+  // for the signals adapter or form logic to work.
+  register('freight-quote', freightUmp, values, conditions)
 
   return (
     <div class="freight-demo umpire-demo">

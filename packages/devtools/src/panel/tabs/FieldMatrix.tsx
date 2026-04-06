@@ -11,11 +11,17 @@ type Props = {
 const headerCellStyle = {
   borderBottom: `1px solid ${theme.border}`,
   color: theme.fgMuted,
-  fontSize: 11,
+  fontSize: 10,
   letterSpacing: '0.08em',
   padding: '10px 12px',
   textAlign: 'left',
   textTransform: 'uppercase',
+}
+
+const boolHeaderCellStyle = {
+  ...headerCellStyle,
+  padding: '10px 6px',
+  textAlign: 'center',
 }
 
 const bodyCellStyle = {
@@ -25,8 +31,17 @@ const bodyCellStyle = {
   verticalAlign: 'top',
 }
 
+const boolCellStyle = {
+  ...bodyCellStyle,
+  fontSize: 11,
+  padding: '10px 6px',
+  textAlign: 'center',
+}
+
 function flag(value: boolean) {
-  return value ? 'yes' : 'no'
+  return value
+    ? <span style={{ color: theme.enabled }}>✓</span>
+    : <span style={{ color: theme.unavailable }}>✗</span>
 }
 
 export function FieldMatrix({ onSelectField, scorecard, selectedField }: Props) {
@@ -36,16 +51,16 @@ export function FieldMatrix({ onSelectField, scorecard, selectedField }: Props) 
 
   return (
     <div style={scrollPaneStyle()}>
-      <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: '100%' }}>
+      <table style={{ borderCollapse: 'collapse', width: '100%' }}>
         <thead>
           <tr>
-            <th style={{ ...headerCellStyle, width: '34%' }}>Field</th>
-            <th style={{ ...headerCellStyle, width: '26%' }}>Value</th>
-            <th style={headerCellStyle}>Enabled</th>
-            <th style={headerCellStyle}>Fair</th>
-            <th style={headerCellStyle}>Req</th>
-            <th style={headerCellStyle}>Changed</th>
-            <th style={headerCellStyle}>Foul</th>
+            <th style={headerCellStyle}>Field</th>
+            <th style={headerCellStyle}>Value</th>
+            <th style={boolHeaderCellStyle}>En</th>
+            <th style={boolHeaderCellStyle}>Fair</th>
+            <th style={boolHeaderCellStyle}>Req</th>
+            <th style={boolHeaderCellStyle}>Ch</th>
+            <th style={boolHeaderCellStyle}>Foul</th>
           </tr>
         </thead>
         <tbody>
@@ -70,6 +85,7 @@ export function FieldMatrix({ onSelectField, scorecard, selectedField }: Props) 
                         background: tone,
                         borderRadius: 999,
                         display: 'inline-block',
+                        flexShrink: 0,
                         height: 8,
                         width: 8,
                       }}
@@ -83,11 +99,11 @@ export function FieldMatrix({ onSelectField, scorecard, selectedField }: Props) 
                 <td style={{ ...bodyCellStyle, color: theme.fg }}>
                   {formatValue(field.value)}
                 </td>
-                <td style={bodyCellStyle}>{flag(field.enabled)}</td>
-                <td style={bodyCellStyle}>{flag(field.fair)}</td>
-                <td style={bodyCellStyle}>{flag(field.required)}</td>
-                <td style={bodyCellStyle}>{flag(field.changed)}</td>
-                <td style={bodyCellStyle}>{field.foul ? 'yes' : 'no'}</td>
+                <td style={boolCellStyle}>{flag(field.enabled)}</td>
+                <td style={boolCellStyle}>{flag(field.fair)}</td>
+                <td style={boolCellStyle}>{flag(field.required)}</td>
+                <td style={boolCellStyle}>{flag(field.changed)}</td>
+                <td style={boolCellStyle}>{flag(!!field.foul)}</td>
               </tr>
             )
           })}
