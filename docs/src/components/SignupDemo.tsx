@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react'
 import { z } from 'zod'
 import { enabledWhen, requires, umpire } from '@umpire/core'
-// Swap back to `@umpire/react` and remove the leading devtools id from the
-// hook call below if you want the plain React adapter again.
-import { useUmpireWithDevtools as useUmpire } from '@umpire/devtools/react'
+// useUmpireWithDevtools powers the named instance in the optional panel on this page.
+// Swap back to: import { useUmpire } from '@umpire/react'  (remove leading id arg)
+import { useUmpireWithDevtools } from '@umpire/devtools/react'
 import { activeSchema, activeErrors, zodErrors } from '@umpire/zod'
 
 // ── Umpire: field availability ───────────────────────────────────────────────
@@ -84,7 +84,7 @@ export default function SignupDemo() {
   const [touched, setTouched] = useState<Set<string>>(new Set())
 
   const conditions: SignupConditions = { plan }
-  const { check: availability, fouls } = useUmpire('signup', signupUmp, values, conditions)
+  const { check: availability, fouls } = useUmpireWithDevtools('signup', signupUmp, values, conditions)
 
   // Build a dynamic Zod schema from availability — disabled fields are
   // excluded, enabled+required fields use the base schema, enabled+optional

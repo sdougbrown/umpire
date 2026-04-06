@@ -88,6 +88,7 @@ export default defineConfig({
             { label: 'Satisfaction', slug: 'concepts/satisfaction' },
             { label: 'Evaluation Order', slug: 'concepts/evaluation' },
             { label: 'Composing Validation', slug: 'concepts/validation' },
+            { label: 'Selection', slug: 'concepts/selection' },
             { label: 'Droid-First Development', slug: 'droid-first' },
           ],
         },

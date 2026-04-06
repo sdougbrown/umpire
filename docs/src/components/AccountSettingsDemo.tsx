@@ -1,4 +1,4 @@
-import { useEffect, useRef, useSyncExternalStore } from 'react'
+import { useEffect, useRef } from 'react'
 import { useStore } from 'zustand'
 import { createStore } from 'zustand/vanilla'
 import { enabledWhen, requires, umpire } from '@umpire/core'
@@ -103,17 +103,14 @@ function useDemoModel() {
 }
 
 function useUmpireSnapshot(model: DemoModel) {
-  return useSyncExternalStore(
-    model.umpStore.subscribe,
-    () => ({
-      availability: model.umpStore.getAvailability(),
-      fouls: model.umpStore.fouls,
-    }),
-    () => ({
-      availability: model.umpStore.getAvailability(),
-      fouls: model.umpStore.fouls,
-    }),
-  )
+  // Subscribing to the base store triggers re-renders when state changes.
+  // umpStore caches availability and fouls against the same store, so
+  // reading them here always reflects the latest values.
+  useStore(model.store)
+  return {
+    availability: model.umpStore.getAvailability(),
+    fouls: model.umpStore.fouls,
+  }
 }
 
 function patchProfile(store: DemoModel['store'], patch: Partial<DemoState['profile']>) {
@@ -369,7 +366,7 @@ export default function AccountSettingsDemo() {
   const teamSizeRead = model.umpStore.field('teamSize')
 
   return (
-    <div className="account-settings-demo umpire-demo umpire-demo--styled">
+    <div className="account-settings-demo umpire-demo">
       {fouls.length > 0 && (
         <div className="umpire-demo__fouls">
           <div className="umpire-demo__fouls-copy">

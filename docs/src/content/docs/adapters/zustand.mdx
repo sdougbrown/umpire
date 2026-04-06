@@ -51,11 +51,32 @@ interface UmpireStore<F extends Record<string, FieldDef>> {
 }
 ```
 
+## Mapping Your Store with `select()`
+
+`select` maps your Zustand state to the flat `{ [fieldName]: value }` shape Umpire expects. If your fields live in nested objects or separate slices, this is where you pull them together:
+
+```ts
+// Store: { profile: { email, displayName }, team: { size, domain }, billing: { plan } }
+fromStore(accountUmp, store, {
+  select: (state) => ({
+    email:       state.profile.email,
+    displayName: state.profile.displayName,
+    teamSize:    state.team.size,
+    teamDomain:  state.team.domain,
+  }),
+  conditions: (state) => ({
+    plan: state.billing.plan,
+  }),
+})
+```
+
+`select` runs once per store update, not per render. The result is cached — `field()` and `getAvailability()` read from it during render.
+
+For the full breakdown of patterns (pass-through, nested, split-slice, `select` vs `conditions`), see [Selection](/umpire/concepts/selection/).
+
 ## Why Zustand Fits Well
 
 Zustand's `subscribe()` passes both current and previous state to every listener. Umpire uses the previous snapshot to detect transitions — which fields just became stale, which values should be cleared. Most stores require a shim to provide this; Zustand doesn't.
-
-For the split-state `select()` pattern or docs on other store adapters, see [`@umpire/store`](/umpire/adapters/store/).
 
 ## Example
 

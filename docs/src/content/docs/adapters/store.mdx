@@ -48,27 +48,11 @@ interface UmpireStore<F extends Record<string, FieldDef>> {
 }
 ```
 
-## `select()` Is The Split-State Answer
+## Mapping Your Store with `select()`
 
-If your app keeps related values in separate slices, `select()` is where you pull them back together for Umpire:
+`select` maps your store state to the flat `{ [fieldName]: value }` shape Umpire expects. `conditions` carries external context rules can read but that isn't a field itself (plan tier, user role, feature flags). Neither has to come from the same slice.
 
-```ts
-const umpStore = fromStore(accountUmp, store, {
-  select: (state) => ({
-    email: state.profile.email,
-    displayName: state.profile.displayName,
-    teamSize: state.team.size,
-    teamDomain: state.team.domain,
-  }),
-  conditions: (state) => ({
-    plan: state.billing.plan,
-  }),
-})
-```
-
-The store stays the source of truth. Umpire only sees the aggregated values object you hand it.
-
-See the [Split-State Account Settings example](/umpire/examples/split-state/) for a worked walkthrough.
+See [Selection](/umpire/concepts/selection/) for the full breakdown of patterns.
 
 ## Shim Packages
 

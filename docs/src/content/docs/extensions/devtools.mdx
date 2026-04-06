@@ -7,20 +7,51 @@ description: Mount an in-app Umpire inspector for scorecards, challenge traces, 
 
 The visual language is intentionally tool-like: tabbed panes, tables, logs, and inspectors. It should feel distinct from your product UI, not like another styled feature surface.
 
+## How it works
+
+Setup has two independent parts:
+
+**`mount()`** — call once to create the floating panel. It injects a Shadow DOM host, renders the Preact UI, and subscribes to the registry. Call it at your app entry point or in a top-level component effect. It returns an `unmount` cleanup function.
+
+**`register()`** — call on every render, alongside `ump.check()`. It updates the registry with the latest snapshot. The panel reacts automatically. You can register before or after mounting — order doesn't matter.
+
 ## Quick Start
 
+**Step 1 — mount the panel** (once, at your app root):
+
 ```ts
+// Vanilla / framework-agnostic entry point
 if (import.meta.env.DEV) {
   const { mount } = await import('@umpire/devtools')
   mount()
 }
 ```
 
+```tsx
+// React — dedicated component, mount in useEffect
+import { useEffect } from 'react'
+import { mount } from '@umpire/devtools'
+
+function DevtoolsPanel() {
+  useEffect(() => mount(), [])
+  return null
+}
+
+// Render once at your app root:
+// <DevtoolsPanel />
+```
+
+**Step 2 — register your ump instances** (on every render, per ump):
+
 ```ts
 import { register } from '@umpire/devtools'
 
+// Called in render, same place as ump.check()
 register('checkout', ump, values, conditions)
+const availability = ump.check(values, conditions)
 ```
+
+Or use a React hook that handles registration automatically — see [React Helpers](#react-helpers) below.
 
 The panel shows:
 
@@ -30,15 +61,52 @@ The panel shows:
 - A graph view of the structural dependency DAG
 - An optional reads view when you register a reads table
 
-## React Helper
+## React Helpers
+
+Umpire is inherently multi-instance — you might have a `checkout` ump, a `shipping` ump, and a `promo` ump all active on the same page. The devtools panel handles this explicitly: each registered ump is tracked independently, and you switch between them in the instance picker.
+
+Two hooks are available depending on whether you want named or anonymous instances.
+
+### `useUmpire` — drop-in, auto-named
+
+Identical call signature to `useUmpire` from `@umpire/react`. The devtools assign a stable numeric id (`ump-0`, `ump-1` …) per component instance automatically. Swapping in and out is a single import-line change.
+
+```ts
+// With devtools
+import { useUmpire } from '@umpire/devtools/react'
+
+// Without devtools — identical callsite, just change the import
+// import { useUmpire } from '@umpire/react'
+
+const { check, fouls } = useUmpire(ump, values, conditions)
+```
+
+Use this when there is only one ump active at a time, or when the auto-assigned label is sufficient for your debugging needs.
+
+### `useUmpireWithDevtools` — named instance
+
+Takes an explicit string id as the first argument. Useful when multiple ump instances are active simultaneously and you need to distinguish them in the panel by name.
 
 ```ts
 import { useUmpireWithDevtools } from '@umpire/devtools/react'
 
-const { check, fouls } = useUmpireWithDevtools('checkout', ump, values, conditions)
+// Panel shows these as "checkout" and "shipping" in the instance picker
+const { check: checkoutCheck } = useUmpireWithDevtools('checkout', checkoutUmp, values)
+const { check: shippingCheck } = useUmpireWithDevtools('shipping', shippingUmp, values)
 ```
 
-The hook preserves the `useUmpire()` return shape and adds registration side effects on your behalf.
+The return shape of both hooks is identical to `useUmpire` from `@umpire/react`: `{ check, fouls }`.
+
+### Registering without the hook
+
+If you are calling `ump.check()` directly (no hook), call `register()` in the same place — during render, before or after `ump.check()`:
+
+```ts
+import { register } from '@umpire/devtools'
+
+register('checkout', ump, values, conditions)
+const availability = ump.check(values, conditions)
+```
 
 ## Reads Support
 
@@ -53,10 +121,16 @@ register('checkout', ump, values, conditions, {
 
 When the reads tab is available, the panel shows dependency edges, bridge wiring, and current computed values.
 
-:::caution[Keep your production bundle clean]
-Static imports still include the devtools package in production, even though `mount()` is gated off by default.
+## Production Safety
 
-Prefer a dynamic import behind a dev-only branch:
+`mount()` and `register()` are both no-ops in production (`NODE_ENV === 'production'`) unless `process.env.UMPIRE_INTERNAL === 'true'` is set — the deliberate escape hatch used by this docs site.
+
+This means leaving `useUmpire` or `useUmpireWithDevtools` in production code is harmless: registration is skipped, no scorecard computation runs, and nothing is added to the registry. The bundle overhead is the only remaining concern.
+
+:::caution[Keep your production bundle clean]
+Static imports still include the devtools package in your bundle, even though all runtime calls are gated off.
+
+Prefer a dynamic import for `mount()` behind a dev-only branch:
 
 ```ts
 if (import.meta.env.DEV) {
@@ -64,6 +138,8 @@ if (import.meta.env.DEV) {
   mount()
 }
 ```
+
+For `register()` and the React hooks, the prod no-op means a static import is generally fine — the overhead is small. If you want zero footprint in production, wrap the import in a dev branch and use the plain `@umpire/react` hook in the production path.
 :::
 
 ## Mount Options
@@ -77,4 +153,19 @@ mount({
 })
 ```
 
-`mount()` is a no-op in production unless `process.env.UMPIRE_INTERNAL === 'true'`, which is the deliberate escape hatch for docs/examples builds.
+| Option | Default | Description |
+|---|---|---|
+| `position` | `'bottom-right'` | One of `top-left`, `top-right`, `bottom-left`, `bottom-right` |
+| `offset` | `{ x: 16, y: 16 }` | Distance from the corner in CSS pixels |
+| `foulLogDepth` | `50` | Max foul events retained in the rolling log |
+| `defaultTab` | `'matrix'` | Starting tab: `matrix`, `fouls`, `graph`, or `reads` |
+
+## Slim Build
+
+If `preact` is already in your bundle, use the `/slim` entrypoint to avoid bundling a second copy:
+
+```ts
+import { mount, register } from '@umpire/devtools/slim'
+```
+
+The slim build marks Preact as external and saves ~4 KB. The default `@umpire/devtools` bundle includes Preact for users who don't have it.

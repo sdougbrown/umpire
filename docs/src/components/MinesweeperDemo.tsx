@@ -1,7 +1,7 @@
 import { useState } from 'react'
-// Swap back to `@umpire/react` and remove the leading devtools id from the
-// hook call below if you want the plain React adapter again.
-import { useUmpireWithDevtools as useUmpire } from '@umpire/devtools/react'
+// useUmpireWithDevtools powers the named instance in the optional panel on this page.
+// Swap back to: import { useUmpire } from '@umpire/react'  (remove leading id arg)
+import { useUmpireWithDevtools } from '@umpire/devtools/react'
 import {
   buildBoard,
   cascadeReveal,
@@ -139,7 +139,7 @@ export default function MinesweeperDemo({ compact = false }: { compact?: boolean
     y: 0,
   })
 
-  const { check: availability } = useUmpire('minesweeper', MINESWEEPER_UMP, values, conditions)
+  const { check: availability } = useUmpireWithDevtools('minesweeper', MINESWEEPER_UMP, values, conditions)
   const activeBoard = board ?? EMPTY_BOARD
   const flaggedCount = CELL_ORDER.reduce((count, cell) => {
     return count + (values[cellKey(cell.x, cell.y)] === 'flagged' ? 1 : 0)
