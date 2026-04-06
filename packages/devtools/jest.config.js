@@ -1,6 +1,7 @@
 /** @type {import('jest').Config} */
 export default {
   watchman: false,
+  coveragePathIgnorePatterns: ['/dist/'],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
