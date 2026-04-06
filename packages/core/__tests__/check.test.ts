@@ -1,7 +1,7 @@
-import { evaluate } from '../src/evaluator.js'
+import { evaluate, evaluateRuleForField } from '../src/evaluator.js'
 import { buildGraph, topologicalSort } from '../src/graph.js'
-import { enabledWhen, requires } from '../src/rules.js'
-import type { Rule } from '../src/types.js'
+import { anyOf, enabledWhen, requires } from '../src/rules.js'
+import type { AvailabilityMap, Rule } from '../src/types.js'
 
 type TestFields = {
   alpha: { required?: boolean }
@@ -133,6 +133,221 @@ describe('evaluate', () => {
     ).toMatchObject({
       enabled: true,
       reason: null,
+    })
+  })
+
+  test('supports predicate-based requires dependencies when the predicate passes', () => {
+    const fields: TestFields = {
+      alpha: {},
+      beta: {},
+      gamma: {},
+      delta: {},
+    }
+    const rules = [
+      requires<TestFields, TestConditions>(
+        'gamma',
+        (_values, conditions) => conditions.allow === true,
+        { reason: 'allow must be true' },
+      ),
+    ]
+
+    const topoOrder = createOrder(fields, rules)
+
+    expect(
+      evaluate(fields, rules, topoOrder, {}, { allow: true }).gamma,
+    ).toEqual({
+      enabled: true,
+      fair: true,
+      required: false,
+      reason: null,
+      reasons: [],
+    })
+    expect(
+      evaluate(fields, rules, topoOrder, {}, { allow: false }).gamma,
+    ).toEqual({
+      enabled: false,
+      fair: true,
+      required: false,
+      reason: 'allow must be true',
+      reasons: ['allow must be true'],
+    })
+  })
+
+  test('preserves an empty reasons list when anyOf gate rules fail silently', () => {
+    const fields: TestFields = {
+      alpha: {},
+      beta: {},
+      gamma: {},
+      delta: {},
+    }
+    const silentRule: Rule<TestFields, TestConditions> = {
+      type: 'silent',
+      targets: ['beta'],
+      sources: [],
+      evaluate: () => new Map([
+        ['beta', {
+          enabled: false,
+          reason: null,
+        }],
+      ]),
+    }
+    const rules = [anyOf(silentRule, silentRule)]
+    const topoOrder = createOrder(fields, rules)
+
+    expect(evaluate(fields, rules, topoOrder, {}, {} as TestConditions).beta).toEqual({
+      enabled: false,
+      fair: true,
+      required: false,
+      reason: null,
+      reasons: [],
+    })
+  })
+
+  test('returns no reasons when silent fair anyOf rules fail', () => {
+    const fields: TestFields = {
+      alpha: {},
+      beta: {},
+      gamma: {},
+      delta: {},
+    }
+    const silentFairRule = {
+      type: 'silent-fair',
+      targets: ['delta'],
+      sources: [],
+      evaluate: () => new Map([
+        ['delta', {
+          enabled: true,
+          fair: false,
+          reason: null,
+        }],
+      ]),
+      _umpire: {
+        kind: 'fairWhen' as const,
+        predicate: (() => false) as never,
+      },
+    } as Rule<TestFields, TestConditions> & {
+      _umpire: {
+        kind: 'fairWhen'
+        predicate: never
+        options?: undefined
+      }
+    }
+    const rule = anyOf(silentFairRule, silentFairRule)
+
+    expect(
+      evaluateRuleForField(
+        rule,
+        'delta',
+        fields,
+        {},
+        {} as TestConditions,
+        undefined,
+        {},
+        new Map(),
+      ),
+    ).toEqual({
+      enabled: true,
+      fair: false,
+      reason: null,
+      reasons: undefined,
+    })
+  })
+
+  test('defaults to an enabled result when a targeted rule omits a field evaluation', () => {
+    const fields: TestFields = {
+      alpha: {},
+      beta: {},
+      gamma: {},
+      delta: {},
+    }
+    const availability: Partial<AvailabilityMap<TestFields>> = {}
+    const rule: Rule<TestFields, TestConditions> = {
+      type: 'partial',
+      targets: ['delta'],
+      sources: [],
+      evaluate: () => new Map(),
+    }
+
+    expect(
+      evaluateRuleForField(
+        rule,
+        'delta',
+        fields,
+        {},
+        {} as TestConditions,
+        undefined,
+        availability,
+        new Map(),
+      ),
+    ).toEqual({
+      enabled: true,
+      reason: null,
+    })
+  })
+
+  test('treats missing dependency availability as enabled and fair in direct requires evaluation', () => {
+    const fields: TestFields = {
+      alpha: {},
+      beta: {},
+      gamma: {},
+      delta: {},
+    }
+    const rule = requires<TestFields, TestConditions>('gamma', 'beta')
+
+    expect(
+      evaluateRuleForField(
+        rule,
+        'gamma',
+        fields,
+        { beta: 'set' },
+        {} as TestConditions,
+        undefined,
+        {},
+        new Map(),
+      ),
+    ).toEqual({
+      enabled: true,
+      reason: null,
+      reasons: undefined,
+    })
+  })
+
+  test('normalizes empty reasons arrays returned by direct rule evaluations', () => {
+    const fields: TestFields = {
+      alpha: {},
+      beta: {},
+      gamma: {},
+      delta: {},
+    }
+    const rule: Rule<TestFields, TestConditions> = {
+      type: 'empty-reasons',
+      targets: ['alpha'],
+      sources: [],
+      evaluate: () => new Map([
+        ['alpha', {
+          enabled: false,
+          reason: 'empty reasons',
+          reasons: [],
+        }],
+      ]),
+    }
+
+    expect(
+      evaluateRuleForField(
+        rule,
+        'alpha',
+        fields,
+        {},
+        {} as TestConditions,
+        undefined,
+        {},
+        new Map(),
+      ),
+    ).toEqual({
+      enabled: false,
+      fair: undefined,
+      reason: 'empty reasons',
+      reasons: undefined,
     })
   })
 
