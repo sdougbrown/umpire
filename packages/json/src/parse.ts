@@ -1,0 +1,143 @@
+import {
+  anyOf,
+  disables,
+  enabledWhen,
+  fairWhen,
+  getNamedCheckMetadata,
+  oneOf,
+  requires,
+  type FieldDef,
+  type FieldValues,
+  type Rule,
+} from '@umpire/core'
+
+import { createNamedCheckFromRule, defaultCheckReason } from './check-ops.js'
+import { compileExpr } from './expr.js'
+import { attachJsonDef } from './json-def.js'
+import type { JsonCheckRule, JsonRule, UmpireJsonSchema } from './schema.js'
+import { hydrateIsEmptyStrategy } from './strategies.js'
+import { validateSchema } from './validate.js'
+
+type ParsedFields = Record<string, FieldDef>
+type ParsedRules<C extends Record<string, unknown>> = Rule<ParsedFields, C>[]
+
+type NamedFairPredicate<C extends Record<string, unknown>> = ((
+  value: unknown,
+  values: FieldValues<ParsedFields>,
+  conditions: C,
+) => boolean) & {
+  _checkField?: string
+  _namedCheck?: ReturnType<typeof getNamedCheckMetadata>
+}
+
+function compileFairExpr<C extends Record<string, unknown>>(
+  rule: Extract<JsonRule, { type: 'fairWhen' }>,
+  schema: UmpireJsonSchema,
+): NamedFairPredicate<C> {
+  const predicate = compileExpr<ParsedFields, C>(rule.when, {
+    fieldNames: new Set(Object.keys(schema.fields)),
+    conditions: schema.conditions,
+  })
+
+  const fairPredicate = ((_: unknown, values: FieldValues<ParsedFields>, conditions: C) =>
+    predicate(values, conditions)) as NamedFairPredicate<C>
+
+  fairPredicate._checkField = predicate._checkField
+
+  return fairPredicate
+}
+
+function parseFieldDefs(fields: UmpireJsonSchema['fields']): ParsedFields {
+  const parsed: ParsedFields = {}
+
+  for (const [field, definition] of Object.entries(fields)) {
+    parsed[field] = {
+      required: definition.required,
+      default: definition.default,
+      isEmpty: hydrateIsEmptyStrategy(definition.isEmpty),
+    }
+  }
+
+  return parsed
+}
+
+function parseCheckRule<C extends Record<string, unknown>>(rule: JsonCheckRule): Rule<ParsedFields, C> {
+  const validator = createNamedCheckFromRule(rule)
+  const metadata = getNamedCheckMetadata(validator)
+  const predicate = ((value: unknown) => validator.validate(value as never)) as NamedFairPredicate<C>
+
+  predicate._checkField = rule.field
+  predicate._namedCheck = metadata
+
+  const parsedRule = fairWhen<ParsedFields, C>(rule.field, predicate, {
+    reason: rule.reason ?? defaultCheckReason(rule),
+  })
+
+  return attachJsonDef(parsedRule, rule)
+}
+
+function parseRule<C extends Record<string, unknown>>(
+  rule: JsonRule,
+  schema: UmpireJsonSchema,
+): Rule<ParsedFields, C> {
+  const fieldNames = new Set(Object.keys(schema.fields))
+  const exprOptions = {
+    fieldNames,
+    conditions: schema.conditions,
+  }
+
+  switch (rule.type) {
+    case 'requires':
+      if ('dependency' in rule) {
+        return attachJsonDef(requires<ParsedFields, C>(rule.field, rule.dependency, {
+          reason: rule.reason,
+        }), rule)
+      }
+
+      return attachJsonDef(requires<ParsedFields, C>(rule.field, compileExpr(rule.when, exprOptions), {
+        reason: rule.reason,
+      }), rule)
+    case 'enabledWhen':
+      return attachJsonDef(enabledWhen<ParsedFields, C>(rule.field, compileExpr(rule.when, exprOptions), {
+        reason: rule.reason,
+      }), rule)
+    case 'disables':
+      if ('source' in rule) {
+        return attachJsonDef(disables<ParsedFields, C>(rule.source, rule.targets, {
+          reason: rule.reason,
+        }), rule)
+      }
+
+      return attachJsonDef(disables<ParsedFields, C>(compileExpr(rule.when, exprOptions), rule.targets, {
+        reason: rule.reason,
+      }), rule)
+    case 'oneOf':
+      return attachJsonDef(oneOf<ParsedFields, C>(rule.group, rule.branches), rule)
+    case 'fairWhen':
+      return attachJsonDef(fairWhen<ParsedFields, C>(rule.field, compileFairExpr<C>(rule, schema), {
+        reason: rule.reason,
+      }), rule)
+    case 'anyOf': {
+      const innerRules = rule.rules.map((innerRule) => parseRule<C>(innerRule, schema))
+      return attachJsonDef(anyOf<ParsedFields, C>(...innerRules), rule)
+    }
+    case 'check':
+      return parseCheckRule<C>(rule)
+    default:
+      throw new Error(`[umpire/json] Unknown rule type "${String((rule as { type?: unknown }).type)}"`)
+  }
+}
+
+export function fromJson<C extends Record<string, unknown> = Record<string, unknown>>(
+  schema: UmpireJsonSchema,
+): {
+  fields: ParsedFields
+  rules: ParsedRules<C>
+} {
+  validateSchema(schema)
+
+  return {
+    fields: parseFieldDefs(schema.fields),
+    rules: schema.rules.map((rule) => parseRule<C>(rule, schema)),
+  }
+}

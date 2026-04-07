@@ -1,0 +1,123 @@
+import { umpire } from '@umpire/core'
+
+import { fromJson, getJsonDef, validateSchema } from '../src/index.js'
+import type { UmpireJsonSchema } from '../src/index.js'
+
+describe('fromJson', () => {
+  test('hydrates fields, check rules, and DSL-backed rules into core config', () => {
+    const schema: UmpireJsonSchema = {
+      version: 1,
+      conditions: {
+        isBusiness: { type: 'boolean' },
+        validPlans: { type: 'string[]' },
+      },
+      fields: {
+        companyName: {},
+        planId: {},
+        email: { isEmpty: 'string' },
+      },
+      rules: [
+        {
+          type: 'requires',
+          field: 'companyName',
+          when: { op: 'cond', condition: 'isBusiness' },
+          reason: 'Company name is required for business accounts',
+        },
+        {
+          type: 'fairWhen',
+          field: 'planId',
+          when: { op: 'fieldInCond', field: 'planId', condition: 'validPlans' },
+          reason: 'Selected plan is not available for this account',
+        },
+        {
+          type: 'check',
+          field: 'email',
+          op: 'email',
+        },
+      ],
+    }
+
+    const { fields, rules } = fromJson(schema)
+    const runtime = umpire({ fields, rules })
+
+    expect(fields.email.isEmpty?.('')).toBe(true)
+    expect(fields.email.isEmpty?.('a')).toBe(false)
+
+    expect(
+      runtime.check(
+        { email: 'invalid', planId: 'starter' },
+        { isBusiness: false, validPlans: ['pro'] },
+      ),
+    ).toMatchObject({
+      companyName: {
+        enabled: false,
+        reason: 'Company name is required for business accounts',
+      },
+      planId: {
+        enabled: true,
+        fair: false,
+        reason: 'Selected plan is not available for this account',
+      },
+      email: {
+        enabled: true,
+        fair: false,
+        reason: 'Must be a valid email address',
+      },
+    })
+
+    expect(getJsonDef(rules[0])).toEqual(schema.rules[0])
+    expect(getJsonDef(rules[1])).toEqual(schema.rules[1])
+    expect(getJsonDef(rules[2])).toEqual(schema.rules[2])
+  })
+
+  test('rejects unknown isEmpty strategies', () => {
+    expect(() =>
+      fromJson({
+        version: 1,
+        fields: {
+          notes: {
+            isEmpty: '__unserializable__' as never,
+          },
+        },
+        rules: [],
+      }),
+    ).toThrow('Unknown isEmpty strategy')
+  })
+})
+
+describe('validateSchema', () => {
+  test('throws descriptively for invalid references and invalid regex patterns', () => {
+    expect(() =>
+      validateSchema({
+        version: 1,
+        fields: {
+          email: {},
+        },
+        rules: [
+          {
+            type: 'requires',
+            field: 'email',
+            when: { op: 'cond', condition: 'missing' },
+          },
+        ],
+      }),
+    ).toThrow('Unknown condition "missing"')
+
+    expect(() =>
+      validateSchema({
+        version: 1,
+        fields: {
+          email: {},
+        },
+        rules: [
+          {
+            type: 'check',
+            field: 'email',
+            op: 'matches',
+            pattern: '[',
+          },
+        ],
+      }),
+    ).toThrow('Invalid regex pattern')
+  })
+})

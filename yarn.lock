@@ -1570,6 +1570,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@umpire/json@workspace:packages/json":
+  version: 0.0.0-use.local
+  resolution: "@umpire/json@workspace:packages/json"
+  dependencies:
+    "@umpire/core": "workspace:^"
+  languageName: unknown
+  linkType: soft
+
 "@umpire/pinia@workspace:packages/pinia":
   version: 0.0.0-use.local
   resolution: "@umpire/pinia@workspace:packages/pinia"
