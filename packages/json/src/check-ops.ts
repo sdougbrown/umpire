@@ -197,9 +197,7 @@ export function createNamedCheckFromSpec(spec: JsonCheckSpec): NamedCheck<any> {
   }
 }
 
-export function createNamedCheckFromRule(rule: JsonCheckRule): NamedCheck<any> {
-  return createNamedCheckFromSpec(rule)
-}
+export const createNamedCheckFromRule: (rule: JsonCheckRule) => NamedCheck<any> = createNamedCheckFromSpec
 
 export function assertValidCheckSpec(rule: JsonCheckSpec): void {
   switch (rule.op) {

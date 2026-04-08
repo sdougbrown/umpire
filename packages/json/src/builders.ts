@@ -162,9 +162,7 @@ export const expr: JsonExprBuilder<Record<string, FieldDef>, Record<string, unkn
   notIn(field, values) {
     return { op: 'notIn', field, values: cloneJson(values) }
   },
-  check(field, validator) {
-    return createPortableCheckExpr(field, validator)
-  },
+  check: createPortableCheckExpr,
   cond(condition) {
     return { op: 'cond', condition }
   },

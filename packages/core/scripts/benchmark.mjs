@@ -67,9 +67,6 @@ function sumAvailability(availability) {
   return enabled + required + reasons
 }
 
-function clone(values) {
-  return structuredClone(values)
-}
 
 function makeSchedulerScenario(sectionCount) {
   const fields = {}
@@ -188,7 +185,7 @@ function makeSchedulerScenario(sectionCount) {
     beforeValues[everyHour] = [9, 13, 17]
   }
 
-  const afterValues = clone(beforeValues)
+  const afterValues = structuredClone(beforeValues)
 
   for (let index = 0; index < sectionCount; index += 1) {
     const mode = `mode_${index}`

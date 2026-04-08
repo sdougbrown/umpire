@@ -204,9 +204,6 @@ function mergeExcluded(
   return merged
 }
 
-function getSerializeMeta(value: unknown): SerializeMeta | undefined {
-  return getJsonDef<SerializeMeta>(value)
-}
 
 function serializeField(name: string, definition: FieldDef): {
   field: JsonFieldDef
@@ -641,7 +638,7 @@ export function toJson<
 >(
   config: ToJsonConfig<F, C>,
 ): UmpireJsonSchema {
-  const meta = getSerializeMeta(config.fields) ?? getSerializeMeta(config.rules)
+  const meta = getJsonDef<SerializeMeta>(config.fields) ?? getJsonDef<SerializeMeta>(config.rules)
   const fields = {} as Record<string, JsonFieldDef>
   const rules: JsonRule[] = []
   const generatedExcluded: ExcludedRule[] = []

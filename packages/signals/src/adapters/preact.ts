@@ -20,8 +20,6 @@ export const preactAdapter: SignalProtocol = {
     const c = computed(fn)
     return { get: () => c.value }
   },
-  effect(fn) {
-    return effect(fn)
-  },
+  effect,
   batch,
 }
