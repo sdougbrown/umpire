@@ -112,6 +112,37 @@
   cursor: not-allowed;
 }
 
+.signup-demo__sso-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.72rem;
+  border: 1px solid rgba(107, 254, 156, 0.28);
+  border-radius: 2rem;
+  background: rgba(107, 254, 156, 0.1);
+  color: var(--umpire-demo-green);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.signup-demo__sso-badge::before {
+  content: '●';
+  font-size: 0.55rem;
+  animation: signup-demo-sso-pulse 2s ease-in-out infinite;
+}
+
+@keyframes signup-demo-sso-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.signup-demo__table-row--submit td {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.015);
+}
+
 .signup-demo__table-shell {
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 0.85rem;

@@ -1,10 +1,27 @@
 import { useState, useMemo } from 'react'
 import { z } from 'zod'
-import { enabledWhen, requires, umpire } from '@umpire/core'
+import { anyOf, check, disables, enabledWhen, requires, umpire } from '@umpire/core'
 // useUmpireWithDevtools powers the named instance in the optional panel on this page.
 // Swap back to: import { useUmpire } from '@umpire/react'  (remove leading id arg)
 import { useUmpireWithDevtools } from '@umpire/devtools/react'
 import { activeSchema, activeErrors, zodErrors } from '@umpire/zod'
+
+// ── Known SSO domains ─────────────────────────────────────────────────────────
+// When the email domain matches one of these, SSO mode activates automatically:
+// password fields disable, plan flips to business, and company name fills in.
+
+const knownDomains: Record<string, string> = {
+  'acme.com':      'Acme Corporation',
+  'globocorp.io':  'GloboCorp Industries',
+  'initech.net':   'Initech',
+  'umbrella.corp': 'Umbrella Corporation',
+}
+
+function domainFromEmail(email: string): string | null {
+  const at = email.indexOf('@')
+  if (at < 0) return null
+  return email.slice(at + 1).toLowerCase().trim() || null
+}
 
 // ── Umpire: field availability ───────────────────────────────────────────────
 
@@ -15,22 +32,48 @@ const signupFields = {
   referralCode:    {},
   companyName:     { required: true, isEmpty: (v: unknown) => !v },
   companySize:     { required: true, isEmpty: (v: unknown) => !v },
+  submit:          { required: true },
 }
 
-type SignupConditions = { plan: 'personal' | 'business' }
+type SignupConditions = { plan: 'personal' | 'business'; sso: boolean }
 type SignupField = keyof typeof signupFields
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const signupUmp = umpire<typeof signupFields, SignupConditions>({
   fields: signupFields,
   rules: [
     requires('confirmPassword', 'password'),
-    enabledWhen('companyName', (_v, cond) => cond.plan === 'business', {
+    enabledWhen('companyName', (_v, c) => c.plan === 'business', {
       reason: 'business plan required',
     }),
-    enabledWhen('companySize', (_v, cond) => cond.plan === 'business', {
+    enabledWhen('companySize', (_v, c) => c.plan === 'business', {
       reason: 'business plan required',
     }),
     requires('companySize', 'companyName'),
+
+    // When SSO is active, the IdP handles authentication — password is not needed
+    disables((_v, c) => c.sso, ['password', 'confirmPassword'], {
+      reason: 'SSO login — no password needed',
+    }),
+
+    // Submit is available via EITHER path:
+    //   Path A — standard auth: email passes format validation
+    //   Path B — SSO: the domain is a known SSO provider
+    // anyOf enables submit when at least one path is satisfied.
+    anyOf(
+      enabledWhen('submit', check('email', emailRegex), {
+        reason: 'Enter a valid email address',
+      }),
+      enabledWhen('submit', (_v, c) => c.sso, {
+        reason: 'No SSO available for this domain',
+      }),
+    ),
+
+    // Path A also requires a password — SSO bypasses this
+    enabledWhen('submit', (v, c) => c.sso || !!v.password, {
+      reason: 'Enter a password',
+    }),
   ],
 })
 
@@ -58,13 +101,17 @@ const fieldOrder = [
   'companySize',
 ] as const satisfies readonly SignupField[]
 
+// submit is shown in the availability table but not rendered as an input
+const tableOrder = [...fieldOrder, 'submit'] as const satisfies readonly SignupField[]
+
 const fieldMeta: Record<SignupField, { label: string; type: string; placeholder: string }> = {
   email:           { label: 'Email',            type: 'email',    placeholder: 'alex@example.com' },
   password:        { label: 'Password',         type: 'password', placeholder: 'Choose a password' },
   confirmPassword: { label: 'Confirm Password', type: 'password', placeholder: 'Re-enter password' },
   referralCode:    { label: 'Referral Code',    type: 'text',     placeholder: 'Optional' },
-  companyName:     { label: 'Company Name',     type: 'text',     placeholder: 'Acme Industries' },
+  companyName:     { label: 'Company Name',     type: 'text',     placeholder: 'Acme Corporation' },
   companySize:     { label: 'Company Size',     type: 'text',     placeholder: '50' },
+  submit:          { label: 'Submit',           type: 'submit',   placeholder: '' },
 }
 
 const planOptions = [
@@ -83,7 +130,12 @@ export default function SignupDemo() {
   const [plan, setPlan] = useState<'personal' | 'business'>('personal')
   const [touched, setTouched] = useState<Set<string>>(new Set())
 
-  const conditions: SignupConditions = { plan }
+  // SSO is derived from the email — no extra state needed
+  const emailDomain = domainFromEmail(String(values.email ?? ''))
+  const ssoCompany = emailDomain ? (knownDomains[emailDomain] ?? null) : null
+  const sso = ssoCompany !== null
+
+  const conditions: SignupConditions = { plan, sso }
   const { check: availability, fouls } = useUmpireWithDevtools('signup', signupUmp, values, conditions)
 
   // Build a dynamic Zod schema from availability — disabled fields are
@@ -101,7 +153,23 @@ export default function SignupDemo() {
   }, [availability, values])
 
   function updateValue(field: SignupField, nextValue: string) {
-    setValues((current) => ({ ...current, [field]: nextValue }))
+    if (field === 'email') {
+      const domain = domainFromEmail(nextValue)
+      const company = domain ? (knownDomains[domain] ?? null) : null
+
+      setValues((current) => ({
+        ...current,
+        email: nextValue,
+        // Auto-fill company name when an SSO domain is recognized
+        ...(company != null ? { companyName: company } : {}),
+      }))
+
+      if (company != null) {
+        setPlan('business')
+      }
+    } else {
+      setValues((current) => ({ ...current, [field]: nextValue }))
+    }
   }
 
   function markTouched(field: string) {
@@ -112,19 +180,13 @@ export default function SignupDemo() {
     setValues((current) => {
       const next = { ...current }
       for (const foul of fouls) {
-        next[foul.field] = foul.suggestedValue
+        ;(next as Record<string, unknown>)[foul.field] = foul.suggestedValue
       }
       return next
     })
   }
 
-  const canSubmit = fieldOrder.every((field) => {
-    const av = availability[field]
-    if (!av.enabled) return true // disabled fields don't block submit
-    if (av.required && !values[field]) return false
-    if (validationErrors[field]) return false
-    return true
-  })
+  const canSubmit = availability.submit.enabled
 
   return (
     <div className="signup-demo umpire-demo">
@@ -136,7 +198,7 @@ export default function SignupDemo() {
               {fouls.map((foul) => (
                 <div key={foul.field} className="umpire-demo__foul">
                   <span className="umpire-demo__foul-field">
-                    {fieldMeta[foul.field].label}
+                    {fieldMeta[foul.field as SignupField]?.label ?? foul.field}
                   </span>
                   <span className="umpire-demo__foul-reason">{foul.reason}</span>
                 </div>
@@ -156,7 +218,13 @@ export default function SignupDemo() {
               <div className="umpire-demo__eyebrow">Live example</div>
               <h2 className="umpire-demo__title">Signup Form</h2>
             </div>
-            <span className="umpire-demo__panel-accent">umpire + zod</span>
+            {sso ? (
+              <span className="signup-demo__sso-badge">
+                SSO — {ssoCompany}
+              </span>
+            ) : (
+              <span className="umpire-demo__panel-accent">umpire + zod</span>
+            )}
           </div>
 
           <div className="umpire-demo__panel-body">
@@ -228,7 +296,7 @@ export default function SignupDemo() {
               )}
               disabled={!canSubmit}
             >
-              Create account
+              {sso ? `Continue with SSO` : `Create account`}
             </button>
           </div>
         </section>
@@ -240,7 +308,7 @@ export default function SignupDemo() {
               <h2 className="umpire-demo__title">Availability + Validation</h2>
             </div>
             <span className="umpire-demo__panel-accent">
-              plan: {plan}
+              {sso ? `sso: true` : `plan: ${plan}`}
             </span>
           </div>
 
@@ -256,12 +324,12 @@ export default function SignupDemo() {
                   </tr>
                 </thead>
                 <tbody>
-                  {fieldOrder.map((field) => {
+                  {tableOrder.map((field) => {
                     const av = availability[field]
-                    const error = validationErrors[field]
+                    const error = field !== 'submit' ? validationErrors[field] : undefined
 
                     return (
-                      <tr key={field}>
+                      <tr key={field} className={field === 'submit' ? 'signup-demo__table-row--submit' : undefined}>
                         <td className="signup-demo__table-field">{field}</td>
                         <td>
                           <span className="signup-demo__status">
@@ -296,7 +364,9 @@ export default function SignupDemo() {
                         <td className="signup-demo__table-reason">
                           {!av.enabled
                             ? av.reason ?? '—'
-                            : error ?? (av.required && !values[field] ? 'empty' : '✓')}
+                            : field === 'submit'
+                              ? (av.enabled ? '✓' : av.reason ?? '—')
+                              : error ?? (av.required && !values[field as SignupField] ? 'empty' : '✓')}
                         </td>
                       </tr>
                     )
