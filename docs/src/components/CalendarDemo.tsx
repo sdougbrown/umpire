@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import type { DateRange, Month } from '@neo-reckoning/core'
-import { useCalendar } from '@neo-reckoning/react'
+import type { DateRange, Month } from '@daywatch/cal'
+import { useCalendar } from '@daywatch/cal-react'
 import { disables, enabledWhen, oneOf, requires, umpire } from '@umpire/core'
 // Swap back to `@umpire/react` and remove the leading devtools id from the
 // hook call below if you want the plain React adapter again.
@@ -562,7 +562,7 @@ export default function CalendarDemo() {
       <section className="calendar-demo__panel calendar-demo__panel--preview">
         <div className="calendar-demo__panel-header">
           <div>
-            <div className="calendar-demo__eyebrow">neo-reckoning preview</div>
+            <div className="calendar-demo__eyebrow">daywatch preview</div>
             <h3 className="calendar-demo__panel-title">{previewMonth.label}</h3>
           </div>
           <div className="calendar-demo__nav">

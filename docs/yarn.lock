@@ -458,6 +458,34 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@daywatch/cal-models@npm:^0.1.1":
+  version: 0.1.1
+  resolution: "@daywatch/cal-models@npm:0.1.1"
+  dependencies:
+    "@daywatch/cal": "npm:^0.1.1"
+  checksum: 10c0/1f37447ad604d1aabfd0312418488bdb9bdf1d65704b969b7dcd5c635ac5ec3ed3e0ec3c10cc9b19c42d3d122ffdb9c5d866b4720e619b2951325c4b9e34a6dd
+  languageName: node
+  linkType: hard
+
+"@daywatch/cal-react@npm:0.1.1":
+  version: 0.1.1
+  resolution: "@daywatch/cal-react@npm:0.1.1"
+  dependencies:
+    "@daywatch/cal": "npm:^0.1.1"
+    "@daywatch/cal-models": "npm:^0.1.1"
+  peerDependencies:
+    react: ^18.0.0 || ^19.0.0
+  checksum: 10c0/776c861887ea49ec6cdf2e1460cd26d79cdb4f897ba3861149812d655aa3bd70eed032868ddce516bb3807d36871dc695b66a1f1961bb7ad219505ff9a084959
+  languageName: node
+  linkType: hard
+
+"@daywatch/cal@npm:0.1.1, @daywatch/cal@npm:^0.1.1":
+  version: 0.1.1
+  resolution: "@daywatch/cal@npm:0.1.1"
+  checksum: 10c0/438f17473a8b732acec68860e975f7e3337a7ed190891463285176870234dc44c90324b353152fca9f68bbd66b76d11eab8792307615c64cf98e8476117d0304
+  languageName: node
+  linkType: hard
+
 "@emnapi/runtime@npm:^1.7.0":
   version: 1.9.1
   resolution: "@emnapi/runtime@npm:1.9.1"
@@ -1196,34 +1224,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@neo-reckoning/core@npm:0.1.1, @neo-reckoning/core@npm:^0.1.1":
-  version: 0.1.1
-  resolution: "@neo-reckoning/core@npm:0.1.1"
-  checksum: 10c0/a743fe8aabc3b7bbdee3adad9d685c61f4348c3798fa7818be4ded097d16765af13917685fdba29a94e620d49f91bdf922a13f620ad3487f83f3441db7682762
-  languageName: node
-  linkType: hard
-
-"@neo-reckoning/models@npm:^0.1.1":
-  version: 0.1.1
-  resolution: "@neo-reckoning/models@npm:0.1.1"
-  dependencies:
-    "@neo-reckoning/core": "npm:^0.1.1"
-  checksum: 10c0/b98c8dcc72380ad8f1a5a3f2667df95096c7bd8fa6aae05d0bcae8eb7795fb360f330e95bef6f4b378c691d84b2edef63d00af40178e42a68e628e8a05f1cfce
-  languageName: node
-  linkType: hard
-
-"@neo-reckoning/react@npm:0.1.1":
-  version: 0.1.1
-  resolution: "@neo-reckoning/react@npm:0.1.1"
-  dependencies:
-    "@neo-reckoning/core": "npm:^0.1.1"
-    "@neo-reckoning/models": "npm:^0.1.1"
-  peerDependencies:
-    react: ^18.0.0 || ^19.0.0
-  checksum: 10c0/9f0433a36587a8f80240176980e73dc3f5c1af48a2c22744caa596d5edcd3406aa32490253b1971908d1c083e72677178f96fa25a145387053a1b8cce5681c1c
-  languageName: node
-  linkType: hard
-
 "@npmcli/agent@npm:^4.0.0":
   version: 4.0.0
   resolution: "@npmcli/agent@npm:4.0.0"
@@ -1894,12 +1894,18 @@ __metadata:
     "@preact/signals-core": ^1.0.0
     alien-signals: ^3.0.0
     signal-polyfill: ^0.2.0
+    solid-js: ^1.0.0
+    vue: ^3.0.0
   peerDependenciesMeta:
     "@preact/signals-core":
       optional: true
     alien-signals:
       optional: true
     signal-polyfill:
+      optional: true
+    solid-js:
+      optional: true
+    vue:
       optional: true
   languageName: node
   linkType: soft
@@ -5790,8 +5796,8 @@ __metadata:
     "@astrojs/preact": "npm:^4.0.0"
     "@astrojs/react": "npm:^5.0.2"
     "@astrojs/starlight": "npm:^0.37.7"
-    "@neo-reckoning/core": "npm:0.1.1"
-    "@neo-reckoning/react": "npm:0.1.1"
+    "@daywatch/cal": "npm:0.1.1"
+    "@daywatch/cal-react": "npm:0.1.1"
     "@preact/signals": "npm:^1.0.0"
     "@preact/signals-core": "npm:^1.0.0"
     "@types/react": "npm:^19.2.14"
