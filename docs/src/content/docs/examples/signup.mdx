@@ -11,7 +11,7 @@ import SignupDemo from '../../../components/SignupDemo.tsx'
   <SignupDemo client:load />
 </div>
 
-This demo composes two layers: **Umpire** decides which fields are available (enabled, required, or due for cleanup), and **Zod** validates the ones that are. Neither knows about the other — they compose through [`@umpire/zod`](/umpire/api/rules/#typing-conditions), a thin adapter that builds a dynamic Zod schema from the availability map.
+This demo composes two layers: **Umpire** decides which fields are available (enabled, required, or due for cleanup), and **Zod** validates the enabled ones. The two layers are authored independently — Umpire rules don't reference Zod, and Zod schemas don't reference Umpire. They compose at the call site through [`@umpire/zod`](/umpire/adapters/zod/), a thin adapter that builds a dynamic Zod schema from the availability map.
 
 ## The Availability Rules
 

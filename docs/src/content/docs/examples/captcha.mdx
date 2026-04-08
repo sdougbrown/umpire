@@ -6,7 +6,9 @@ description: A conditions-driven example where submit availability depends on bo
 import CaptchaDemo from '../../../components/CaptchaDemo.tsx'
 import DevtoolsPanel from '../../../components/DevtoolsPanel.tsx'
 
-A login form where the submit button depends on both field values *and* an external captcha token. Shows how conditions-driven rules and reasons aggregation work together.
+Most forms gate submission on field values — email is present, password is filled in, that kind of thing. But sometimes availability depends on state the form doesn't own. A captcha token comes from an external widget. A permission check lives on the server. A feature flag is set at the session level.
+
+Umpire handles those through **conditions**: declared inputs that arrive alongside field values at evaluation time. This example shows a login form where `submit` depends on three separate rules — two field-driven, one condition-driven — and how they aggregate into a single availability result.
 
 <div class="umpire-demo">
   <DevtoolsPanel defaultTab="matrix" client:only="react" />
