@@ -125,6 +125,12 @@ type Source<
   C extends Record<string, unknown>,
 > = (keyof F & string) | Predicate<F, C>
 
+type SourceInput<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+  V = unknown,
+> = FieldSelector<F, V> | Predicate<F, C>
+
 type FairPredicate<
   V,
   F extends Record<string, FieldDef>,
@@ -136,6 +142,11 @@ type FairPredicate<
 type OneOfBranches<F extends Record<string, FieldDef>> = Record<
   string,
   Array<keyof F & string>
+>
+
+type OneOfBranchesInput<F extends Record<string, FieldDef>> = Record<
+  string,
+  Array<FieldSelector<F>>
 >
 
 type OneOfOptions<
@@ -353,6 +364,31 @@ export function getSourceField<
   }
 
   return getCheckField(source)
+}
+
+function normalizeSource<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+  V = unknown,
+>(
+  source: SourceInput<F, C, V>,
+): Source<F, C> {
+  if (typeof source === 'function') {
+    return source
+  }
+
+  return getFieldNameOrThrow(source)
+}
+
+function normalizeBranches<F extends Record<string, FieldDef>>(
+  branches: OneOfBranchesInput<F>,
+): OneOfBranches<F> {
+  return Object.fromEntries(
+    Object.entries(branches).map(([branchName, branchFields]) => [
+      branchName,
+      branchFields.map((field) => getFieldNameOrThrow(field)),
+    ]),
+  ) as OneOfBranches<F>
 }
 
 export function getInternalRuleMetadata<
@@ -1006,24 +1042,27 @@ export function fairWhen<
 export function disables<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown> = Record<string, unknown>,
+  V = unknown,
 >(
-  source: Source<F, C>,
-  targets: Array<keyof F & string>,
+  source: SourceInput<F, C, V>,
+  targets: Array<FieldSelector<F>>,
   options?: RuleOptions<F, C>,
 ): Rule<F, C> {
+  const resolvedSource = normalizeSource(source)
+  const resolvedTargets = targets.map((target) => getFieldNameOrThrow(target))
   const defaultReason =
-    typeof source === 'string'
-      ? `overridden by ${source}`
-      : `overridden by ${getSourceLabel(source)}`
+    typeof resolvedSource === 'string'
+      ? `overridden by ${resolvedSource}`
+      : `overridden by ${getSourceLabel(resolvedSource)}`
 
   const rule: InternalRuleCarrier<F, C> = {
     type: 'disables',
-    targets,
-    sources: getSourceFields(source),
+    targets: resolvedTargets,
+    sources: getSourceFields(resolvedSource),
     evaluate(values, conditions, _prev, fields) {
-      const active = isSourceActive(source, values, conditions, fields)
+      const active = isSourceActive(resolvedSource, values, conditions, fields)
 
-      return createResultMap(targets, () => ({
+      return createResultMap(resolvedTargets, () => ({
         enabled: !active,
         reason: active ? resolveReason(options?.reason, values, conditions, defaultReason) : null,
       }))
@@ -1032,7 +1071,7 @@ export function disables<
 
   rule._umpire = {
     kind: 'disables',
-    source,
+    source: resolvedSource,
     options,
   }
 
@@ -1045,12 +1084,13 @@ export function requires<
   V = unknown,
 >(
   field: FieldSelector<F, V>,
-  ...deps: Array<Source<F, C> | RuleOptions<F, C>>
+  ...deps: Array<SourceInput<F, C> | RuleOptions<F, C>>
 ): Rule<F, C> {
   const target = getFieldNameOrThrow(field)
   const maybeOptions = deps[deps.length - 1]
   const options = isRuleOptions<F, C>(maybeOptions) ? maybeOptions : undefined
-  const dependencies = (options ? deps.slice(0, -1) : deps) as Array<Source<F, C>>
+  const dependencies: Array<Source<F, C>> = (options ? deps.slice(0, -1) : deps)
+    .map((dependency) => normalizeSource(dependency as SourceInput<F, C>))
 
   if (dependencies.length === 0) {
     throw new Error(`[umpire] requires("${target}") requires at least one dependency`)
@@ -1105,18 +1145,19 @@ export function oneOf<
   C extends Record<string, unknown> = Record<string, unknown>,
 >(
   groupName: string,
-  branches: OneOfBranches<F>,
+  branches: OneOfBranchesInput<F>,
   options?: OneOfOptions<F, C>,
 ): Rule<F, C> {
+  const resolvedBranches = normalizeBranches(branches)
   const seenFields = new Set<string>()
-  const branchNames = Object.keys(branches)
+  const branchNames = Object.keys(resolvedBranches)
 
   if (branchNames.length === 0) {
     throw new Error(`[umpire] oneOf("${groupName}") must include at least one branch`)
   }
 
   for (const branchName of branchNames) {
-    const fields = branches[branchName]
+    const fields = resolvedBranches[branchName]
 
     if (fields.length === 0) {
       throw new Error(`[umpire] oneOf("${groupName}") branch "${branchName}" must not be empty`)
@@ -1131,13 +1172,13 @@ export function oneOf<
     }
   }
 
-  if (typeof options?.activeBranch === 'string' && !(options.activeBranch in branches)) {
+  if (typeof options?.activeBranch === 'string' && !(options.activeBranch in resolvedBranches)) {
     throw new Error(
       `[umpire] Unknown active branch "${options.activeBranch}" for oneOf("${groupName}")`,
     )
   }
 
-  const targets = branchNames.flatMap((branchName) => branches[branchName])
+  const targets = branchNames.flatMap((branchName) => resolvedBranches[branchName])
 
   const rule: InternalRuleCarrier<F, C> = {
     type: 'oneOf',
@@ -1146,7 +1187,7 @@ export function oneOf<
     evaluate(values, conditions, prev, fields) {
       const resolution = resolveOneOfState(
         groupName,
-        branches,
+        resolvedBranches,
         values,
         prev,
         options?.activeBranch,
@@ -1159,7 +1200,7 @@ export function oneOf<
       }
 
       return createResultMap(targets, (target) => {
-        const inActiveBranch = branches[resolution.activeBranch as string].includes(target)
+        const inActiveBranch = resolvedBranches[resolution.activeBranch as string].includes(target)
         return {
           enabled: inActiveBranch,
           reason: inActiveBranch
@@ -1178,7 +1219,7 @@ export function oneOf<
   rule._umpire = {
     kind: 'oneOf',
     groupName,
-    branches,
+    branches: resolvedBranches,
     options,
   }
 

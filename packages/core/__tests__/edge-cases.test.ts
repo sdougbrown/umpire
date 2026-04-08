@@ -1,3 +1,4 @@
+import { field } from '../src/field.js'
 import { anyOf, check, disables, enabledWhen, oneOf, requires } from '../src/rules.js'
 import { umpire } from '../src/umpire.js'
 
@@ -150,6 +151,28 @@ describe('edge cases', () => {
     )
   })
 
+  test('rejects the same disables()/requires() contradiction with named builders', () => {
+    const beta = field<string>('beta')
+    const delta = field<string>('delta')
+
+    expect(() =>
+      umpire({
+        fields: {
+          alpha: field<string>('alpha'),
+          beta,
+          gamma: field<string>('gamma'),
+          delta,
+        },
+        rules: [
+          disables(beta, [delta]),
+          requires(delta, beta),
+        ],
+      }),
+    ).toThrow(
+      'Contradictory rules: "delta" can never be enabled because it requires "beta", but is disabled whenever "beta" is satisfied',
+    )
+  })
+
   test('rejects cross-branch requires() dependencies in auto oneOf()', () => {
     expect(() =>
       umpire<TestFields>({
@@ -165,6 +188,31 @@ describe('edge cases', () => {
             second: ['beta'],
           }),
           requires<TestFields>('alpha', check('beta', (value) => value === 'ready')),
+        ],
+      }),
+    ).toThrow(
+      'Contradictory rules: "alpha" can never be enabled because it requires "beta", but oneOf("strategy") places them in different branches ("first" and "second")',
+    )
+  })
+
+  test('rejects the same cross-branch contradiction with named builders', () => {
+    const alpha = field<string>('alpha')
+    const beta = field<string>('beta')
+
+    expect(() =>
+      umpire({
+        fields: {
+          alpha,
+          beta,
+          gamma: field<string>('gamma'),
+          delta: field<string>('delta'),
+        },
+        rules: [
+          oneOf('strategy', {
+            first: [alpha],
+            second: [beta],
+          }),
+          requires(alpha, beta),
         ],
       }),
     ).toThrow(

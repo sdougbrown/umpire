@@ -253,6 +253,32 @@ describe('field()', () => {
     })
   })
 
+  test('supports named builders in attached requires() rules', () => {
+    const cpu = field<string>('cpu').required().isEmpty((value) => !value)
+    const motherboard = field<string>('motherboard')
+      .required()
+      .isEmpty((value) => !value)
+      .requires(cpu, {
+        reason: 'Pick a CPU first',
+      })
+
+    const ump = umpire({
+      fields: {
+        cpu,
+        motherboard,
+      },
+      rules: [],
+    })
+
+    expect(ump.check({}).motherboard).toEqual({
+      enabled: false,
+      fair: true,
+      required: false,
+      reason: 'Pick a CPU first',
+      reasons: ['Pick a CPU first'],
+    })
+  })
+
   test('throws when a named builder key does not match its declared name', () => {
     expect(() =>
       umpire({
@@ -267,6 +293,12 @@ describe('field()', () => {
   test('throws when an unnamed builder is passed directly to a top-level rule', () => {
     expect(() =>
       requires(field<string>(), 'cpu'),
+    ).toThrow('Named field builder required when passing a field() value to a rule')
+  })
+
+  test('throws when an unnamed builder is used in an attached requires() rule', () => {
+    expect(() =>
+      field<string>('motherboard').requires(field<string>()),
     ).toThrow('Named field builder required when passing a field() value to a rule')
   })
 })

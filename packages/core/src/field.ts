@@ -27,6 +27,11 @@ type FairPredicate<
   C extends Record<string, unknown>,
 > = (value: NonNullable<V>, values: InputValues<F>, conditions: C) => boolean
 
+type FieldSelector<
+  F extends Record<string, FieldDef>,
+  V = unknown,
+> = (keyof F & string) | { readonly __umpfield: keyof F & string } | { readonly __umpfield: string }
+
 export type AttachedFieldRule =
   | {
       kind: 'enabledWhen'
@@ -76,7 +81,7 @@ export interface BaseFieldBuilder<V = unknown> {
     F extends Record<string, FieldDef>,
     C extends Record<string, unknown> = Record<string, unknown>,
   >(
-    dependency: keyof F & string,
+    dependency: FieldSelector<F>,
     options?: RuleOptions<F, C>,
   ): this
 }
@@ -156,12 +161,12 @@ function createFieldBuilder<V>(name?: string): FieldBuilder<V> {
       F extends Record<string, FieldDef>,
       C extends Record<string, unknown> = Record<string, unknown>,
     >(
-      dependency: keyof F & string,
+      dependency: FieldSelector<F>,
       options?: RuleOptions<F, C>,
     ) {
       return pushRule(this, {
         kind: 'requires',
-        dependency,
+        dependency: getFieldNameOrThrow(dependency),
         options: options as AttachedRequires['options'],
       })
     },
@@ -192,6 +197,24 @@ export function getFieldBuilderName(value: unknown): string | undefined {
 
   const name = (value as { __umpfield?: unknown }).__umpfield
   return typeof name === 'string' ? name : undefined
+}
+
+function getFieldNameOrThrow<
+  F extends Record<string, FieldDef>,
+  V,
+>(
+  field: FieldSelector<F, V>,
+): keyof F & string {
+  if (typeof field === 'string') {
+    return field
+  }
+
+  const name = getFieldBuilderName(field)
+  if (!name) {
+    throw new Error('[umpire] Named field builder required when passing a field() value to a rule')
+  }
+
+  return name as keyof F & string
 }
 
 export function getFieldBuilderDef<V>(builder: FieldBuilder<V>): FieldDef<V> {

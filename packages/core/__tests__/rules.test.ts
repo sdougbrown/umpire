@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals'
+import { field } from '../src/field.js'
 import {
   anyOf,
   check,
@@ -89,6 +90,20 @@ describe('disables', () => {
     })
   })
 
+  test('accepts named builders for source and targets', () => {
+    const alpha = field<string>('alpha')
+    const beta = field<string>('beta')
+    const gamma = field<string>('gamma')
+    const rule = disables(beta, [alpha, gamma])
+
+    expect(rule.sources).toEqual(['beta'])
+    expect(rule.targets).toEqual(['alpha', 'gamma'])
+    expect(rule.evaluate({ beta: 'present' }, { allow: true }).get('alpha')).toEqual({
+      enabled: false,
+      reason: 'overridden by beta',
+    })
+  })
+
   test('with predicate source keeps sources empty', () => {
     const rule = disables<TestFields, TestConditions>(
       (_values, conditions) => conditions.allow,
@@ -109,6 +124,16 @@ describe('disables', () => {
       'overridden by beta',
     )
   })
+
+  test('requires named builders when passing builders to source or targets', () => {
+    expect(() =>
+      disables(field<string>(), ['alpha']),
+    ).toThrow('Named field builder required when passing a field() value to a rule')
+
+    expect(() =>
+      disables('beta', [field<string>()]),
+    ).toThrow('Named field builder required when passing a field() value to a rule')
+  })
 })
 
 describe('requires', () => {
@@ -125,6 +150,19 @@ describe('requires', () => {
     expect(rule.evaluate({ beta: 0 }, { allow: true }).get('alpha')).toEqual({
       enabled: true,
       reason: null,
+    })
+  })
+
+  test('accepts named builders for target and dependencies', () => {
+    const alpha = field<string>('alpha')
+    const beta = field<string>('beta')
+    const rule = requires(alpha, beta)
+
+    expect(rule.targets).toEqual(['alpha'])
+    expect(rule.sources).toEqual(['beta'])
+    expect(rule.evaluate({ beta: undefined }, { allow: true }).get('alpha')).toMatchObject({
+      enabled: false,
+      reason: 'requires beta',
     })
   })
 
@@ -155,6 +193,12 @@ describe('requires', () => {
       requires<TestFields, TestConditions>('alpha', { reason: 'custom reason' }),
     ).toThrow('requires("alpha") requires at least one dependency')
   })
+
+  test('requires named builders when passing builders as dependencies', () => {
+    expect(() =>
+      requires('alpha', field<string>()),
+    ).toThrow('Named field builder required when passing a field() value to a rule')
+  })
 })
 
 describe('oneOf', () => {
@@ -182,6 +226,15 @@ describe('oneOf', () => {
     ).toThrow('must not be empty')
   })
 
+  test('requires named builders when passing builders in branch definitions', () => {
+    expect(() =>
+      oneOf('strategy', {
+        first: [field<string>()],
+        second: ['beta'],
+      }),
+    ).toThrow('Named field builder required when passing a field() value to a rule')
+  })
+
   test('returns all fields as targets', () => {
     const rule = oneOf<TestFields, TestConditions>('strategy', {
       first: ['alpha'],
@@ -190,6 +243,23 @@ describe('oneOf', () => {
 
     expect(rule.targets).toEqual(['alpha', 'beta', 'gamma'])
     expect(rule.sources).toEqual(['alpha', 'beta', 'gamma'])
+  })
+
+  test('accepts named builders in branch definitions', () => {
+    const alpha = field<string>('alpha')
+    const beta = field<string>('beta')
+    const gamma = field<string>('gamma')
+    const rule = oneOf('strategy', {
+      first: [alpha],
+      second: [beta, gamma],
+    })
+
+    expect(rule.targets).toEqual(['alpha', 'beta', 'gamma'])
+    expect(rule.sources).toEqual(['alpha', 'beta', 'gamma'])
+    expect(rule.evaluate({ beta: 'active' }, { allow: true }).get('alpha')).toEqual({
+      enabled: false,
+      reason: 'conflicts with second strategy',
+    })
   })
 
   test('auto-detects the active branch from satisfied fields', () => {

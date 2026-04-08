@@ -21,6 +21,8 @@ oneOf(
 )
 ```
 
+Branch members can be field names or named field builders. Predicates and `check()` are not supported for branch members — branches need stable field references for mutual exclusion tracking.
+
 ## Branch resolution
 
 The active branch is determined by (in order):

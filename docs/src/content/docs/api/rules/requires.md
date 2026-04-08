@@ -17,6 +17,7 @@ requires(
 Dependencies can be:
 
 - field names
+- named field builders
 - predicates `(values, conditions) => boolean`
 - `check(field, validator)` helpers
 

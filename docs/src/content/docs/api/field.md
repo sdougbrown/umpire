@@ -38,6 +38,8 @@ const ump = umpire({
 
 The name is baked into the builder and extracted by rule factories. Rules receive a typed `value: NonNullable<V>` parameter.
 
+Named builders work anywhere field names are accepted — as targets in top-level rules, and in `requires()`, `disables()`, and `oneOf()`.
+
 When a named builder is used as an object key in `umpire()`, the provided name must match the key. Mismatches throw at construction time.
 
 ## Builder API
@@ -58,7 +60,7 @@ interface FieldBuilder<V> {
     options?: { reason?: string | ((values, conditions) => string) },
   ): this
   requires(
-    dependency: string,
+    dependency: string | FieldBuilder<unknown>,
     options?: { reason?: string },
   ): this
 }

@@ -20,8 +20,14 @@ disables(
 `source` can be:
 
 - a field name
+- a named field builder
 - a predicate `(values, conditions) => boolean`
 - a `check(field, validator)` helper
+
+`targets` can be:
+
+- field names
+- named field builders
 
 ## Examples
 
