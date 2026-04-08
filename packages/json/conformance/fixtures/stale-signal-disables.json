@@ -1,0 +1,67 @@
+{
+  "fixtureVersion": 1,
+  "id": "stale-signal-disables",
+  "description": "A disabled source field can still disable its own targets when it holds a satisfied stale value.",
+  "schema": {
+    "version": 1,
+    "fields": {
+      "rainDelay": {
+        "isEmpty": "string"
+      },
+      "catcherSignal": {
+        "isEmpty": "string"
+      },
+      "bullpenPhone": {
+        "isEmpty": "string"
+      }
+    },
+    "rules": [
+      {
+        "type": "disables",
+        "source": "rainDelay",
+        "targets": ["catcherSignal"]
+      },
+      {
+        "type": "disables",
+        "source": "catcherSignal",
+        "targets": ["bullpenPhone"]
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "stale-disabled-signal-still-locks-the-phone",
+      "values": {
+        "rainDelay": "storm cell over center field",
+        "catcherSignal": "wave from the third-base box"
+      },
+      "expectedAvailability": {
+        "rainDelay": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "catcherSignal": { "enabled": false, "fair": true, "required": false, "reason": "overridden by rainDelay", "reasons": ["overridden by rainDelay"] },
+        "bullpenPhone": { "enabled": false, "fair": true, "required": false, "reason": "overridden by catcherSignal", "reasons": ["overridden by catcherSignal"] }
+      }
+    },
+    {
+      "id": "empty-disabled-signal-does-not-lock-the-phone",
+      "values": {
+        "rainDelay": "storm cell over center field"
+      },
+      "expectedAvailability": {
+        "rainDelay": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "catcherSignal": { "enabled": false, "fair": true, "required": false, "reason": "overridden by rainDelay", "reasons": ["overridden by rainDelay"] },
+        "bullpenPhone": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] }
+      }
+    },
+    {
+      "id": "live-signal-locks-the-phone-without-rain",
+      "values": {
+        "catcherSignal": "wave from the third-base box"
+      },
+      "expectedAvailability": {
+        "rainDelay": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "catcherSignal": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "bullpenPhone": { "enabled": false, "fair": true, "required": false, "reason": "overridden by catcherSignal", "reasons": ["overridden by catcherSignal"] }
+      }
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "fixtureVersion": 1,
+  "id": "rotation-cascade",
+  "description": "A foul field can stay enabled itself while still cascading availability failures through downstream requires links.",
+  "schema": {
+    "version": 1,
+    "conditions": {
+      "availablePitchers": {
+        "type": "string[]",
+        "description": "Pitchers available for tonight's game"
+      }
+    },
+    "fields": {
+      "startingPitcher": {
+        "required": true,
+        "isEmpty": "string"
+      },
+      "catcherPlan": {
+        "isEmpty": "string"
+      },
+      "bullpenPhone": {
+        "isEmpty": "string"
+      }
+    },
+    "rules": [
+      {
+        "type": "fairWhen",
+        "field": "startingPitcher",
+        "when": {
+          "op": "fieldInCond",
+          "field": "startingPitcher",
+          "condition": "availablePitchers"
+        },
+        "reason": "Starting pitcher is not available tonight"
+      },
+      {
+        "type": "requires",
+        "field": "catcherPlan",
+        "dependency": "startingPitcher"
+      },
+      {
+        "type": "requires",
+        "field": "bullpenPhone",
+        "dependency": "catcherPlan"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "starter-foul-cascades-through-the-battery-plan",
+      "values": {
+        "startingPitcher": "Cole",
+        "catcherPlan": "soft away early",
+        "bullpenPhone": "call the bridge arm"
+      },
+      "conditions": {
+        "availablePitchers": ["Holmes"]
+      },
+      "expectedAvailability": {
+        "startingPitcher": { "enabled": true, "fair": false, "required": true, "reason": "Starting pitcher is not available tonight", "reasons": ["Starting pitcher is not available tonight"] },
+        "catcherPlan": { "enabled": false, "fair": true, "required": false, "reason": "requires startingPitcher", "reasons": ["requires startingPitcher"] },
+        "bullpenPhone": { "enabled": false, "fair": true, "required": false, "reason": "requires catcherPlan", "reasons": ["requires catcherPlan"] }
+      }
+    },
+    {
+      "id": "starter-on-the-card-keeps-the-plan-live",
+      "values": {
+        "startingPitcher": "Cole",
+        "catcherPlan": "soft away early",
+        "bullpenPhone": "call the bridge arm"
+      },
+      "conditions": {
+        "availablePitchers": ["Cole", "Holmes"]
+      },
+      "expectedAvailability": {
+        "startingPitcher": { "enabled": true, "fair": true, "required": true, "reason": null, "reasons": [] },
+        "catcherPlan": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "bullpenPhone": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] }
+      }
+    }
+  ]
+}

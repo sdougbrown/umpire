@@ -1,0 +1,103 @@
+{
+  "fixtureVersion": 1,
+  "id": "dugout-emptiness",
+  "description": "Portable isEmpty strategies should agree on what counts as present before a dependency can unlock a target field.",
+  "schema": {
+    "version": 1,
+    "fields": {
+      "scoutingNote": {
+        "isEmpty": "string"
+      },
+      "benchBats": {
+        "isEmpty": "array"
+      },
+      "pitcherCard": {
+        "isEmpty": "object"
+      },
+      "inning": {
+        "isEmpty": "number"
+      },
+      "shiftOn": {
+        "isEmpty": "boolean"
+      },
+      "pregameChecklistReady": {}
+    },
+    "rules": [
+      {
+        "type": "requires",
+        "field": "pregameChecklistReady",
+        "dependency": "scoutingNote"
+      },
+      {
+        "type": "requires",
+        "field": "pregameChecklistReady",
+        "dependency": "benchBats"
+      },
+      {
+        "type": "requires",
+        "field": "pregameChecklistReady",
+        "dependency": "pitcherCard"
+      },
+      {
+        "type": "requires",
+        "field": "pregameChecklistReady",
+        "dependency": "inning"
+      },
+      {
+        "type": "requires",
+        "field": "pregameChecklistReady",
+        "dependency": "shiftOn"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "empty-values-do-not-count",
+      "values": {
+        "scoutingNote": "",
+        "benchBats": [],
+        "pitcherCard": {},
+        "inning": null,
+        "shiftOn": null
+      },
+      "expectedAvailability": {
+        "scoutingNote": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "benchBats": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "pitcherCard": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "inning": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "shiftOn": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "pregameChecklistReady": {
+          "enabled": false,
+          "fair": true,
+          "required": false,
+          "reason": "requires scoutingNote",
+          "reasons": [
+            "requires scoutingNote",
+            "requires benchBats",
+            "requires pitcherCard",
+            "requires inning",
+            "requires shiftOn"
+          ]
+        }
+      }
+    },
+    {
+      "id": "false-and-numbers-can-still-be-present",
+      "values": {
+        "scoutingNote": "Attack away early",
+        "benchBats": ["Verdugo"],
+        "pitcherCard": { "firstPitch": "four-seam" },
+        "inning": 1,
+        "shiftOn": false
+      },
+      "expectedAvailability": {
+        "scoutingNote": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "benchBats": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "pitcherCard": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "inning": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "shiftOn": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "pregameChecklistReady": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] }
+      }
+    }
+  ]
+}

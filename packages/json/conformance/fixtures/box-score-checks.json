@@ -1,0 +1,125 @@
+{
+  "fixtureVersion": 1,
+  "id": "box-score-checks",
+  "description": "Named portable checks should behave the same way everywhere and use the same default reasons when no rule-level override is supplied.",
+  "schema": {
+    "version": 1,
+    "fields": {
+      "scorerEmail": {},
+      "highlightUrl": {},
+      "jerseyNumber": {},
+      "benchBats": {},
+      "walkupClips": {},
+      "pitchCount": {},
+      "bullpenArms": {},
+      "lineupSlot": {},
+      "inning": {}
+    },
+    "rules": [
+      {
+        "type": "check",
+        "field": "scorerEmail",
+        "op": "email"
+      },
+      {
+        "type": "check",
+        "field": "highlightUrl",
+        "op": "url"
+      },
+      {
+        "type": "check",
+        "field": "jerseyNumber",
+        "op": "matches",
+        "pattern": "^[0-9]{1,2}$"
+      },
+      {
+        "type": "check",
+        "field": "benchBats",
+        "op": "minLength",
+        "value": 1
+      },
+      {
+        "type": "check",
+        "field": "walkupClips",
+        "op": "maxLength",
+        "value": 3
+      },
+      {
+        "type": "check",
+        "field": "pitchCount",
+        "op": "min",
+        "value": 1
+      },
+      {
+        "type": "check",
+        "field": "bullpenArms",
+        "op": "max",
+        "value": 8
+      },
+      {
+        "type": "check",
+        "field": "lineupSlot",
+        "op": "range",
+        "min": 1,
+        "max": 9
+      },
+      {
+        "type": "check",
+        "field": "inning",
+        "op": "integer"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "all-box-score-checks-pass",
+      "values": {
+        "scorerEmail": "pressbox@ballpark.example",
+        "highlightUrl": "https://mlb.example/highlights/9th-inning",
+        "jerseyNumber": "27",
+        "benchBats": ["Soto"],
+        "walkupClips": ["intro", "chorus", "outro"],
+        "pitchCount": 1,
+        "bullpenArms": 8,
+        "lineupSlot": 4,
+        "inning": 9
+      },
+      "expectedAvailability": {
+        "scorerEmail": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "highlightUrl": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "jerseyNumber": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "benchBats": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "walkupClips": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "pitchCount": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "bullpenArms": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "lineupSlot": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "inning": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] }
+      }
+    },
+    {
+      "id": "each-portable-check-fails-cleanly",
+      "values": {
+        "scorerEmail": "pressbox-at-ballpark",
+        "highlightUrl": "/highlights/9th",
+        "jerseyNumber": "100",
+        "benchBats": [],
+        "walkupClips": ["a", "b", "c", "d"],
+        "pitchCount": 0,
+        "bullpenArms": 9,
+        "lineupSlot": 10,
+        "inning": 9.5
+      },
+      "expectedAvailability": {
+        "scorerEmail": { "enabled": true, "fair": false, "required": false, "reason": "Must be a valid email address", "reasons": ["Must be a valid email address"] },
+        "highlightUrl": { "enabled": true, "fair": false, "required": false, "reason": "Must be a valid URL", "reasons": ["Must be a valid URL"] },
+        "jerseyNumber": { "enabled": true, "fair": false, "required": false, "reason": "Must match the required format", "reasons": ["Must match the required format"] },
+        "benchBats": { "enabled": true, "fair": false, "required": false, "reason": "Must be at least 1 characters", "reasons": ["Must be at least 1 characters"] },
+        "walkupClips": { "enabled": true, "fair": false, "required": false, "reason": "Must be 3 characters or fewer", "reasons": ["Must be 3 characters or fewer"] },
+        "pitchCount": { "enabled": true, "fair": false, "required": false, "reason": "Must be at least 1", "reasons": ["Must be at least 1"] },
+        "bullpenArms": { "enabled": true, "fair": false, "required": false, "reason": "Must be 8 or less", "reasons": ["Must be 8 or less"] },
+        "lineupSlot": { "enabled": true, "fair": false, "required": false, "reason": "Must be between 1 and 9", "reasons": ["Must be between 1 and 9"] },
+        "inning": { "enabled": true, "fair": false, "required": false, "reason": "Must be a whole number", "reasons": ["Must be a whole number"] }
+      }
+    }
+  ]
+}

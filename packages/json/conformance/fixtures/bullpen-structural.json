@@ -1,0 +1,204 @@
+{
+  "fixtureVersion": 1,
+  "id": "bullpen-structural",
+  "description": "Structural availability, conditions, oneOf prev resolution, anyOf, fairWhen, and excluded carry-forward.",
+  "schema": {
+    "version": 1,
+    "conditions": {
+      "isPlayoffs": {
+        "type": "boolean",
+        "description": "Whether the club is in postseason mode"
+      },
+      "availablePitchers": {
+        "type": "string[]",
+        "description": "Pitchers available for tonight's game"
+      }
+    },
+    "fields": {
+      "startingPitcher": {
+        "required": true,
+        "isEmpty": "string"
+      },
+      "bullpenPhone": {
+        "isEmpty": "string"
+      },
+      "outfieldSignal": {
+        "isEmpty": "string"
+      },
+      "closerReady": {},
+      "inning": {
+        "default": 1,
+        "isEmpty": "number"
+      },
+      "pitcherCard": {
+        "isEmpty": "object"
+      },
+      "benchBats": {
+        "isEmpty": "array"
+      },
+      "stealCoverOn": {
+        "isEmpty": "boolean"
+      },
+      "dugoutReady": {}
+    },
+    "rules": [
+      {
+        "type": "oneOf",
+        "group": "bullpenCall",
+        "branches": {
+          "phone": ["bullpenPhone"],
+          "signal": ["outfieldSignal"]
+        }
+      },
+      {
+        "type": "requires",
+        "field": "bullpenPhone",
+        "dependency": "startingPitcher"
+      },
+      {
+        "type": "requires",
+        "field": "dugoutReady",
+        "dependency": "pitcherCard"
+      },
+      {
+        "type": "requires",
+        "field": "dugoutReady",
+        "dependency": "benchBats"
+      },
+      {
+        "type": "requires",
+        "field": "dugoutReady",
+        "dependency": "stealCoverOn"
+      },
+      {
+        "type": "requires",
+        "field": "dugoutReady",
+        "dependency": "inning"
+      },
+      {
+        "type": "anyOf",
+        "rules": [
+          {
+            "type": "enabledWhen",
+            "field": "closerReady",
+            "when": { "op": "cond", "condition": "isPlayoffs" },
+            "reason": "Playoff game keeps the closer hot"
+          },
+          {
+            "type": "enabledWhen",
+            "field": "closerReady",
+            "when": { "op": "eq", "field": "inning", "value": 9 },
+            "reason": "Closer waits for the ninth"
+          }
+        ]
+      },
+      {
+        "type": "fairWhen",
+        "field": "startingPitcher",
+        "when": {
+          "op": "fieldInCond",
+          "field": "startingPitcher",
+          "condition": "availablePitchers"
+        },
+        "reason": "Starting pitcher is not available tonight"
+      }
+    ],
+    "excluded": [
+      {
+        "type": "custom",
+        "field": "dugoutReady",
+        "description": "Home clubhouse still tracks some prep steps on a whiteboard",
+        "key": "clubhouse:whiteboard:dugoutReady"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "phone-branch-wins-in-the-ninth",
+      "values": {
+        "startingPitcher": "Cole",
+        "bullpenPhone": "ring the pen",
+        "inning": 9,
+        "pitcherCard": { "fastball": 62 },
+        "benchBats": ["Soto", "Verdugo"],
+        "stealCoverOn": false
+      },
+      "conditions": {
+        "isPlayoffs": false,
+        "availablePitchers": ["Cole", "Holmes"]
+      },
+      "expectedAvailability": {
+        "startingPitcher": { "enabled": true, "fair": true, "required": true, "reason": null, "reasons": [] },
+        "bullpenPhone": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "outfieldSignal": { "enabled": false, "fair": true, "required": false, "reason": "conflicts with phone strategy", "reasons": ["conflicts with phone strategy"] },
+        "closerReady": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "inning": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "pitcherCard": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "benchBats": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "stealCoverOn": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "dugoutReady": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] }
+      }
+    },
+    {
+      "id": "signal-branch-wins-with-prev",
+      "values": {
+        "startingPitcher": "Cole",
+        "bullpenPhone": "ring the pen",
+        "outfieldSignal": "left-fielder wave",
+        "inning": 8,
+        "pitcherCard": { "fastball": 62 },
+        "benchBats": ["Soto", "Verdugo"],
+        "stealCoverOn": true
+      },
+      "prev": {
+        "startingPitcher": "Cole",
+        "bullpenPhone": "ring the pen",
+        "inning": 8,
+        "pitcherCard": { "fastball": 62 },
+        "benchBats": ["Soto", "Verdugo"],
+        "stealCoverOn": true
+      },
+      "conditions": {
+        "isPlayoffs": false,
+        "availablePitchers": ["Cole", "Holmes"]
+      },
+      "expectedAvailability": {
+        "startingPitcher": { "enabled": true, "fair": true, "required": true, "reason": null, "reasons": [] },
+        "bullpenPhone": { "enabled": false, "fair": true, "required": false, "reason": "conflicts with signal strategy", "reasons": ["conflicts with signal strategy"] },
+        "outfieldSignal": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "closerReady": { "enabled": false, "fair": true, "required": false, "reason": "Playoff game keeps the closer hot", "reasons": ["Playoff game keeps the closer hot", "Closer waits for the ninth"] },
+        "inning": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "pitcherCard": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "benchBats": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "stealCoverOn": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "dugoutReady": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] }
+      }
+    },
+    {
+      "id": "starter-not-on-tonights-card",
+      "values": {
+        "startingPitcher": "Cole",
+        "bullpenPhone": "ring the pen",
+        "inning": 7,
+        "pitcherCard": { "fastball": 62 },
+        "benchBats": ["Soto"],
+        "stealCoverOn": true
+      },
+      "conditions": {
+        "isPlayoffs": false,
+        "availablePitchers": ["Holmes"]
+      },
+      "expectedAvailability": {
+        "startingPitcher": { "enabled": true, "fair": false, "required": true, "reason": "Starting pitcher is not available tonight", "reasons": ["Starting pitcher is not available tonight"] },
+        "bullpenPhone": { "enabled": false, "fair": true, "required": false, "reason": "requires startingPitcher", "reasons": ["requires startingPitcher"] },
+        "outfieldSignal": { "enabled": false, "fair": true, "required": false, "reason": "conflicts with phone strategy", "reasons": ["conflicts with phone strategy"] },
+        "closerReady": { "enabled": false, "fair": true, "required": false, "reason": "Playoff game keeps the closer hot", "reasons": ["Playoff game keeps the closer hot", "Closer waits for the ninth"] },
+        "inning": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "pitcherCard": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "benchBats": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "stealCoverOn": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "dugoutReady": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] }
+      }
+    }
+  ]
+}

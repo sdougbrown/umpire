@@ -1,0 +1,70 @@
+{
+  "fixtureVersion": 1,
+  "id": "rain-delay-chain",
+  "description": "A disabled field can knock out a whole downstream requires chain, even when stale values are still present.",
+  "schema": {
+    "version": 1,
+    "fields": {
+      "rainDelay": {
+        "isEmpty": "string"
+      },
+      "starterWarmup": {
+        "isEmpty": "string"
+      },
+      "moundVisitPlan": {
+        "isEmpty": "string"
+      },
+      "bullpenPhone": {
+        "isEmpty": "string"
+      }
+    },
+    "rules": [
+      {
+        "type": "disables",
+        "source": "rainDelay",
+        "targets": ["starterWarmup"]
+      },
+      {
+        "type": "requires",
+        "field": "moundVisitPlan",
+        "dependency": "starterWarmup"
+      },
+      {
+        "type": "requires",
+        "field": "bullpenPhone",
+        "dependency": "moundVisitPlan"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "storm-cell-ripples-through-the-chain",
+      "values": {
+        "rainDelay": "storm cell over center field",
+        "starterWarmup": "long toss in foul territory",
+        "moundVisitPlan": "visit after the third",
+        "bullpenPhone": "call the lefty"
+      },
+      "expectedAvailability": {
+        "rainDelay": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "starterWarmup": { "enabled": false, "fair": true, "required": false, "reason": "overridden by rainDelay", "reasons": ["overridden by rainDelay"] },
+        "moundVisitPlan": { "enabled": false, "fair": true, "required": false, "reason": "requires starterWarmup", "reasons": ["requires starterWarmup"] },
+        "bullpenPhone": { "enabled": false, "fair": true, "required": false, "reason": "requires moundVisitPlan", "reasons": ["requires moundVisitPlan"] }
+      }
+    },
+    {
+      "id": "clear-skies-keep-the-chain-live",
+      "values": {
+        "starterWarmup": "long toss in foul territory",
+        "moundVisitPlan": "visit after the third",
+        "bullpenPhone": "call the lefty"
+      },
+      "expectedAvailability": {
+        "rainDelay": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "starterWarmup": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "moundVisitPlan": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "bullpenPhone": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] }
+      }
+    }
+  ]
+}
