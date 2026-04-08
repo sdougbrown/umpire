@@ -1,4 +1,4 @@
-import { anyOf, check, enabledWhen, oneOf, requires } from '../src/rules.js'
+import { anyOf, check, disables, enabledWhen, oneOf, requires } from '../src/rules.js'
 import { umpire } from '../src/umpire.js'
 
 type TestFields = {
@@ -129,6 +129,70 @@ describe('edge cases', () => {
         ],
       }),
     ).toThrow('Unknown field "missing" in oneOf("strategy") branch "second"')
+  })
+
+  test('rejects requires() when the same dependency also disables the target', () => {
+    expect(() =>
+      umpire<TestFields>({
+        fields: {
+          alpha: {},
+          beta: {},
+          gamma: {},
+          delta: {},
+        },
+        rules: [
+          disables<TestFields>('beta', ['delta']),
+          requires<TestFields>('delta', 'beta'),
+        ],
+      }),
+    ).toThrow(
+      'Contradictory rules: "delta" can never be enabled because it requires "beta", but is disabled whenever "beta" is satisfied',
+    )
+  })
+
+  test('rejects cross-branch requires() dependencies in auto oneOf()', () => {
+    expect(() =>
+      umpire<TestFields>({
+        fields: {
+          alpha: {},
+          beta: {},
+          gamma: {},
+          delta: {},
+        },
+        rules: [
+          oneOf<TestFields>('strategy', {
+            first: ['alpha'],
+            second: ['beta'],
+          }),
+          requires<TestFields>('alpha', check('beta', (value) => value === 'ready')),
+        ],
+      }),
+    ).toThrow(
+      'Contradictory rules: "alpha" can never be enabled because it requires "beta", but oneOf("strategy") places them in different branches ("first" and "second")',
+    )
+  })
+
+  test('does not reject cross-branch requires() when oneOf() branch selection is dynamic', () => {
+    expect(() =>
+      umpire<TestFields, { mode: string }>({
+        fields: {
+          alpha: {},
+          beta: {},
+          gamma: {},
+          delta: {},
+        },
+        rules: [
+          oneOf<TestFields, { mode: string }>('strategy', {
+            first: ['alpha'],
+            second: ['beta'],
+          }, {
+            activeBranch: (_values, conditions) =>
+              conditions.mode === 'all-open' ? null : 'first',
+          }),
+          requires<TestFields, { mode: string }>('alpha', 'beta'),
+        ],
+      }),
+    ).not.toThrow()
   })
 
   test('precomputes rule target lookups at construction time', () => {

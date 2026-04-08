@@ -557,6 +557,169 @@ function buildTransitiveDeps<
   return result
 }
 
+type StructuralRequirement<Field extends string = string> = {
+  target: Field
+  dependency: Field
+}
+
+type StaticOneOfGroup<Field extends string = string> = {
+  groupName: string
+  branchByField: Map<Field, string>
+}
+
+function getStructuralRequirementsFromRule<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(rule: Rule<F, C>): Array<StructuralRequirement<keyof F & string>> {
+  const metadata = getInternalRuleMetadata(rule)
+
+  if (metadata?.kind !== 'requires') {
+    return []
+  }
+
+  return metadata.dependencies.flatMap((dependency) => {
+    const dependencyField =
+      typeof dependency === 'string'
+        ? dependency
+        : getSourceField(dependency)
+
+    if (!dependencyField) {
+      return []
+    }
+
+    return [{
+      target: rule.targets[0],
+      dependency: dependencyField,
+    }]
+  })
+}
+
+function getFieldSourceDisableTargetsFromRule<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(rule: Rule<F, C>): { source: keyof F & string; targets: Array<keyof F & string> } | null {
+  const metadata = getInternalRuleMetadata(rule)
+
+  // Only a plain field-name source proves the hard contradiction we care
+  // about here. Predicates may preserve source-field metadata via check(),
+  // but they do not mean "disabled whenever this field is satisfied".
+  if (metadata?.kind !== 'disables' || typeof metadata.source !== 'string') {
+    return null
+  }
+
+  return {
+    source: metadata.source,
+    targets: [...rule.targets],
+  }
+}
+
+function getStaticOneOfGroupFromRule<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(rule: Rule<F, C>): StaticOneOfGroup<keyof F & string> | null {
+  const metadata = getInternalRuleMetadata(rule)
+
+  if (
+    metadata?.kind !== 'oneOf' ||
+    typeof metadata.options?.activeBranch === 'function'
+  ) {
+    return null
+  }
+
+  const branchByField = new Map<keyof F & string, string>()
+
+  for (const [branchName, branchFields] of Object.entries(metadata.branches)) {
+    for (const field of branchFields) {
+      branchByField.set(field, branchName)
+    }
+  }
+
+  return {
+    groupName: metadata.groupName,
+    branchByField,
+  }
+}
+
+/**
+ * Rejects a small set of rule combinations that are structurally impossible.
+ *
+ * This is intentionally a conservative creation-time validation pass, not a
+ * general satisfiability solver. It only looks for contradictions we can prove
+ * from static rule structure alone, without evaluating arbitrary values,
+ * conditions, or custom logic.
+ *
+ * Today that means two hard-error cases:
+ * - `requires(target, dependency)` together with `disables(dependency, [target])`
+ * - `requires(target, dependency)` where `target` and `dependency` belong to
+ *   different branches of the same non-dynamic `oneOf()` group
+ *
+ * Those cases are safe to reject because, under Umpire's semantics, there is
+ * no state in which the target can become enabled.
+ *
+ * This pass intentionally excludes anything that would require interpreting
+ * broader predicate meaning rather than explicit field structure, including:
+ * - predicate-backed `disables()` sources, even when they preserve a field via
+ *   `check()`, because that metadata does not mean "whenever this field is
+ *   satisfied"
+ * - dynamic `oneOf({ activeBranch })` functions, because runtime conditions can
+ *   legitimately reopen states that look contradictory from static structure
+ * - `anyOf()` and custom rules, because they would require deeper semantic
+ *   analysis than this validator is meant to provide
+ *
+ * Future additions here should follow the same bar: only add checks that are
+ * provably impossible by construction, with no need to reason about runtime
+ * data beyond the structural guarantees encoded in the rule definitions.
+ */
+function validateStructuralContradictions<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(rules: Rule<F, C>[]): void {
+  const requirements: Array<StructuralRequirement<keyof F & string>> = []
+  const disablesBySource = new Map<keyof F & string, Set<keyof F & string>>()
+  const staticOneOfGroups: Array<StaticOneOfGroup<keyof F & string>> = []
+
+  for (const rule of rules) {
+    requirements.push(...getStructuralRequirementsFromRule(rule))
+
+    const disableTargets = getFieldSourceDisableTargetsFromRule(rule)
+    if (disableTargets) {
+      const targets = disablesBySource.get(disableTargets.source) ?? new Set<keyof F & string>()
+
+      for (const target of disableTargets.targets) {
+        targets.add(target)
+      }
+
+      disablesBySource.set(disableTargets.source, targets)
+    }
+
+    const staticOneOfGroup = getStaticOneOfGroupFromRule(rule)
+    if (staticOneOfGroup) {
+      staticOneOfGroups.push(staticOneOfGroup)
+    }
+  }
+
+  for (const { target, dependency } of requirements) {
+    if (disablesBySource.get(dependency)?.has(target)) {
+      throw new Error(
+        `[umpire] Contradictory rules: "${target}" can never be enabled because it requires "${dependency}", but is disabled whenever "${dependency}" is satisfied`,
+      )
+    }
+
+    for (const group of staticOneOfGroups) {
+      const targetBranch = group.branchByField.get(target)
+      const dependencyBranch = group.branchByField.get(dependency)
+
+      if (!targetBranch || !dependencyBranch || targetBranch === dependencyBranch) {
+        continue
+      }
+
+      throw new Error(
+        `[umpire] Contradictory rules: "${target}" can never be enabled because it requires "${dependency}", but oneOf("${group.groupName}") places them in different branches ("${targetBranch}" and "${dependencyBranch}")`,
+      )
+    }
+  }
+}
+
 function validateRules<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
@@ -585,6 +748,8 @@ function validateRules<
       }
     }
   }
+
+  validateStructuralContradictions(rules)
 }
 
 export function umpire<
