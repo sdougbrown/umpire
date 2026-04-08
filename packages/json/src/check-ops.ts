@@ -1,6 +1,6 @@
 import type { JsonPrimitive, NamedCheck, NamedCheckMetadata } from '@umpire/core'
 
-import type { JsonCheckRule, JsonCheckOp } from './schema.js'
+import type { JsonCheckRule, JsonCheckOp, JsonCheckSpec } from './schema.js'
 
 type Params = Readonly<Record<string, JsonPrimitive>>
 
@@ -77,9 +77,9 @@ export const checks = Object.freeze({
   },
 })
 
-export function defaultCheckReason(rule: JsonCheckRule | NamedCheckMetadata): string {
+export function defaultCheckReason(rule: JsonCheckSpec | NamedCheckMetadata): string {
   const metadata = 'op' in rule
-    ? ({ __check: rule.op, params: paramsFromCheckRule(rule) } satisfies NamedCheckMetadata)
+    ? ({ __check: rule.op, params: paramsFromCheckSpec(rule) } satisfies NamedCheckMetadata)
     : rule
 
   switch (metadata.__check) {
@@ -106,7 +106,7 @@ export function defaultCheckReason(rule: JsonCheckRule | NamedCheckMetadata): st
   }
 }
 
-function paramsFromCheckRule(rule: JsonCheckRule): Params | undefined {
+function paramsFromCheckSpec(rule: JsonCheckSpec): Params | undefined {
   switch (rule.op) {
     case 'matches':
       return { pattern: rule.pattern }
@@ -126,28 +126,19 @@ function paramsFromNamedCheckMetadata(metadata: NamedCheckMetadata): Params | un
   return metadata.params
 }
 
-export function createCheckRuleFromMetadata(
-  field: string,
-  metadata: NamedCheckMetadata,
-  reason?: string,
-): JsonCheckRule | undefined {
-  const resolvedReason = reason && reason !== defaultCheckReason(metadata) ? reason : undefined
+export function createCheckSpecFromMetadata(metadata: NamedCheckMetadata): JsonCheckSpec | undefined {
   const params = paramsFromNamedCheckMetadata(metadata)
 
   switch (metadata.__check) {
     case 'email':
     case 'url':
     case 'integer':
-      return resolvedReason
-        ? { type: 'check', field, op: metadata.__check, reason: resolvedReason }
-        : { type: 'check', field, op: metadata.__check }
+      return { op: metadata.__check }
     case 'matches':
       if (typeof params?.pattern !== 'string') {
         return undefined
       }
-      return resolvedReason
-        ? { type: 'check', field, op: 'matches', pattern: params.pattern, reason: resolvedReason }
-        : { type: 'check', field, op: 'matches', pattern: params.pattern }
+      return { op: 'matches', pattern: params.pattern }
     case 'minLength':
     case 'maxLength':
     case 'min':
@@ -155,45 +146,62 @@ export function createCheckRuleFromMetadata(
       if (typeof params?.value !== 'number') {
         return undefined
       }
-      return resolvedReason
-        ? { type: 'check', field, op: metadata.__check, value: params.value, reason: resolvedReason }
-        : { type: 'check', field, op: metadata.__check, value: params.value }
+      return { op: metadata.__check, value: params.value }
     case 'range':
       if (typeof params?.min !== 'number' || typeof params?.max !== 'number') {
         return undefined
       }
-      return resolvedReason
-        ? { type: 'check', field, op: 'range', min: params.min, max: params.max, reason: resolvedReason }
-        : { type: 'check', field, op: 'range', min: params.min, max: params.max }
+      return { op: 'range', min: params.min, max: params.max }
     default:
       return undefined
   }
 }
 
-export function createNamedCheckFromRule(rule: JsonCheckRule): NamedCheck<any> {
-  switch (rule.op) {
+export function createCheckRuleFromMetadata(
+  field: string,
+  metadata: NamedCheckMetadata,
+  reason?: string,
+): JsonCheckRule | undefined {
+  const resolvedReason = reason && reason !== defaultCheckReason(metadata) ? reason : undefined
+  const spec = createCheckSpecFromMetadata(metadata)
+
+  if (!spec) {
+    return undefined
+  }
+
+  return resolvedReason
+    ? { type: 'check', field, reason: resolvedReason, ...spec }
+    : { type: 'check', field, ...spec }
+}
+
+export function createNamedCheckFromSpec(spec: JsonCheckSpec): NamedCheck<any> {
+  switch (spec.op) {
     case 'email':
       return checks.email()
     case 'url':
       return checks.url()
     case 'matches':
-      return checks.matches(rule.pattern)
+      return checks.matches(spec.pattern)
     case 'minLength':
-      return checks.minLength(rule.value)
+      return checks.minLength(spec.value)
     case 'maxLength':
-      return checks.maxLength(rule.value)
+      return checks.maxLength(spec.value)
     case 'min':
-      return checks.min(rule.value)
+      return checks.min(spec.value)
     case 'max':
-      return checks.max(rule.value)
+      return checks.max(spec.value)
     case 'range':
-      return checks.range(rule.min, rule.max)
+      return checks.range(spec.min, spec.max)
     case 'integer':
       return checks.integer()
   }
 }
 
-export function assertValidCheckRule(rule: JsonCheckRule): void {
+export function createNamedCheckFromRule(rule: JsonCheckRule): NamedCheck<any> {
+  return createNamedCheckFromSpec(rule)
+}
+
+export function assertValidCheckSpec(rule: JsonCheckSpec): void {
   switch (rule.op) {
     case 'email':
     case 'url':
@@ -228,4 +236,8 @@ export function assertValidCheckRule(rule: JsonCheckRule): void {
     default:
       throw new Error(`[umpire/json] Unknown named check op "${String((rule as { op?: unknown }).op)}"`)
   }
+}
+
+export function assertValidCheckRule(rule: JsonCheckRule): void {
+  assertValidCheckSpec(rule)
 }

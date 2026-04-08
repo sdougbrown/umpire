@@ -61,6 +61,23 @@ function validateRule(
         return
       }
 
+      if ('dependencies' in rule) {
+        if (!Array.isArray(rule.dependencies) || rule.dependencies.length === 0) {
+          throw new Error('[umpire/json] "requires" rules with dependencies must include at least one entry')
+        }
+
+        for (const dependency of rule.dependencies) {
+          if (typeof dependency === 'string') {
+            assertField(dependency, fieldNames, '"requires"')
+            continue
+          }
+
+          compileExpr(dependency, { fieldNames, conditions })
+        }
+
+        return
+      }
+
       compileExpr(rule.when, { fieldNames, conditions })
       return
     case 'enabledWhen':

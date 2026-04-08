@@ -63,6 +63,29 @@
       "errorIncludes": "Invalid regex pattern"
     },
     {
+      "id": "invalid-regex-pattern-in-check-expression",
+      "phase": "validate",
+      "schema": {
+        "version": 1,
+        "fields": {
+          "scorerEmail": {},
+          "replayBoard": {}
+        },
+        "rules": [
+          {
+            "type": "enabledWhen",
+            "field": "replayBoard",
+            "when": {
+              "op": "check",
+              "field": "scorerEmail",
+              "check": { "op": "matches", "pattern": "[" }
+            }
+          }
+        ]
+      },
+      "errorIncludes": "Invalid regex pattern"
+    },
+    {
       "id": "missing-runtime-condition",
       "phase": "evaluate",
       "schema": {

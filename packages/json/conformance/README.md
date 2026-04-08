@@ -51,6 +51,7 @@ the rules are still small enough to read at a glance.
 
 - structural rules
 - expression DSL operators, including combinators
+- named checks used as field-bound sources inside other rules
 - conditions
 - `oneOf()` with `prev`-assisted resolution
 - `anyOf()` reason collection

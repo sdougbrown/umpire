@@ -1,5 +1,6 @@
-import type { FieldDef, FieldValues } from '@umpire/core'
+import { getNamedCheckMetadata, type FieldDef, type FieldValues, type NamedCheckMetadata } from '@umpire/core'
 
+import { assertValidCheckSpec, createNamedCheckFromSpec } from './check-ops.js'
 import type { JsonConditionDef, JsonExpr } from './schema.js'
 
 type ExprPredicate<
@@ -7,9 +8,11 @@ type ExprPredicate<
   C extends Record<string, unknown>,
 > = ((values: FieldValues<F>, conditions: C) => boolean) & {
   _checkField?: keyof F & string
+  _namedCheck?: NamedCheckMetadata
 }
 
 type CompileExprOptions = {
+  allowUndeclaredConditions?: boolean
   fieldNames: Set<string>
   conditions?: Record<string, JsonConditionDef>
 }
@@ -56,6 +59,7 @@ function collectFieldRefs(expr: JsonExpr): string[] {
     case 'falsy':
     case 'in':
     case 'notIn':
+    case 'check':
       return [expr.field]
     case 'fieldInCond':
       return [expr.field]
@@ -135,24 +139,43 @@ function compileInner<
     case 'notIn':
       assertField(expr.field, expr.op, options.fieldNames)
       return (values) => !expr.values.includes(values[expr.field as keyof F & string] as never)
+    case 'check': {
+      assertField(expr.field, expr.op, options.fieldNames)
+      assertValidCheckSpec(expr.check)
+      const validator = createNamedCheckFromSpec(expr.check)
+
+      return (values) => {
+        const value = values[expr.field as keyof F & string]
+
+        return value != null && validator.validate(value as never)
+      }
+    }
     case 'cond':
-      getConditionDef(expr.condition, expr.op, options.conditions)
+      if (!options.allowUndeclaredConditions) {
+        getConditionDef(expr.condition, expr.op, options.conditions)
+      }
       return (_values, conditions) => Boolean(getConditionValue(expr.condition, conditions))
     case 'condEq':
-      getConditionDef(expr.condition, expr.op, options.conditions)
+      if (!options.allowUndeclaredConditions) {
+        getConditionDef(expr.condition, expr.op, options.conditions)
+      }
       return (_values, conditions) => getConditionValue(expr.condition, conditions) === expr.value
     case 'condIn':
-      getConditionDef(expr.condition, expr.op, options.conditions)
+      if (!options.allowUndeclaredConditions) {
+        getConditionDef(expr.condition, expr.op, options.conditions)
+      }
       return (_values, conditions) =>
         expr.values.includes(getConditionValue(expr.condition, conditions) as never)
     case 'fieldInCond': {
       assertField(expr.field, expr.op, options.fieldNames)
-      const conditionDef = getConditionDef(expr.condition, expr.op, options.conditions)
+      if (!options.allowUndeclaredConditions) {
+        const conditionDef = getConditionDef(expr.condition, expr.op, options.conditions)
 
-      if (conditionDef.type !== 'string[]' && conditionDef.type !== 'number[]') {
-        throw new Error(
-          `[umpire/json] "fieldInCond" requires an array condition, but "${expr.condition}" is "${conditionDef.type}"`,
-        )
+        if (conditionDef.type !== 'string[]' && conditionDef.type !== 'number[]') {
+          throw new Error(
+            `[umpire/json] "fieldInCond" requires an array condition, but "${expr.condition}" is "${conditionDef.type}"`,
+          )
+        }
       }
 
       return (values, conditions) => {
@@ -201,6 +224,10 @@ export function compileExpr<
 
   if (fieldRefs.length === 1) {
     predicate._checkField = fieldRefs[0] as keyof F & string
+  }
+
+  if (expr.op === 'check') {
+    predicate._namedCheck = getNamedCheckMetadata(createNamedCheckFromSpec(expr.check))
   }
 
   return predicate

@@ -1,0 +1,103 @@
+{
+  "fixtureVersion": 1,
+  "id": "scoreboard-source-checks",
+  "description": "Portable named checks can act as field-bound sources inside other rules, not just as top-level same-field checks.",
+  "schema": {
+    "version": 1,
+    "fields": {
+      "scorerEmail": { "isEmpty": "string" },
+      "password": { "isEmpty": "string" },
+      "submit": {},
+      "replayBoard": {},
+      "scoutingNote": { "isEmpty": "string" }
+    },
+    "rules": [
+      {
+        "type": "requires",
+        "field": "submit",
+        "dependencies": [
+          "password",
+          {
+            "op": "check",
+            "field": "scorerEmail",
+            "check": { "op": "email" }
+          }
+        ],
+        "reason": "Need a valid scorer email and password before submit"
+      },
+      {
+        "type": "enabledWhen",
+        "field": "replayBoard",
+        "when": {
+          "op": "check",
+          "field": "scorerEmail",
+          "check": { "op": "email" }
+        },
+        "reason": "Replay board needs a valid scorer email"
+      },
+      {
+        "type": "disables",
+        "when": {
+          "op": "check",
+          "field": "scoutingNote",
+          "check": { "op": "minLength", "value": 5 }
+        },
+        "targets": ["replayBoard"],
+        "reason": "Replay board locks once a scouting note is posted"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "clean-submit-keeps-the-board-live",
+      "values": {
+        "scorerEmail": "crew@ballpark.com",
+        "password": "secret",
+        "submit": "send it",
+        "replayBoard": "open",
+        "scoutingNote": "tag"
+      },
+      "expectedAvailability": {
+        "scorerEmail": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "password": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "submit": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "replayBoard": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "scoutingNote": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] }
+      }
+    },
+    {
+      "id": "bad-email-blocks-submit-and-the-board",
+      "values": {
+        "scorerEmail": "crew-at-ballpark",
+        "password": "secret",
+        "submit": "send it",
+        "replayBoard": "open",
+        "scoutingNote": "tag"
+      },
+      "expectedAvailability": {
+        "scorerEmail": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "password": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "submit": { "enabled": false, "fair": true, "required": false, "reason": "Need a valid scorer email and password before submit", "reasons": ["Need a valid scorer email and password before submit"] },
+        "replayBoard": { "enabled": false, "fair": true, "required": false, "reason": "Replay board needs a valid scorer email", "reasons": ["Replay board needs a valid scorer email"] },
+        "scoutingNote": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] }
+      }
+    },
+    {
+      "id": "posted-note-locks-the-board-after-the-email-passes",
+      "values": {
+        "scorerEmail": "crew@ballpark.com",
+        "password": "secret",
+        "submit": "send it",
+        "replayBoard": "open",
+        "scoutingNote": "posted"
+      },
+      "expectedAvailability": {
+        "scorerEmail": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "password": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "submit": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] },
+        "replayBoard": { "enabled": false, "fair": true, "required": false, "reason": "Replay board locks once a scouting note is posted", "reasons": ["Replay board locks once a scouting note is posted"] },
+        "scoutingNote": { "enabled": true, "fair": true, "required": false, "reason": null, "reasons": [] }
+      }
+    }
+  ]
+}

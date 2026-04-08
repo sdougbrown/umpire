@@ -6,12 +6,13 @@ import {
   type RuleInspection,
 } from '@umpire/core'
 
-import { createCheckRuleFromMetadata } from './check-ops.js'
+import { createCheckRuleFromMetadata, createCheckSpecFromMetadata } from './check-ops.js'
 import { getJsonDef } from './json-def.js'
 import type {
   ExcludedRule,
   JsonConditionDef,
   JsonFieldDef,
+  JsonExpr,
   JsonRule,
   UmpireJsonSchema,
 } from './schema.js'
@@ -96,11 +97,28 @@ function createCheckParamsKeyPart(rule: Extract<JsonRule, { type: 'check' }>): s
   }
 }
 
+function createCheckExprFromMetadata(
+  field: string,
+  metadata: Parameters<typeof createCheckSpecFromMetadata>[0],
+): Extract<JsonExpr, { op: 'check' }> | undefined {
+  const spec = createCheckSpecFromMetadata(metadata)
+
+  return spec
+    ? {
+        op: 'check',
+        field,
+        check: spec,
+      }
+    : undefined
+}
+
 function createRuleKey(rule: JsonRule): string | undefined {
   switch (rule.type) {
     case 'requires':
       return 'dependency' in rule
         ? createKey('rule', 'requires', rule.field, 'dependency', rule.dependency)
+        : 'dependencies' in rule
+          ? createKey('rule', 'requires', rule.field, 'dependencies', JSON.stringify(rule.dependencies))
         : undefined
     case 'enabledWhen':
       return createKey('rule', 'enabledWhen', rule.field)
@@ -267,9 +285,28 @@ function serializeInspection(
         )
       }
 
+      if (inspection.predicate?.field && inspection.predicate.namedCheck) {
+        const when = createCheckExprFromMetadata(inspection.predicate.field, inspection.predicate.namedCheck)
+
+        if (when) {
+          const rule: Extract<JsonRule, { type: 'enabledWhen' }> = {
+            type: 'enabledWhen',
+            field: inspection.target,
+            when,
+            ...(inspection.reason ? { reason: inspection.reason } : {}),
+          }
+
+          return {
+            rules: [rule],
+            excluded: [],
+            coverageKeys: [createKey('rule', 'enabledWhen', inspection.target)],
+          }
+        }
+      }
+
       return excludeInspection(
         inspection,
-        'enabledWhen() predicates are only serializable when hydrated from JSON',
+        'enabledWhen() predicates are only serializable when hydrated from JSON or when they map to a named check',
         undefined,
         createKey('rule', 'enabledWhen', inspection.target),
       )
@@ -293,9 +330,31 @@ function serializeInspection(
       }
 
       if (inspection.source.kind !== 'field') {
+        if (inspection.source.predicate?.field && inspection.source.predicate.namedCheck) {
+          const when = createCheckExprFromMetadata(
+            inspection.source.predicate.field,
+            inspection.source.predicate.namedCheck,
+          )
+
+          if (when) {
+            const rule: Extract<JsonRule, { type: 'disables'; when: JsonExpr }> = {
+              type: 'disables',
+              when,
+              targets: [...inspection.targets],
+              ...(inspection.reason ? { reason: inspection.reason } : {}),
+            }
+
+            return {
+              rules: [rule],
+              excluded: [],
+              coverageKeys: [],
+            }
+          }
+        }
+
         return excludeInspection(
           inspection,
-          'disables() with predicate sources cannot be serialized unless hydrated from JSON',
+          'disables() with predicate sources cannot be serialized unless hydrated from JSON or when they map to a named check',
         )
       }
 
@@ -343,6 +402,25 @@ function serializeInspection(
         }
       }
 
+      if (inspection.predicate?.field && inspection.predicate.namedCheck) {
+        const when = createCheckExprFromMetadata(inspection.predicate.field, inspection.predicate.namedCheck)
+
+        if (when) {
+          const rule: Extract<JsonRule, { type: 'fairWhen' }> = {
+            type: 'fairWhen',
+            field: inspection.target,
+            when,
+            ...(inspection.reason ? { reason: inspection.reason } : {}),
+          }
+
+          return {
+            rules: [rule],
+            excluded: [],
+            coverageKeys: [createKey('rule', 'fairWhen', inspection.target)],
+          }
+        }
+      }
+
       return excludeInspection(
         inspection,
         'fairWhen() predicates are only serializable when hydrated from JSON or when they map to a named check on the same field',
@@ -367,28 +445,70 @@ function serializeInspection(
           dependency.kind === 'field',
       )
 
-      if (fieldDependencies.length !== inspection.dependencies.length) {
+      const serializedDependencies = inspection.dependencies.map((dependency) => {
+        if (dependency.kind === 'field') {
+          return dependency.field
+        }
+
+        if (dependency.predicate?.field && dependency.predicate.namedCheck) {
+          return createCheckExprFromMetadata(
+            dependency.predicate.field,
+            dependency.predicate.namedCheck,
+          )
+        }
+
+        return undefined
+      })
+
+      if (serializedDependencies.some((dependency) => dependency === undefined)) {
         return excludeInspection(
           inspection,
-          'requires() with predicate dependencies cannot be serialized unless hydrated from JSON',
+          'requires() with predicate dependencies cannot be serialized unless hydrated from JSON or when those predicates map to named checks',
           undefined,
         )
       }
 
-      const rules = fieldDependencies.map((dependency) => ({
-        type: 'requires' as const,
-        field: inspection.target,
-        dependency: dependency.field,
-        ...(inspection.reason ? { reason: inspection.reason } : {}),
-      }))
+      if (
+        fieldDependencies.length === inspection.dependencies.length &&
+        !nestedInAnyOf &&
+        serializedDependencies.length > 1
+      ) {
+        const rules = fieldDependencies.map((dependency) => ({
+          type: 'requires' as const,
+          field: inspection.target,
+          dependency: dependency.field,
+          ...(inspection.reason ? { reason: inspection.reason } : {}),
+        }))
 
-      if (nestedInAnyOf && rules.length !== 1) {
-        return excludeInspection(
-          inspection,
-          'requires() with multiple dependencies cannot be nested inside anyOf() in JSON output',
-          undefined,
-        )
+        return {
+          rules,
+          excluded: [],
+          coverageKeys: rules.map((rule) => createCoverageKeys(rule)).flat(),
+        }
       }
+
+      const [firstDependency] = serializedDependencies as Array<string | JsonExpr>
+
+      const rules = serializedDependencies.length === 1
+        ? [typeof firstDependency === 'string'
+            ? {
+                type: 'requires' as const,
+                field: inspection.target,
+                dependency: firstDependency,
+                ...(inspection.reason ? { reason: inspection.reason } : {}),
+              }
+            : {
+                type: 'requires' as const,
+                field: inspection.target,
+                when: firstDependency,
+                ...(inspection.reason ? { reason: inspection.reason } : {}),
+              }]
+        : [{
+            type: 'requires' as const,
+            field: inspection.target,
+            dependencies: serializedDependencies as Array<string | JsonExpr>,
+            ...(inspection.reason ? { reason: inspection.reason } : {}),
+          }]
 
       return {
         rules,

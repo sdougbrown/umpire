@@ -1,6 +1,6 @@
 import { umpire } from '@umpire/core'
 
-import { fromJson, getJsonDef, validateSchema } from '../src/index.js'
+import { fromJson, getJsonDef, toJson, validateSchema } from '../src/index.js'
 import type { UmpireJsonSchema } from '../src/index.js'
 
 describe('fromJson', () => {
@@ -85,6 +85,32 @@ describe('fromJson', () => {
         rules: [],
       }),
     ).toThrow('Unknown isEmpty strategy')
+  })
+
+  test('round-trips fairWhen check expressions without dropping named-check metadata', () => {
+    const schema: UmpireJsonSchema = {
+      version: 1,
+      fields: {
+        email: {},
+        submit: {},
+      },
+      rules: [
+        {
+          type: 'fairWhen',
+          field: 'submit',
+          when: {
+            op: 'check',
+            field: 'email',
+            check: { op: 'email' },
+          },
+          reason: 'Submit stays foul until the scorer email is valid',
+        },
+      ],
+    }
+
+    const parsed = fromJson(schema)
+
+    expect(toJson(parsed)).toEqual(schema)
   })
 })
 

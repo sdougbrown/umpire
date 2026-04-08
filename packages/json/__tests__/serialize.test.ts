@@ -1,5 +1,6 @@
 import {
   anyOf,
+  check,
   disables,
   enabledWhen,
   isEmptyObject,
@@ -8,7 +9,7 @@ import {
   requires,
 } from '@umpire/core'
 
-import { fromJson, hydrateIsEmptyStrategy, toJson } from '../src/index.js'
+import { checks, fromJson, hydrateIsEmptyStrategy, toJson } from '../src/index.js'
 import type { UmpireJsonSchema } from '../src/index.js'
 
 describe('toJson', () => {
@@ -73,6 +74,9 @@ describe('toJson', () => {
       requires<typeof fields>('submit', 'email', 'username', {
         reason: 'Need an identity field',
       }),
+      requires<typeof fields>('submit', check('email', checks.email()), 'password', {
+        reason: 'Need a valid email and password',
+      }),
       disables<typeof fields>('mode', ['submit']),
       oneOf<typeof fields>('accessMode', {
         credential: ['email', 'password'],
@@ -109,6 +113,19 @@ describe('toJson', () => {
           field: 'submit',
           dependency: 'username',
           reason: 'Need an identity field',
+        },
+        {
+          type: 'requires',
+          field: 'submit',
+          dependencies: [
+            {
+              op: 'check',
+              field: 'email',
+              check: { op: 'email' },
+            },
+            'password',
+          ],
+          reason: 'Need a valid email and password',
         },
         {
           type: 'disables',
@@ -148,7 +165,7 @@ describe('toJson', () => {
         {
           type: 'enabledWhen',
           field: 'submit',
-          description: 'enabledWhen() predicates are only serializable when hydrated from JSON',
+          description: 'enabledWhen() predicates are only serializable when hydrated from JSON or when they map to a named check',
           key: 'rule:enabledWhen:submit',
         },
       ],

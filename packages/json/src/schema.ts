@@ -28,6 +28,7 @@ export type JsonExpr =
   | { op: 'falsy'; field: string }
   | { op: 'in'; field: string; values: JsonPrimitive[] }
   | { op: 'notIn'; field: string; values: JsonPrimitive[] }
+  | { op: 'check'; field: string; check: JsonCheckSpec }
   | { op: 'cond'; condition: string }
   | { op: 'condEq'; condition: string; value: JsonPrimitive }
   | { op: 'condIn'; condition: string; values: JsonPrimitive[] }
@@ -47,14 +48,23 @@ export type JsonCheckOp =
   | 'range'
   | 'integer'
 
-export type JsonCheckRule =
-  | { type: 'check'; field: string; op: 'email' | 'url' | 'integer'; reason?: string }
-  | { type: 'check'; field: string; op: 'matches'; pattern: string; reason?: string }
-  | { type: 'check'; field: string; op: 'minLength' | 'maxLength' | 'min' | 'max'; value: number; reason?: string }
-  | { type: 'check'; field: string; op: 'range'; min: number; max: number; reason?: string }
+export type JsonCheckSpec =
+  | { op: 'email' | 'url' | 'integer' }
+  | { op: 'matches'; pattern: string }
+  | { op: 'minLength' | 'maxLength' | 'min' | 'max'; value: number }
+  | { op: 'range'; min: number; max: number }
+
+export type JsonCheckRule = {
+  type: 'check'
+  field: string
+  reason?: string
+} & JsonCheckSpec
+
+export type JsonRequiresDependency = string | JsonExpr
 
 export type JsonRule =
   | { type: 'requires'; field: string; dependency: string; reason?: string }
+  | { type: 'requires'; field: string; dependencies: JsonRequiresDependency[]; reason?: string }
   | { type: 'requires'; field: string; when: JsonExpr; reason?: string }
   | { type: 'enabledWhen'; field: string; when: JsonExpr; reason?: string }
   | { type: 'disables'; source: string; targets: string[]; reason?: string }

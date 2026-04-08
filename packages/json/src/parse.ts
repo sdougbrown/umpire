@@ -47,6 +47,7 @@ function compileFairExpr<C extends Record<string, unknown>>(
     predicate(values, conditions)) as NamedFairPredicate<C>
 
   fairPredicate._checkField = predicate._checkField
+  fairPredicate._namedCheck = predicate._namedCheck
 
   return fairPredicate
 }
@@ -96,6 +97,20 @@ function parseRule<C extends Record<string, unknown>>(
         return attachJsonDef(requires<ParsedFields, C>(rule.field, rule.dependency, {
           reason: rule.reason,
         }), rule)
+      }
+
+      if ('dependencies' in rule) {
+        const dependencies = rule.dependencies.map((dependency) =>
+          typeof dependency === 'string'
+            ? dependency
+            : compileExpr<ParsedFields, C>(dependency, exprOptions))
+
+        return attachJsonDef(
+          rule.reason
+            ? requires<ParsedFields, C>(rule.field, ...dependencies, { reason: rule.reason })
+            : requires<ParsedFields, C>(rule.field, ...dependencies),
+          rule,
+        )
       }
 
       return attachJsonDef(requires<ParsedFields, C>(rule.field, compileExpr(rule.when, exprOptions), {
