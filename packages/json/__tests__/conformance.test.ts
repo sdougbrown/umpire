@@ -39,9 +39,31 @@ type ConformanceFixture = {
   cases: ConformanceCase[]
 }
 
+type FailureCase = {
+  id: string
+  phase: 'validate' | 'evaluate'
+  schema: UmpireJsonSchema
+  values?: Record<string, JsonFixtureValue>
+  conditions?: Record<string, JsonFixtureValue>
+  prev?: Record<string, JsonFixtureValue>
+  errorIncludes: string
+}
+
+type FailureFixture = {
+  fixtureVersion: 1
+  id: string
+  description?: string
+  failures: FailureCase[]
+}
+
 const fixturesDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '../conformance/fixtures',
+)
+
+const failureFixturesDir = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../conformance/failures',
 )
 
 function loadFixtures(): ConformanceFixture[] {
@@ -53,10 +75,25 @@ function loadFixtures(): ConformanceFixture[] {
     )
 }
 
+function loadFailureFixtures(): FailureFixture[] {
+  return readdirSync(failureFixturesDir)
+    .filter((fileName) => fileName.endsWith('.json'))
+    .sort()
+    .map((fileName) =>
+      JSON.parse(readFileSync(path.join(failureFixturesDir, fileName), 'utf8')) as FailureFixture,
+    )
+}
+
 function assertFixtureShape(fixture: ConformanceFixture): void {
   expect(fixture.fixtureVersion).toBe(1)
   expect(typeof fixture.id).toBe('string')
   expect(Array.isArray(fixture.cases)).toBe(true)
+}
+
+function assertFailureFixtureShape(fixture: FailureFixture): void {
+  expect(fixture.fixtureVersion).toBe(1)
+  expect(typeof fixture.id).toBe('string')
+  expect(Array.isArray(fixture.failures)).toBe(true)
 }
 
 describe('JSON conformance fixtures', () => {
@@ -88,6 +125,36 @@ describe('JSON conformance fixtures', () => {
       ) as AvailabilityMap<Record<string, FieldDef>>
 
       expect(actual).toEqual(testCase.expectedAvailability)
+    }
+  })
+})
+
+describe('JSON conformance failure fixtures', () => {
+  const fixtures = loadFailureFixtures()
+
+  test.each(fixtures)('$id produces the expected failures', ({ failures, ...fixture }) => {
+    assertFailureFixtureShape({ failures, ...fixture })
+
+    for (const failure of failures) {
+      if (failure.phase === 'validate') {
+        expect(() => validateSchema(failure.schema)).toThrow(failure.errorIncludes)
+        continue
+      }
+
+      validateSchema(failure.schema)
+      const parsed = fromJson(failure.schema)
+      const runtime = umpire({
+        fields: parsed.fields,
+        rules: parsed.rules,
+      })
+
+      expect(() =>
+        runtime.check(
+          (failure.values ?? {}) as Record<string, unknown>,
+          failure.conditions as Record<string, unknown> | undefined,
+          failure.prev as Record<string, unknown> | undefined,
+        ),
+      ).toThrow(failure.errorIncludes)
     }
   })
 })

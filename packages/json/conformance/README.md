@@ -11,6 +11,7 @@ can consume the same files without translating TypeScript test code first.
 - prove that a runtime can parse a portable schema
 - prove that `check()`-equivalent evaluation matches the reference behavior
 - prove that `fromJson()` / `toJson()` round-trip hydrated schemas exactly
+- prove that invalid schemas and missing runtime inputs fail descriptively
 
 The current fixture set is baseball-themed on purpose. The domain is fun, but
 the rules are still small enough to read at a glance.
@@ -49,6 +50,7 @@ the rules are still small enough to read at a glance.
 ## Current Coverage
 
 - structural rules
+- expression DSL operators, including combinators
 - conditions
 - `oneOf()` with `prev`-assisted resolution
 - `anyOf()` reason collection
@@ -59,6 +61,34 @@ the rules are still small enough to read at a glance.
 - named `check` ops
 - `isEmpty` strategies
 - schema round-trip, including carried `excluded` metadata
+- invalid schema references and runtime condition failures
+
+## Failure Fixture Shape
+
+```json
+{
+  "fixtureVersion": 1,
+  "id": "bad-call-sheet-failures",
+  "description": "Short human summary",
+  "failures": [
+    {
+      "id": "unknown-field-in-expression",
+      "phase": "validate",
+      "schema": {
+        "version": 1,
+        "fields": {},
+        "rules": []
+      },
+      "errorIncludes": "Unknown field"
+    }
+  ]
+}
+```
+
+Failure phases:
+
+- `validate` — the schema itself should be rejected by `validateSchema()`
+- `evaluate` — the schema is valid, but runtime evaluation should throw
 
 ## Running The Reference Suite
 

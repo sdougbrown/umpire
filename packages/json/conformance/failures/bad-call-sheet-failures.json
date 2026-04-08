@@ -1,0 +1,90 @@
+{
+  "fixtureVersion": 1,
+  "id": "bad-call-sheet-failures",
+  "description": "Invalid references, invalid check patterns, wrong condition types, and missing runtime conditions should fail descriptively.",
+  "failures": [
+    {
+      "id": "unknown-field-in-expression",
+      "phase": "validate",
+      "schema": {
+        "version": 1,
+        "fields": {
+          "starter": {}
+        },
+        "rules": [
+          {
+            "type": "enabledWhen",
+            "field": "starter",
+            "when": { "op": "eq", "field": "missingField", "value": "Cole" }
+          }
+        ]
+      },
+      "errorIncludes": "Unknown field \"missingField\""
+    },
+    {
+      "id": "field-in-cond-needs-array-condition",
+      "phase": "validate",
+      "schema": {
+        "version": 1,
+        "conditions": {
+          "weatherBand": { "type": "string" }
+        },
+        "fields": {
+          "starter": {},
+          "starterGate": {}
+        },
+        "rules": [
+          {
+            "type": "enabledWhen",
+            "field": "starterGate",
+            "when": { "op": "fieldInCond", "field": "starter", "condition": "weatherBand" }
+          }
+        ]
+      },
+      "errorIncludes": "\"fieldInCond\" requires an array condition"
+    },
+    {
+      "id": "invalid-regex-pattern",
+      "phase": "validate",
+      "schema": {
+        "version": 1,
+        "fields": {
+          "scorerEmail": {}
+        },
+        "rules": [
+          {
+            "type": "check",
+            "field": "scorerEmail",
+            "op": "matches",
+            "pattern": "["
+          }
+        ]
+      },
+      "errorIncludes": "Invalid regex pattern"
+    },
+    {
+      "id": "missing-runtime-condition",
+      "phase": "evaluate",
+      "schema": {
+        "version": 1,
+        "conditions": {
+          "isPlayoffs": { "type": "boolean" }
+        },
+        "fields": {
+          "closerReady": {}
+        },
+        "rules": [
+          {
+            "type": "enabledWhen",
+            "field": "closerReady",
+            "when": { "op": "cond", "condition": "isPlayoffs" },
+            "reason": "Only active in October"
+          }
+        ]
+      },
+      "values": {},
+      "conditions": {},
+      "errorIncludes": "Missing runtime condition \"isPlayoffs\""
+    }
+  ]
+}
