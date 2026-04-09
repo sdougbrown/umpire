@@ -167,6 +167,60 @@ describe('zodValidationExtension', () => {
     })
   })
 
+  test('shows the valid path without error sections', () => {
+    const extension = zodValidationExtension({
+      availability: createAvailability({
+        companyName: {
+          enabled: true,
+          required: true,
+          reason: null,
+          reasons: [],
+        },
+      }),
+      result: { success: true },
+      schemaFields: ['email', 'companyName', 'companySize'],
+    })
+
+    const view = extension.inspect({
+      conditions: undefined,
+      previous: null,
+      scorecard: demoUmp.scorecard({
+        values: {
+          email: 'doug@example.com',
+          companyName: 'Acme',
+          companySize: '50',
+        },
+      }),
+      ump: demoUmp,
+      values: {
+        email: 'doug@example.com',
+        companyName: 'Acme',
+        companySize: '50',
+      },
+    })
+
+    expect(view?.sections[0]).toEqual({
+      kind: 'badges',
+      title: 'Summary',
+      badges: expect.arrayContaining([
+        { tone: 'enabled', value: 'valid' },
+        { tone: 'accent', value: 'errors 0' },
+        { tone: 'muted', value: 'suppressed 0' },
+        { tone: 'fair', value: 'unmapped 0' },
+      ]),
+    })
+
+    expect(view?.sections.find((section) => section.title === 'Active Error Map')).toBeUndefined()
+    expect(view?.sections).toContainEqual({
+      kind: 'rows',
+      title: 'Active Schema',
+      rows: [
+        { label: 'field count', value: 3 },
+        { label: 'fields', value: 'email, companyName, companySize' },
+      ],
+    })
+  })
+
   test('can resolve validation from devtools context and scorecard output', () => {
     const contextualUmp = umpire({
       fields: {
@@ -237,6 +291,86 @@ describe('zodValidationExtension', () => {
         { label: 'field count', value: 1 },
         { label: 'fields', value: 'email' },
       ],
+    })
+  })
+
+  test('returns null when resolve chooses not to render validation details', () => {
+    const extension = zodValidationExtension({
+      resolve() {
+        return null
+      },
+    })
+
+    const view = extension.inspect({
+      conditions: undefined,
+      previous: null,
+      scorecard: demoUmp.scorecard({
+        values: {
+          email: '',
+          companyName: '',
+          companySize: '',
+        },
+      }),
+      ump: demoUmp,
+      values: {
+        email: '',
+        companyName: '',
+        companySize: '',
+      },
+    })
+
+    expect(view).toBeNull()
+  })
+
+  test('omits suppressed availability reason rows when no reason is present', () => {
+    const extension = zodValidationExtension({
+      availability: createAvailability({
+        companyName: {
+          enabled: false,
+          required: false,
+          reason: null,
+          reasons: [],
+        },
+      }),
+      result: {
+        success: false,
+        error: {
+          issues: [{
+            path: ['companyName'],
+            message: 'Company name is required',
+          }],
+        },
+      },
+    })
+
+    const view = extension.inspect({
+      conditions: undefined,
+      previous: null,
+      scorecard: demoUmp.scorecard({
+        values: {
+          email: '',
+          companyName: '',
+          companySize: '',
+        },
+      }),
+      ump: demoUmp,
+      values: {
+        email: '',
+        companyName: '',
+        companySize: '',
+      },
+    })
+
+    expect(view?.sections).toContainEqual({
+      kind: 'items',
+      title: 'Suppressed Issues',
+      items: [{
+        id: 'companyName:0',
+        title: 'companyName',
+        badge: { tone: 'muted', value: 'disabled' },
+        body: 'Company name is required',
+        rows: undefined,
+      }],
     })
   })
 })
