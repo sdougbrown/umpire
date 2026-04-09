@@ -5,6 +5,7 @@ import { anyOf, check, disables, enabledWhen, requires, umpire } from '@umpire/c
 // Swap back to: import { useUmpire } from '@umpire/react'  (remove leading id arg)
 import { useUmpireWithDevtools } from '@umpire/devtools/react'
 import { activeSchema, activeErrors, zodErrors } from '@umpire/zod'
+import { zodValidationExtension } from '@umpire/zod/devtools'
 
 // ── Known SSO domains ─────────────────────────────────────────────────────────
 // When the email domain matches one of these, SSO mode activates automatically:
@@ -136,21 +137,41 @@ export default function SignupDemo() {
   const sso = ssoCompany !== null
 
   const conditions: SignupConditions = { plan, sso }
-  const { check: availability, fouls } = useUmpireWithDevtools('signup', signupUmp, values, conditions)
+  const availability = useMemo(
+    () => signupUmp.check(values, conditions),
+    [values, conditions],
+  )
 
   // Build a dynamic Zod schema from availability — disabled fields are
   // excluded, enabled+required fields use the base schema, enabled+optional
   // fields get .optional(). This is the @umpire/zod composition.
-  const validationErrors = useMemo(() => {
-    const schema = activeSchema(availability, fieldSchemas.shape, z)
+  const validation = useMemo(() => {
+    const baseSchema = activeSchema(availability, fieldSchemas.shape, z)
+    const schema = baseSchema
       .refine(
         (data) => !data.confirmPassword || !data.password || data.confirmPassword === data.password,
         { message: 'Passwords do not match', path: ['confirmPassword'] },
       )
     const result = schema.safeParse(values)
-    if (result.success) return {}
-    return activeErrors(availability, zodErrors(result.error))
+    return {
+      result,
+      schemaFields: Object.keys(baseSchema.shape),
+      validationErrors: result.success
+        ? {}
+        : activeErrors(availability, zodErrors(result.error)),
+    }
   }, [availability, values])
+  const validationErrors = validation.validationErrors
+
+  const { fouls } = useUmpireWithDevtools('signup', signupUmp, values, conditions, {
+    extensions: [
+      zodValidationExtension({
+        availability,
+        result: validation.result,
+        schemaFields: validation.schemaFields,
+      }),
+    ],
+  })
 
   function updateValue(field: SignupField, nextValue: string) {
     if (field === 'email') {

@@ -72,6 +72,41 @@ Filters normalized field errors to only include enabled fields. Returns `Partial
 
 Normalizes a Zod error's `issues` array into `{ field, message }[]` pairs for use with `activeErrors`.
 
+## Devtools
+
+If you use `@umpire/devtools`, `@umpire/zod/devtools` can expose your current parse result in a validation tab:
+
+```ts
+import { register } from '@umpire/devtools'
+import { zodValidationExtension } from '@umpire/zod/devtools'
+
+const baseSchema = activeSchema(availability, fieldSchemas, z)
+const schema = baseSchema.refine(
+  (data) => !data.confirmPassword || !data.password || data.confirmPassword === data.password,
+  { message: 'Passwords do not match', path: ['confirmPassword'] },
+)
+const result = schema.safeParse(values)
+
+register('signup', ump, values, conditions, {
+  extensions: [
+    zodValidationExtension({
+      availability,
+      result,
+      schemaFields: Object.keys(baseSchema.shape),
+    }),
+  ],
+})
+```
+
+The first pass shows:
+- valid/invalid
+- surfaced error count
+- suppressed and unmapped issue counts
+- the active error map after availability filtering
+- optional active schema field names
+
+It does not currently detect skipped `refine()`/`superRefine()` execution on its own. If we want that, we will likely need richer validation instrumentation than a plain `safeParse()` result exposes.
+
 ## The Render Loop
 
 The payoff — one loop renders every field regardless of availability, validation, or fouls:
