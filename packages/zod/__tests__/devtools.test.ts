@@ -1,6 +1,7 @@
 import type { AvailabilityMap } from '@umpire/core'
-import { umpire } from '@umpire/core'
+import { enabledWhen, umpire } from '@umpire/core'
 import { z } from 'zod'
+import { activeSchema } from '../src/active-schema.js'
 import { zodValidationExtension } from '../src/devtools.js'
 
 type TestFields = {
@@ -163,6 +164,79 @@ describe('zodValidationExtension', () => {
         badge: { tone: 'fair', value: 'unmapped' },
         body: 'Passwords do not match',
       }],
+    })
+  })
+
+  test('can resolve validation from devtools context and scorecard output', () => {
+    const contextualUmp = umpire({
+      fields: {
+        email: { default: '' },
+        companyName: { default: '' },
+      },
+      rules: [
+        enabledWhen('companyName', (_v, c: { plan: 'personal' | 'business' }) => c.plan === 'business', {
+          reason: 'business plan required',
+        }),
+      ],
+    })
+
+    const values = {
+      email: 'nope',
+      companyName: '',
+    }
+    const scorecard = contextualUmp.scorecard({
+      values,
+      conditions: { plan: 'personal' },
+    })
+
+    const extension = zodValidationExtension({
+      resolve({ scorecard, values }) {
+        const baseSchema = activeSchema(scorecard.check, {
+          email: z.string().email('Enter a valid email'),
+          companyName: z.string().min(1, 'Company name is required'),
+        }, z)
+
+        return {
+          result: baseSchema.safeParse(values),
+          schemaFields: Object.keys(baseSchema.shape),
+        }
+      },
+    })
+
+    const view = extension.inspect({
+      conditions: { plan: 'personal' },
+      previous: null,
+      scorecard,
+      ump: contextualUmp,
+      values,
+    })
+
+    expect(view?.sections[0]).toEqual({
+      kind: 'badges',
+      title: 'Summary',
+      badges: expect.arrayContaining([
+        { tone: 'disabled', value: 'invalid' },
+        { tone: 'accent', value: 'errors 1' },
+        { tone: 'muted', value: 'suppressed 0' },
+        { tone: 'fair', value: 'unmapped 0' },
+      ]),
+    })
+
+    expect(view?.sections).toContainEqual({
+      kind: 'rows',
+      title: 'Active Error Map',
+      rows: [
+        { label: 'email', value: 'Enter a valid email' },
+      ],
+    })
+
+    expect(view?.sections).toContainEqual({
+      kind: 'rows',
+      title: 'Active Schema',
+      rows: [
+        { label: 'field count', value: 1 },
+        { label: 'fields', value: 'email' },
+      ],
     })
   })
 })

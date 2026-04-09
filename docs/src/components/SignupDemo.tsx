@@ -91,6 +91,30 @@ const fieldSchemas = z.object({
   companySize: z.string().min(1, 'Company size is required').regex(/^\d+$/, 'Must be a number'),
 })
 
+type SignupValues = ReturnType<typeof signupUmp.init>
+type SignupAvailability = ReturnType<typeof signupUmp.check>
+
+function buildSignupValidation(
+  availability: SignupAvailability,
+  values: SignupValues,
+) {
+  const baseSchema = activeSchema(availability, fieldSchemas.shape, z)
+  const schema = baseSchema
+    .refine(
+      (data) => !data.confirmPassword || !data.password || data.confirmPassword === data.password,
+      { message: 'Passwords do not match', path: ['confirmPassword'] },
+    )
+  const result = schema.safeParse(values)
+
+  return {
+    result,
+    schemaFields: Object.keys(baseSchema.shape),
+    validationErrors: result.success
+      ? {}
+      : activeErrors(availability, zodErrors(result.error)),
+  }
+}
+
 // ── Field metadata ───────────────────────────────────────────────────────────
 
 const fieldOrder = [
@@ -137,41 +161,24 @@ export default function SignupDemo() {
   const sso = ssoCompany !== null
 
   const conditions: SignupConditions = { plan, sso }
-  const availability = useMemo(
-    () => signupUmp.check(values, conditions),
-    [values, conditions],
-  )
-
-  // Build a dynamic Zod schema from availability — disabled fields are
-  // excluded, enabled+required fields use the base schema, enabled+optional
-  // fields get .optional(). This is the @umpire/zod composition.
-  const validation = useMemo(() => {
-    const baseSchema = activeSchema(availability, fieldSchemas.shape, z)
-    const schema = baseSchema
-      .refine(
-        (data) => !data.confirmPassword || !data.password || data.confirmPassword === data.password,
-        { message: 'Passwords do not match', path: ['confirmPassword'] },
-      )
-    const result = schema.safeParse(values)
-    return {
-      result,
-      schemaFields: Object.keys(baseSchema.shape),
-      validationErrors: result.success
-        ? {}
-        : activeErrors(availability, zodErrors(result.error)),
-    }
-  }, [availability, values])
-  const validationErrors = validation.validationErrors
-
-  const { fouls } = useUmpireWithDevtools('signup', signupUmp, values, conditions, {
+  const { check: availability, fouls } = useUmpireWithDevtools('signup', signupUmp, values, conditions, {
     extensions: [
       zodValidationExtension({
-        availability,
-        result: validation.result,
-        schemaFields: validation.schemaFields,
+        resolve({ scorecard, values }) {
+          const validation = buildSignupValidation(scorecard.check, values)
+
+          return {
+            result: validation.result,
+            schemaFields: validation.schemaFields,
+          }
+        },
       }),
     ],
   })
+  const validationErrors = useMemo(
+    () => buildSignupValidation(availability, values).validationErrors,
+    [availability, values],
+  )
 
   function updateValue(field: SignupField, nextValue: string) {
     if (field === 'email') {

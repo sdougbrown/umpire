@@ -74,29 +74,33 @@ Normalizes a Zod error's `issues` array into `{ field, message }[]` pairs for us
 
 ## Devtools
 
-If you use `@umpire/devtools`, `@umpire/zod/devtools` can expose your current parse result in a validation tab:
+If you use `@umpire/devtools`, `@umpire/zod/devtools` can expose validation state in a tab. The most ergonomic path is to derive from the current devtools context:
 
 ```ts
-import { register } from '@umpire/devtools'
+import { useUmpireWithDevtools } from '@umpire/devtools/react'
 import { zodValidationExtension } from '@umpire/zod/devtools'
 
-const baseSchema = activeSchema(availability, fieldSchemas, z)
-const schema = baseSchema.refine(
-  (data) => !data.confirmPassword || !data.password || data.confirmPassword === data.password,
-  { message: 'Passwords do not match', path: ['confirmPassword'] },
-)
-const result = schema.safeParse(values)
-
-register('signup', ump, values, conditions, {
+const { check } = useUmpireWithDevtools('signup', ump, values, conditions, {
   extensions: [
     zodValidationExtension({
-      availability,
-      result,
-      schemaFields: Object.keys(baseSchema.shape),
+      resolve({ scorecard, values }) {
+        const baseSchema = activeSchema(scorecard.check, fieldSchemas, z)
+        const schema = baseSchema.refine(
+          (data) => !data.confirmPassword || !data.password || data.confirmPassword === data.password,
+          { message: 'Passwords do not match', path: ['confirmPassword'] },
+        )
+
+        return {
+          result: schema.safeParse(values),
+          schemaFields: Object.keys(baseSchema.shape),
+        }
+      },
     }),
   ],
 })
 ```
+
+If you already have a precomputed parse result, the helper also accepts `availability`, `result`, and optional `schemaFields` directly.
 
 The first pass shows:
 - valid/invalid

@@ -1,6 +1,10 @@
 import type {
   AvailabilityMap,
   FieldDef,
+  InputValues,
+  ScorecardResult,
+  Snapshot,
+  Umpire,
 } from '@umpire/core'
 import { activeErrors, zodErrors } from './active-errors.js'
 import type { NormalizedFieldError } from './active-errors.js'
@@ -58,25 +62,61 @@ type ValidationExtensionView = {
   sections: ValidationExtensionSection[]
 }
 
+type ValidationExtensionInspectContext<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+> = {
+  conditions?: C
+  previous: Snapshot<F, C> | null
+  scorecard: ScorecardResult<F, C>
+  ump: Umpire<F, C>
+  values: InputValues<F>
+}
+
 type ValidationExtension<F extends Record<string, FieldDef>, C extends Record<string, unknown>> = {
   id: string
   label?: string
-  inspect(): ValidationExtensionView | null
+  inspect(context: ValidationExtensionInspectContext<F, C>): ValidationExtensionView | null
 }
 
-export type ZodValidationExtensionOptions<
+type ZodValidationInspection<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown> = Record<string, unknown>,
 > = {
-  availability: AvailabilityMap<F>
-  id?: string
-  label?: string
+  availability?: AvailabilityMap<F>
   result: ZodSafeParseResultLike
   schemaFields?: readonly (keyof F & string)[] | readonly string[]
 } & (
   | { normalizedErrors?: undefined }
   | { normalizedErrors: NormalizedFieldError[] }
 )
+
+type ZodValidationResolveOptions<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown> = Record<string, unknown>,
+> = {
+  id?: string
+  label?: string
+  resolve(
+    context: ValidationExtensionInspectContext<F, C>,
+  ): ZodValidationInspection<F, C> | null
+}
+
+type ZodValidationStaticOptions<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown> = Record<string, unknown>,
+> = {
+  availability: AvailabilityMap<F>
+  id?: string
+  label?: string
+} & ZodValidationInspection<F, C>
+
+export type ZodValidationExtensionOptions<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown> = Record<string, unknown>,
+> =
+  | ZodValidationResolveOptions<F, C>
+  | ZodValidationStaticOptions<F, C>
 
 function issueFieldLabel(field: string) {
   return field === '' ? '(form)' : field
@@ -98,6 +138,15 @@ function sectionRows<F extends Record<string, FieldDef>>(
   }
 }
 
+function hasResolve<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(
+  options: ZodValidationExtensionOptions<F, C>,
+): options is ZodValidationResolveOptions<F, C> {
+  return 'resolve' in options
+}
+
 export function zodValidationExtension<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown> = Record<string, unknown>,
@@ -105,30 +154,36 @@ export function zodValidationExtension<
   options: ZodValidationExtensionOptions<F, C>,
 ): ValidationExtension<F, C> {
   const {
-    availability,
     id = 'validation',
     label = 'validation',
-    result,
-    schemaFields,
   } = options
-  const normalizedErrors = options.normalizedErrors ??
-    (result.success ? [] : zodErrors(result.error))
-  const activeErrorMap = activeErrors(availability, normalizedErrors)
-  const activeFieldCount = Object.values(availability).filter((field) => field.enabled).length
-  const activeErrorCount = Object.keys(activeErrorMap).length
-  const { suppressedIssues, unknownIssues } = sectionRows(availability, normalizedErrors)
 
   return {
     id,
     label,
-    inspect() {
+    inspect(context) {
+      const resolved = hasResolve(options)
+        ? options.resolve(context)
+        : options
+
+      if (!resolved) {
+        return null
+      }
+
+      const availability = resolved.availability ?? context.scorecard.check
+      const normalizedErrors = resolved.normalizedErrors ??
+        (resolved.result.success ? [] : zodErrors(resolved.result.error))
+      const activeErrorMap = activeErrors(availability, normalizedErrors)
+      const activeFieldCount = Object.values(availability).filter((field) => field.enabled).length
+      const activeErrorCount = Object.keys(activeErrorMap).length
+      const { suppressedIssues, unknownIssues } = sectionRows(availability, normalizedErrors)
       const sections: ValidationExtensionSection[] = [{
         kind: 'badges',
         title: 'Summary',
         badges: [
           {
-            tone: result.success ? 'enabled' : 'disabled',
-            value: result.success ? 'valid' : 'invalid',
+            tone: resolved.result.success ? 'enabled' : 'disabled',
+            value: resolved.result.success ? 'valid' : 'invalid',
           },
           {
             tone: 'accent',
@@ -160,13 +215,13 @@ export function zodValidationExtension<
         })
       }
 
-      if (schemaFields && schemaFields.length > 0) {
+      if (resolved.schemaFields && resolved.schemaFields.length > 0) {
         sections.push({
           kind: 'rows',
           title: 'Active Schema',
           rows: [
-            { label: 'field count', value: schemaFields.length },
-            { label: 'fields', value: schemaFields.join(', ') },
+            { label: 'field count', value: resolved.schemaFields.length },
+            { label: 'fields', value: resolved.schemaFields.join(', ') },
           ],
         })
       }
