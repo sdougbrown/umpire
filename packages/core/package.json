@@ -12,7 +12,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "bench": "yarn build && node ./scripts/benchmark.mjs",
+    "bench": "yarn build && bun ./scripts/benchmark.mjs",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },

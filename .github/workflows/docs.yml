@@ -28,7 +28,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: yarn
           cache-dependency-path: docs/yarn.lock
 
@@ -43,8 +43,7 @@ jobs:
         run: yarn install --immutable
 
       - name: Build docs
-        working-directory: docs
-        run: npx astro build
+        run: yarn docs:build
 
       - uses: actions/upload-pages-artifact@v3
         with:
