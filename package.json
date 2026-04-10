@@ -17,12 +17,17 @@
     "docs:build": "yarn --cwd docs build",
     "test": "turbo run test",
     "test:coverage": "turbo run test --force -- --coverage --coverage-reporter=lcov --coverage-dir=coverage && bun ./scripts/merge-lcov.mjs",
+    "test:coverage:istanbul": "bun ./scripts/test-coverage-istanbul.ts",
     "test:smoke": "yarn workspace @umpire/devtools test:smoke",
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
     "@changesets/cli": "^2.30.0",
     "@happy-dom/global-registrator": "^20.0.10",
+    "istanbul-lib-coverage": "^3.2.2",
+    "istanbul-lib-instrument": "^6.0.3",
+    "istanbul-lib-report": "^3.0.1",
+    "istanbul-reports": "^3.2.0",
     "turbo": "^2.5.0",
     "typescript": "^5.8.3"
   }
