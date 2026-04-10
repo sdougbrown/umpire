@@ -51,7 +51,6 @@ describe('activeSchema', () => {
         requiredName: z.string(),
         disabledSecret: z.string(),
       },
-      z,
     )
 
     expect(Object.keys(schema.shape)).toEqual(['requiredName'])
@@ -64,7 +63,6 @@ describe('activeSchema', () => {
       {
         requiredName: z.string(),
       },
-      z,
     )
 
     expect(schema.safeParse({}).success).toBe(false)
@@ -77,7 +75,6 @@ describe('activeSchema', () => {
       {
         optionalNickname: z.string(),
       },
-      z,
     )
 
     expect(schema.safeParse({}).success).toBe(true)
@@ -85,7 +82,7 @@ describe('activeSchema', () => {
   })
 
   test('returns an empty object schema for empty availability', () => {
-    const schema = activeSchema({} as AvailabilityMap<EmptyFields>, {}, z)
+    const schema = activeSchema({} as AvailabilityMap<EmptyFields>, {})
 
     expect(Object.keys(schema.shape)).toEqual([])
     expect(schema.safeParse({}).success).toBe(true)
@@ -97,7 +94,6 @@ describe('activeSchema', () => {
       {
         requiredName: z.string(),
       },
-      z,
     )
 
     expect(schema.shape.missingSchema).toBeUndefined()
@@ -110,9 +106,8 @@ describe('activeSchema', () => {
       z.object({
         requiredName: z.string(),
       }) as never,
-      z,
     )).toThrow(
-      '[@umpire/zod] activeSchema() expects per-field schemas, not a z.object(). ' +
+      'activeSchema() expects per-field schemas, not a z.object(). ' +
       'Pass formSchema.shape instead of formSchema.',
     )
   })

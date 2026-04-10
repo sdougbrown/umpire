@@ -1,5 +1,6 @@
-import type { z } from 'zod'
+import { z } from 'zod'
 import type { AvailabilityMap, FieldDef } from '@umpire/core'
+import { assertFieldSchemas } from './schema-guards.js'
 
 type FieldSchemas<F extends Record<string, FieldDef>> = Partial<
   Record<keyof F & string, z.ZodTypeAny>
@@ -11,26 +12,17 @@ type FieldSchemas<F extends Record<string, FieldDef>> = Partial<
  *
  * ```ts
  * // Per-field
- * activeSchema(availability, { email: z.string().email() }, z)
+ * activeSchema(availability, { email: z.string().email() })
  *
  * // From an existing z.object()
- * activeSchema(availability, formSchema.shape, z)
+ * activeSchema(availability, formSchema.shape)
  * ```
  */
 export function activeSchema<F extends Record<string, FieldDef>>(
   availability: AvailabilityMap<F>,
   schemas: FieldSchemas<F>,
-  zod: {
-    object(shape: Record<string, z.ZodTypeAny>): z.ZodObject<Record<string, z.ZodTypeAny>>
-  },
 ): z.ZodObject<Record<string, z.ZodTypeAny>> {
-  // Catch the common mistake of passing a z.object() instead of its .shape
-  if ('_def' in schemas || '_zod' in schemas) {
-    throw new Error(
-      '[@umpire/zod] activeSchema() expects per-field schemas, not a z.object(). ' +
-      'Pass formSchema.shape instead of formSchema.',
-    )
-  }
+  assertFieldSchemas(schemas, 'activeSchema')
 
   const fieldSchemas = schemas
 
@@ -51,5 +43,5 @@ export function activeSchema<F extends Record<string, FieldDef>>(
     shape[field] = status.required ? base : base.optional()
   }
 
-  return zod.object(shape)
+  return z.object(shape)
 }

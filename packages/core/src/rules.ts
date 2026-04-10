@@ -1,9 +1,11 @@
+import { shouldWarnInDev } from './dev.js'
 import { getFieldBuilderName } from './field.js'
 import { isSatisfied } from './satisfaction.js'
+import { isNamedCheck as isNamedCheckValidator, runFieldValidator } from './validation.js'
 import type {
+  FieldValidator,
   FieldDef,
   FieldValues,
-  NamedCheck,
   NamedCheckMetadata,
   Rule,
   RuleEvaluation,
@@ -155,15 +157,6 @@ type OneOfOptions<
 > = RuleOptions<F, C> & {
   activeBranch?: string | ((values: FieldValues<F>, conditions: C) => string | null | undefined)
 }
-
-type FunctionValidator<V> = (value: V) => boolean
-type SafeParseValidator<V> = { safeParse: (value: V) => { success: boolean } }
-type StringTestValidator = { test: (value: string) => boolean }
-type Validator<V> =
-  | FunctionValidator<V>
-  | NamedCheck<V>
-  | SafeParseValidator<V>
-  | StringTestValidator
 
 export type InternalPredicate<
   F extends Record<string, FieldDef>,
@@ -411,19 +404,6 @@ function cloneNamedCheckMetadata(metadata: NamedCheckMetadata): NamedCheckMetada
   })
 }
 
-export function isNamedCheck<T = unknown>(validator: unknown): validator is NamedCheck<T> {
-  if (typeof validator !== 'object' || validator === null) {
-    return false
-  }
-
-  return (
-    '__check' in validator &&
-    typeof (validator as { __check?: unknown }).__check === 'string' &&
-    'validate' in validator &&
-    typeof (validator as { validate?: unknown }).validate === 'function'
-  )
-}
-
 function isNamedCheckMetadataCarrier(value: unknown): value is NamedCheckMetadataCarrier {
   return (typeof value === 'function' || typeof value === 'object') && value !== null
 }
@@ -435,7 +415,7 @@ function hasNamedCheckMetadata(
 }
 
 export function getNamedCheckMetadata(value: unknown): NamedCheckMetadata | undefined {
-  if (isNamedCheck(value)) {
+  if (isNamedCheckValidator(value)) {
     return cloneNamedCheckMetadata(value)
   }
 
@@ -828,11 +808,6 @@ function branchHasSatisfiedField<F extends Record<string, FieldDef>>(
   }
 
   return branchFields.some((field) => isSatisfied(values[field], fields?.[field]))
-}
-
-function shouldWarnInDev(): boolean {
-  const processLike = globalThis as { process?: { env?: Record<string, string | undefined> } }
-  return processLike.process?.env?.NODE_ENV !== 'production'
 }
 
 function warnAmbiguousOneOf(groupName: string, branchNames: string[]): void {
@@ -1322,10 +1297,10 @@ export function check<
   V = unknown,
 >(
   field: FieldSelector<F, V>,
-  validator: Validator<NonNullable<V>>,
+  validator: FieldValidator<NonNullable<V>>,
 ): Predicate<F, C> {
   const target = getFieldNameOrThrow(field)
-  const namedCheckMetadata = isNamedCheck(validator)
+  const namedCheckMetadata = isNamedCheckValidator(validator)
     ? cloneNamedCheckMetadata(validator)
     : undefined
 
@@ -1336,23 +1311,7 @@ export function check<
       return false
     }
 
-    if (typeof validator === 'function') {
-      return validator(value as NonNullable<V>)
-    }
-
-    if (isNamedCheck(validator)) {
-      return validator.validate(value as NonNullable<V>)
-    }
-
-    if ('safeParse' in validator) {
-      return validator.safeParse(value as NonNullable<V>).success
-    }
-
-    if ('test' in validator) {
-      return typeof value === 'string' && validator.test(value)
-    }
-
-    return false
+    return runFieldValidator(validator, value as NonNullable<V>)
   }) as Predicate<F, C>
 
   predicate._checkField = target

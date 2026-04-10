@@ -15,7 +15,7 @@ yarn add @umpire/core @umpire/zod zod
 
 ## API
 
-### `activeSchema(availability, shape, z)`
+### `activeSchema(availability, shape)`
 
 Builds a `z.object()` from the availability map:
 
@@ -34,7 +34,7 @@ const fieldSchemas = {
 }
 
 const availability = ump.check(values, conditions)
-const schema = activeSchema(availability, fieldSchemas, z)
+const schema = activeSchema(availability, fieldSchemas)
 const result = schema.safeParse(values)
 ```
 
@@ -47,10 +47,10 @@ const myFormSchema = z.object({
 })
 
 // ✗ Wrong — activeSchema expects a shape, not a z.object()
-activeSchema(availability, myFormSchema, z)
+activeSchema(availability, myFormSchema)
 
 // ✓ Correct
-activeSchema(availability, myFormSchema.shape, z)
+activeSchema(availability, myFormSchema.shape)
 ```
 
 `activeSchema` throws a descriptive error if it detects a Zod object was passed instead of its shape.
@@ -77,12 +77,38 @@ const errors = activeErrors(availability, zodErrors(result.error))
 // companyName omitted if disabled on the current plan
 ```
 
+## Blank strings and `isEmpty`
+
+`@umpire/zod` follows Umpire's satisfaction rules. By default, only `null` and
+`undefined` count as empty. So if a field does not define `isEmpty`, an empty
+string is still considered satisfied and can surface `valid: false` from
+`validators` immediately.
+
+For form-style string inputs, use an explicit empty-state helper:
+
+```ts
+import { isEmptyString, umpire } from '@umpire/core'
+
+const ump = umpire({
+  fields: {
+    email: { required: true, isEmpty: isEmptyString },
+  },
+  rules: [],
+  validators: createZodValidation({
+    schemas: { email: z.string().email('Enter a valid email') },
+  }).validators,
+})
+```
+
+That keeps blank strings in the "not yet validateable" lane until the field is
+actually satisfied under your chosen emptiness rule.
+
 ## Chaining refinements
 
 Cross-field refinements chain normally on the result of `activeSchema`:
 
 ```ts
-const schema = activeSchema(availability, fieldSchemas, z)
+const schema = activeSchema(availability, fieldSchemas)
   .refine(
     (data) => !data.confirmPassword || !data.password
       || data.confirmPassword === data.password,

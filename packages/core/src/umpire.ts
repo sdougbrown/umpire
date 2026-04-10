@@ -21,6 +21,11 @@ import {
   resolveOneOfState,
 } from './rules.js'
 import { isSatisfied } from './satisfaction.js'
+import {
+  normalizeValidationEntry,
+  runValidationEntry,
+  type NormalizedValidationEntry,
+} from './validation.js'
 import type {
   AvailabilityMap,
   ChallengeDirectReason,
@@ -37,11 +42,16 @@ import type {
   ScorecardResult,
   Umpire,
   UmpireGraph,
+  ValidationMap,
 } from './types.js'
 
 function createEmptyConditions<C extends Record<string, unknown>>(conditions: C | undefined): C {
   return (conditions ?? ({} as C)) as C
 }
+
+type NormalizedValidationMap<F extends Record<string, FieldDef>> = Partial<{
+  [K in keyof F & string]: NormalizedValidationEntry
+}>
 
 function getChangedFields<
   F extends Record<string, FieldDef>,
@@ -60,6 +70,39 @@ function getChangedFields<
 
 function isPresent(value: unknown) {
   return value !== null && value !== undefined
+}
+
+function normalizeValidators<F extends Record<string, FieldDef>>(
+  fields: F,
+  validators: ValidationMap<F> | undefined,
+): NormalizedValidationMap<F> {
+  const normalized = {} as NormalizedValidationMap<F>
+
+  if (!validators) {
+    return normalized
+  }
+
+  const fieldNames = new Set(Object.keys(fields))
+
+  for (const [field, entry] of Object.entries(validators) as Array<[keyof F & string, unknown]>) {
+    if (entry === undefined) {
+      continue
+    }
+
+    if (!fieldNames.has(field)) {
+      throw new Error(`[umpire] Unknown field "${field}" referenced by validators`)
+    }
+
+    const normalizedEntry = normalizeValidationEntry(entry)
+
+    if (!normalizedEntry) {
+      throw new Error(`[umpire] Invalid validator configured for field "${field}"`)
+    }
+
+    normalized[field] = normalizedEntry
+  }
+
+  return normalized
 }
 
 function buildFieldEdgeLookup<F extends Record<string, FieldDef>>(
@@ -758,9 +801,12 @@ export function umpire<
 >(config: {
   fields: FInput
   rules: Rule<NormalizeFields<FInput>, C>[]
+  validators?: ValidationMap<NormalizeFields<FInput>>
 }): Umpire<NormalizeFields<FInput>, C> {
   const { fields, rules } = normalizeConfig(config.fields, config.rules)
   const fieldNames = Object.keys(fields) as Array<keyof NormalizeFields<FInput> & string>
+  const validators = normalizeValidators(fields, config.validators)
+  const hasValidators = Object.keys(validators).length > 0
 
   validateRules(fields, rules)
 
@@ -792,6 +838,44 @@ export function umpire<
       prev,
       rulesByTarget,
     )
+  }
+
+  function attachValidationMetadata(
+    values: FieldValues<NormalizeFields<FInput>>,
+    availability: AvailabilityMap<NormalizeFields<FInput>>,
+  ): AvailabilityMap<NormalizeFields<FInput>> {
+    if (!hasValidators) {
+      return availability
+    }
+
+    const validated = {} as AvailabilityMap<NormalizeFields<FInput>>
+
+    for (const field of fieldNames) {
+      const status = availability[field]
+      const validator = validators[field]
+
+      // Validation metadata only applies once a field is structurally active
+      // and has a satisfied value to validate.
+      if (!validator || !status.enabled || !isSatisfied(values[field], fields[field])) {
+        validated[field] = status
+        continue
+      }
+
+      const result = runValidationEntry(
+        validator,
+        values[field] as NonNullable<FieldValues<NormalizeFields<FInput>>[typeof field]>,
+      )
+
+      const nextStatus = { ...status, valid: result.valid }
+
+      if (!result.valid && result.error !== undefined) {
+        nextStatus.error = result.error
+      }
+
+      validated[field] = nextStatus
+    }
+
+    return validated
   }
 
   function recommendFouls(
@@ -940,7 +1024,8 @@ export function umpire<
     const { before, includeChallenge = false } = options
     const typedValues = snapshot.values as FieldValues<NormalizeFields<FInput>>
     const typedPrev = before?.values as FieldValues<NormalizeFields<FInput>> | undefined
-    const check = checkAvailability(typedValues, snapshot.conditions, typedPrev)
+    const structuralCheck = checkAvailability(typedValues, snapshot.conditions, typedPrev)
+    const check = attachValidationMetadata(typedValues, structuralCheck)
     const changedFields = getChangedFields(
       fieldNames,
       before as { values: FieldValues<NormalizeFields<FInput>> } | undefined,
@@ -971,28 +1056,37 @@ export function umpire<
         const value = typedValues[field]
         const present = isPresent(value)
         const satisfied = isSatisfied(value, fields[field])
+        const scorecardField: ScorecardResult<NormalizeFields<FInput>, C>['fields'][typeof field] = {
+          field,
+          value,
+          present,
+          satisfied,
+          enabled: availability.enabled,
+          fair: availability.fair,
+          required: availability.required,
+          reason: availability.reason,
+          reasons: availability.reasons,
+          changed: changedFieldSet.has(field),
+          cascaded: cascadingFieldSet.has(field),
+          foul: foulsByField[field] ?? null,
+          incoming: incomingByField[field],
+          outgoing: outgoingByField[field],
+          trace: includeChallenge
+            ? buildChallenge(field, snapshot.values, snapshot.conditions, before?.values)
+            : undefined,
+        }
+
+        if (availability.valid !== undefined) {
+          scorecardField.valid = availability.valid
+        }
+
+        if (availability.error !== undefined) {
+          scorecardField.error = availability.error
+        }
 
         return [
           field,
-          {
-            field,
-            value,
-            present,
-            satisfied,
-            enabled: availability.enabled,
-            fair: availability.fair,
-            required: availability.required,
-            reason: availability.reason,
-            reasons: availability.reasons,
-            changed: changedFieldSet.has(field),
-            cascaded: cascadingFieldSet.has(field),
-            foul: foulsByField[field] ?? null,
-            incoming: incomingByField[field],
-            outgoing: outgoingByField[field],
-            trace: includeChallenge
-              ? buildChallenge(field, snapshot.values, snapshot.conditions, before?.values)
-              : undefined,
-          },
+          scorecardField,
         ]
       }),
     ) as ScorecardResult<NormalizeFields<FInput>, C>['fields']
@@ -1015,10 +1109,15 @@ export function umpire<
 
   return {
     check(values, conditions, prev) {
-      return checkAvailability(
-        values as FieldValues<NormalizeFields<FInput>>,
-        conditions,
-        prev as FieldValues<NormalizeFields<FInput>> | undefined,
+      const typedValues = values as FieldValues<NormalizeFields<FInput>>
+
+      return attachValidationMetadata(
+        typedValues,
+        checkAvailability(
+          typedValues,
+          conditions,
+          prev as FieldValues<NormalizeFields<FInput>> | undefined,
+        ),
       )
     },
 

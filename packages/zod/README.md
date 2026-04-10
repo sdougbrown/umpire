@@ -17,7 +17,7 @@ npm install @umpire/core @umpire/zod zod
 ```ts
 import { z } from 'zod'
 import { umpire, enabledWhen, requires } from '@umpire/core'
-import { activeSchema, activeErrors, zodErrors } from '@umpire/zod'
+import { activeSchema, activeErrors, createZodValidation, zodErrors } from '@umpire/zod'
 
 // 1. Define availability rules
 const ump = umpire({
@@ -41,7 +41,7 @@ const fieldSchemas = {
 // 3. Compose at render time
 const availability = ump.check(values, { plan })
 
-const schema = activeSchema(availability, fieldSchemas, z)
+const schema = activeSchema(availability, fieldSchemas)
 const result = schema.safeParse(values)
 
 if (!result.success) {
@@ -49,11 +49,28 @@ if (!result.success) {
   // errors.email → 'Enter a valid email' (only if email is enabled)
   // errors.companyName → undefined (disabled on personal plan)
 }
+
+const validation = createZodValidation({
+  schemas: fieldSchemas,
+})
+
+const umpWithValidation = umpire({
+  fields: {
+    email:       { required: true, isEmpty: (v) => !v },
+    companyName: { required: true, isEmpty: (v) => !v },
+  },
+  rules: [
+    enabledWhen('companyName', (_v, c) => c.plan === 'business', {
+      reason: 'business plan required',
+    }),
+  ],
+  validators: validation.validators,
+})
 ```
 
 ## API
 
-### `activeSchema(availability, schemas, z)`
+### `activeSchema(availability, schemas)`
 
 Builds a `z.object()` from the availability map:
 - **Disabled fields** are excluded entirely
@@ -72,6 +89,44 @@ Filters normalized field errors to only include enabled fields. Returns `Partial
 
 Normalizes a Zod error's `issues` array into `{ field, message }[]` pairs for use with `activeErrors`.
 
+### `createZodValidation({ schemas, build? })`
+
+Creates a convenience adapter with:
+- `validators` for `umpire({ validators })`, surfacing the first field-level Zod issue as `error`
+- `run(availability, values)` for the full `activeSchema() -> safeParse() -> activeErrors()` flow
+
+If you need every issue or deeper control, you can still use `activeSchema()` and `safeParse()` directly.
+
+### Blank strings and `isEmpty`
+
+The generated validators follow Umpire's satisfaction semantics. By default,
+only `null` and `undefined` count as empty. So if a string field does not define
+`isEmpty`, a value like `''` is still considered satisfied and may surface
+`valid: false` immediately.
+
+For form-style inputs, define an explicit empty-state rule:
+
+```ts
+import { isEmptyString, umpire } from '@umpire/core'
+
+const validation = createZodValidation({
+  schemas: {
+    email: z.string().email('Enter a valid email'),
+  },
+})
+
+const ump = umpire({
+  fields: {
+    email: { required: true, isEmpty: isEmptyString },
+  },
+  rules: [],
+  validators: validation.validators,
+})
+```
+
+That keeps blank strings out of the validation path until the field is
+satisfied under your chosen emptiness semantics.
+
 ## Devtools
 
 If you use `@umpire/devtools`, `@umpire/zod/devtools` can expose validation state in a tab. The most ergonomic path is to derive from the current devtools context:
@@ -80,20 +135,21 @@ If you use `@umpire/devtools`, `@umpire/zod/devtools` can expose validation stat
 import { useUmpireWithDevtools } from '@umpire/devtools/react'
 import { zodValidationExtension } from '@umpire/zod/devtools'
 
+const validation = createZodValidation({
+  schemas: fieldSchemas,
+  build(baseSchema) {
+    return baseSchema.refine(
+      (data) => !data.confirmPassword || !data.password || data.confirmPassword === data.password,
+      { message: 'Passwords do not match', path: ['confirmPassword'] },
+    )
+  },
+})
+
 const { check } = useUmpireWithDevtools('signup', ump, values, conditions, {
   extensions: [
     zodValidationExtension({
       resolve({ scorecard, values }) {
-        const baseSchema = activeSchema(scorecard.check, fieldSchemas, z)
-        const schema = baseSchema.refine(
-          (data) => !data.confirmPassword || !data.password || data.confirmPassword === data.password,
-          { message: 'Passwords do not match', path: ['confirmPassword'] },
-        )
-
-        return {
-          result: schema.safeParse(values),
-          schemaFields: Object.keys(baseSchema.shape),
-        }
+        return validation.run(scorecard.check, values)
       },
     }),
   ],
