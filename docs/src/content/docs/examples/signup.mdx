@@ -151,7 +151,7 @@ const availability = signupUmp.check(values, { plan, sso })
 // Build a Zod schema that only validates enabled fields.
 // Enabled + required → base schema. Enabled + optional → .optional().
 // Disabled → excluded entirely.
-const schema = activeSchema(availability, fieldSchemas.shape, z)
+const schema = activeSchema(availability, fieldSchemas.shape)
   .refine(
     (data) => !data.confirmPassword || !data.password
       || data.confirmPassword === data.password,

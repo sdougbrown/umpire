@@ -248,7 +248,7 @@ describe('zodValidationExtension', () => {
         const baseSchema = activeSchema(scorecard.check, {
           email: z.string().email('Enter a valid email'),
           companyName: z.string().min(1, 'Company name is required'),
-        }, z)
+        })
 
         return {
           result: baseSchema.safeParse(values),

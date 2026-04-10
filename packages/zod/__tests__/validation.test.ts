@@ -8,7 +8,6 @@ describe('createZodValidation', () => {
       schemas: {
         email: z.string().email('Enter a valid email'),
       },
-      zod: z,
     })
 
     const ump = umpire({
@@ -43,7 +42,6 @@ describe('createZodValidation', () => {
         confirmPassword: z.string().min(1, 'Confirm your password'),
         companyName: z.string().min(1, 'Company name is required'),
       },
-      zod: z,
       build(baseSchema) {
         return baseSchema.refine(
           (data) => data.confirmPassword === data.password,
@@ -85,7 +83,6 @@ describe('createZodValidation', () => {
       schemas: z.object({
         email: z.string().email(),
       }) as never,
-      zod: z,
     })).toThrow(
       'createZodValidation() expects per-field schemas, not a z.object(). ' +
       'Pass formSchema.shape instead of formSchema.',
@@ -95,7 +92,6 @@ describe('createZodValidation', () => {
   test('throws if given a non-object instead of per-field schemas', () => {
     expect(() => createZodValidation({
       schemas: undefined as never,
-      zod: z,
     })).toThrow('createZodValidation() expects a per-field schema map object.')
   })
 })

@@ -41,7 +41,7 @@ const fieldSchemas = {
 // 3. Compose at render time
 const availability = ump.check(values, { plan })
 
-const schema = activeSchema(availability, fieldSchemas, z)
+const schema = activeSchema(availability, fieldSchemas)
 const result = schema.safeParse(values)
 
 if (!result.success) {
@@ -52,7 +52,6 @@ if (!result.success) {
 
 const validation = createZodValidation({
   schemas: fieldSchemas,
-  zod: z,
 })
 
 const umpWithValidation = umpire({
@@ -71,7 +70,7 @@ const umpWithValidation = umpire({
 
 ## API
 
-### `activeSchema(availability, schemas, z)`
+### `activeSchema(availability, schemas)`
 
 Builds a `z.object()` from the availability map:
 - **Disabled fields** are excluded entirely
@@ -90,7 +89,7 @@ Filters normalized field errors to only include enabled fields. Returns `Partial
 
 Normalizes a Zod error's `issues` array into `{ field, message }[]` pairs for use with `activeErrors`.
 
-### `createZodValidation({ schemas, zod, build? })`
+### `createZodValidation({ schemas, build? })`
 
 Creates a convenience adapter with:
 - `validators` for `umpire({ validators })`, surfacing the first field-level Zod issue as `error`
@@ -108,7 +107,6 @@ import { zodValidationExtension } from '@umpire/zod/devtools'
 
 const validation = createZodValidation({
   schemas: fieldSchemas,
-  zod: z,
   build(baseSchema) {
     return baseSchema.refine(
       (data) => !data.confirmPassword || !data.password || data.confirmPassword === data.password,

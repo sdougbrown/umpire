@@ -15,7 +15,7 @@ yarn add @umpire/core @umpire/zod zod
 
 ## API
 
-### `activeSchema(availability, shape, z)`
+### `activeSchema(availability, shape)`
 
 Builds a `z.object()` from the availability map:
 
@@ -34,7 +34,7 @@ const fieldSchemas = {
 }
 
 const availability = ump.check(values, conditions)
-const schema = activeSchema(availability, fieldSchemas, z)
+const schema = activeSchema(availability, fieldSchemas)
 const result = schema.safeParse(values)
 ```
 
@@ -47,10 +47,10 @@ const myFormSchema = z.object({
 })
 
 // ✗ Wrong — activeSchema expects a shape, not a z.object()
-activeSchema(availability, myFormSchema, z)
+activeSchema(availability, myFormSchema)
 
 // ✓ Correct
-activeSchema(availability, myFormSchema.shape, z)
+activeSchema(availability, myFormSchema.shape)
 ```
 
 `activeSchema` throws a descriptive error if it detects a Zod object was passed instead of its shape.
@@ -82,7 +82,7 @@ const errors = activeErrors(availability, zodErrors(result.error))
 Cross-field refinements chain normally on the result of `activeSchema`:
 
 ```ts
-const schema = activeSchema(availability, fieldSchemas, z)
+const schema = activeSchema(availability, fieldSchemas)
   .refine(
     (data) => !data.confirmPassword || !data.password
       || data.confirmPassword === data.password,

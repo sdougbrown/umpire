@@ -55,7 +55,6 @@ const fieldSchemas = z.object({
 
 const signupValidation = createZodValidation({
   schemas: fieldSchemas.shape,
-  zod: z,
   build(baseSchema) {
     // Keep the schema-level refinement too: Umpire owns availability and
     // blocked-submit reasons, while this remains an optional final parse-time

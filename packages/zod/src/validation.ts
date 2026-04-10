@@ -30,13 +30,8 @@ type ZodSchemaLike = {
   safeParse(value: unknown): ZodSafeParseResultLike
 }
 
-type ZodObjectFactory = {
-  object(shape: Record<string, z.ZodTypeAny>): z.ZodObject<Record<string, z.ZodTypeAny>>
-}
-
 export type CreateZodValidationOptions<F extends Record<string, FieldDef>> = {
   schemas: FieldSchemas<F>
-  zod: ZodObjectFactory
   build?(schema: z.ZodObject<Record<string, z.ZodTypeAny>>): ZodSchemaLike
 }
 
@@ -77,7 +72,6 @@ export function createZodValidation<F extends Record<string, FieldDef>>(
 
   const {
     schemas,
-    zod,
     build,
   } = options
   const validators = {} as ValidationMap<F>
@@ -105,7 +99,7 @@ export function createZodValidation<F extends Record<string, FieldDef>>(
   return {
     validators,
     run(availability, values) {
-      const baseSchema = activeSchema(availability, schemas, zod)
+      const baseSchema = activeSchema(availability, schemas)
       const schema = build ? build(baseSchema) : baseSchema
       const result = schema.safeParse(values)
       const normalizedErrors = isFailedParseResult(result) ? zodErrors(result.error) : []

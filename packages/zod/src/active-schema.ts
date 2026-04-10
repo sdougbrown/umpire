@@ -1,4 +1,4 @@
-import type { z } from 'zod'
+import { z } from 'zod'
 import type { AvailabilityMap, FieldDef } from '@umpire/core'
 import { assertFieldSchemas } from './schema-guards.js'
 
@@ -12,18 +12,15 @@ type FieldSchemas<F extends Record<string, FieldDef>> = Partial<
  *
  * ```ts
  * // Per-field
- * activeSchema(availability, { email: z.string().email() }, z)
+ * activeSchema(availability, { email: z.string().email() })
  *
  * // From an existing z.object()
- * activeSchema(availability, formSchema.shape, z)
+ * activeSchema(availability, formSchema.shape)
  * ```
  */
 export function activeSchema<F extends Record<string, FieldDef>>(
   availability: AvailabilityMap<F>,
   schemas: FieldSchemas<F>,
-  zod: {
-    object(shape: Record<string, z.ZodTypeAny>): z.ZodObject<Record<string, z.ZodTypeAny>>
-  },
 ): z.ZodObject<Record<string, z.ZodTypeAny>> {
   assertFieldSchemas(schemas, 'activeSchema')
 
@@ -46,5 +43,5 @@ export function activeSchema<F extends Record<string, FieldDef>>(
     shape[field] = status.required ? base : base.optional()
   }
 
-  return zod.object(shape)
+  return z.object(shape)
 }
