@@ -14,6 +14,10 @@ export type NormalizedValidationEntry<T = unknown> = {
   error?: string
 }
 
+// `check()` remains boolean-only at the public API boundary, but the runtime
+// validator shapes are otherwise shared with richer validation entries.
+type SupportedValidator<T = unknown> = FieldValidator<T> | ValidationValidator<T>
+
 type ValidationEntryObject<T = unknown> = {
   validator: ValidationValidator<T>
   error?: string
@@ -37,14 +41,7 @@ export function isNamedCheck<T = unknown>(validator: unknown): validator is Name
     typeof validator.validate === 'function'
 }
 
-function isFieldValidator<T = unknown>(validator: unknown): validator is FieldValidator<T> {
-  return typeof validator === 'function' ||
-    isNamedCheck<T>(validator) ||
-    isSafeParseValidator<T>(validator) ||
-    isStringTestValidator(validator)
-}
-
-function isValidationValidator<T = unknown>(validator: unknown): validator is ValidationValidator<T> {
+function isSupportedValidator<T = unknown>(validator: unknown): validator is SupportedValidator<T> {
   return typeof validator === 'function' ||
     isNamedCheck<T>(validator) ||
     isSafeParseValidator<T>(validator) ||
@@ -60,7 +57,7 @@ function isValidationResult(result: unknown): result is ValidationResult {
 function isValidationEntryObject<T = unknown>(entry: unknown): entry is ValidationEntryObject<T> {
   return isRecord(entry) &&
     'validator' in entry &&
-    isValidationValidator<T>(entry.validator) &&
+    isSupportedValidator<T>(entry.validator) &&
     (!('error' in entry) || entry.error === undefined || typeof entry.error === 'string')
 }
 
@@ -103,7 +100,7 @@ function normalizeValidationResult(
 }
 
 function toValidationFunction<T = unknown>(
-  validator: ValidationValidator<T>,
+  validator: SupportedValidator<T>,
 ): (value: NonNullable<T>) => ValidationOutcome {
   if (typeof validator === 'function') {
     return validator
@@ -123,7 +120,7 @@ function toValidationFunction<T = unknown>(
 export function normalizeValidationEntry<T = unknown>(
   entry: unknown,
 ): NormalizedValidationEntry<T> | null {
-  if (isValidationValidator<T>(entry)) {
+  if (isSupportedValidator<T>(entry)) {
     return { validate: toValidationFunction(entry) }
   }
 
@@ -146,7 +143,7 @@ export function runFieldValidator<T = unknown>(
   validator: FieldValidator<T>,
   value: NonNullable<T>,
 ): boolean {
-  if (!isFieldValidator<T>(validator)) {
+  if (!isSupportedValidator<T>(validator)) {
     return false
   }
 
