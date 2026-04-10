@@ -15,12 +15,43 @@ export interface NamedCheck<T = unknown> extends NamedCheckMetadata {
   readonly validate: (value: NonNullable<T>) => boolean
 }
 
+export type FieldValue<T extends FieldDef> = T extends FieldDef<infer V> ? V : unknown
+
+export type FunctionValidator<T = unknown> = (value: NonNullable<T>) => boolean
+
+export type SafeParseValidator<T = unknown> = {
+  safeParse(value: NonNullable<T>): { success: boolean }
+}
+
+export type StringTestValidator = {
+  test(value: string): boolean
+}
+
+export type FieldValidator<T = unknown> =
+  | FunctionValidator<T>
+  | NamedCheck<T>
+  | SafeParseValidator<T>
+  | StringTestValidator
+
+export type ValidationEntry<T = unknown> =
+  | FieldValidator<T>
+  | {
+      validator: FieldValidator<T>
+      error?: string
+    }
+
+export type ValidationMap<F extends Record<string, FieldDef>> = Partial<{
+  [K in keyof F & string]: ValidationEntry<FieldValue<F[K]>>
+}>
+
 export type FieldStatus = {
   enabled: boolean
   fair: boolean
   required: boolean
   reason: string | null
   reasons: string[]
+  valid?: boolean
+  error?: string
 }
 
 export type FieldAvailability = FieldStatus
@@ -28,8 +59,6 @@ export type FieldAvailability = FieldStatus
 export type AvailabilityMap<F extends Record<string, FieldDef>> = {
   [K in keyof F]: FieldStatus
 }
-
-export type FieldValue<T extends FieldDef> = T extends FieldDef<infer V> ? V : unknown
 
 export type FieldValues<F extends Record<string, FieldDef>> = {
   [K in keyof F]?: FieldValue<F[K]>
@@ -135,6 +164,8 @@ export type ScorecardField<F extends Record<string, FieldDef>> = {
   satisfied: boolean
   enabled: boolean
   fair: boolean
+  valid?: boolean
+  error?: string
   required: boolean
   reason: string | null
   reasons: string[]

@@ -26,6 +26,9 @@ export type {
   JsonPrimitive,
   NamedCheck,
   NamedCheckMetadata,
+  FieldValidator,
+  ValidationEntry,
+  ValidationMap,
 } from './types.js'
 export type { FieldBuilder, FieldInput, FieldRef, NormalizeField, NormalizeFields } from './field.js'
 export type {
