@@ -14,6 +14,10 @@ export type NormalizedValidationEntry<T = unknown> = {
   error?: string
 }
 
+type NormalizedValidationResult =
+  | { valid: true }
+  | { valid: false; error?: string }
+
 // `check()` remains boolean-only at the public API boundary, but the runtime
 // validator shapes are otherwise shared with richer validation entries.
 type SupportedValidator<T = unknown> = FieldValidator<T> | ValidationValidator<T>
@@ -64,7 +68,7 @@ function isValidationEntryObject<T = unknown>(entry: unknown): entry is Validati
 function normalizeValidationResult(
   result: unknown,
   fallbackError?: string,
-): ValidationResult {
+): NormalizedValidationResult {
   if (typeof result === 'boolean') {
     return result
       ? { valid: true }
@@ -153,6 +157,6 @@ export function runFieldValidator<T = unknown>(
 export function runValidationEntry<T = unknown>(
   entry: NormalizedValidationEntry<T>,
   value: NonNullable<T>,
-): ValidationResult {
+): NormalizedValidationResult {
   return normalizeValidationResult(entry.validate(value), entry.error)
 }

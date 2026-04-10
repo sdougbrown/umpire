@@ -866,9 +866,13 @@ export function umpire<
         values[field] as NonNullable<FieldValues<NormalizeFields<FInput>>[typeof field]>,
       )
 
-      validated[field] = result.error === undefined
-        ? { ...status, valid: result.valid }
-        : { ...status, valid: result.valid, error: result.error }
+      const nextStatus = { ...status, valid: result.valid }
+
+      if (!result.valid && result.error !== undefined) {
+        nextStatus.error = result.error
+      }
+
+      validated[field] = nextStatus
     }
 
     return validated
