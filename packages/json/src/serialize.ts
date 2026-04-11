@@ -342,7 +342,7 @@ function excludeInspection(
 
 function serializeInspection(
   inspection: RuleInspection<Record<string, FieldDef>, Record<string, unknown>>,
-  nestedInAnyOf: boolean,
+  nestedInComposite: boolean,
 ): SerializeRuleResult {
   switch (inspection.kind) {
     case 'enabledWhen':
@@ -540,7 +540,7 @@ function serializeInspection(
 
       if (
         fieldDependencies.length === inspection.dependencies.length &&
-        !nestedInAnyOf &&
+        !nestedInComposite &&
         serializedDependencies.length > 1
       ) {
         const rules = fieldDependencies.map((dependency) => ({
