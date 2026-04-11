@@ -1,18 +1,10 @@
+import {
+  combineCompositeResults,
+  getCompositeFailureReasons,
+} from './composite.js'
 import { isSatisfied } from './satisfaction.js'
 import { getInternalRuleMetadata, isFairRule, isGateRule, resolveReason } from './rules.js'
 import type { AvailabilityMap, FieldDef, FieldValues, Rule, RuleEvaluation } from './types.js'
-
-function getFailureReasons(result: RuleEvaluation): string[] {
-  if (result.reasons && result.reasons.length > 0) {
-    return [...result.reasons]
-  }
-
-  if (result.reason !== null) {
-    return [result.reason]
-  }
-
-  return []
-}
 
 function partitionRulesByPhase<
   F extends Record<string, FieldDef>,
@@ -88,34 +80,29 @@ export function evaluateRuleForField<
       ),
     )
 
-    if (metadata.constraint === 'fair') {
-      if (innerResults.some((result) => result.fair !== false)) {
-        return {
-          enabled: true,
-          fair: true,
-          reason: null,
-        }
-      }
+    return combineCompositeResults(metadata.constraint, 'or', innerResults)
+  }
 
-      const reasons = innerResults.flatMap(getFailureReasons)
-      return {
-        enabled: true,
-        fair: false,
-        reason: reasons[0] ?? null,
-        reasons: reasons.length === 0 ? undefined : reasons,
-      }
-    }
+  if (metadata?.kind === 'eitherOf') {
+    const branchResults = Object.values(metadata.branches).map((branchRules) =>
+      combineCompositeResults(
+        metadata.constraint,
+        'and',
+        branchRules.map((innerRule) =>
+          evaluateRuleForField(
+            innerRule,
+            field,
+            fields,
+            values,
+            conditions,
+            prev,
+            availability,
+            baseRuleCache,
+          )),
+      ),
+    )
 
-    if (innerResults.some((result) => result.enabled)) {
-      return { enabled: true, reason: null }
-    }
-
-    const reasons = innerResults.flatMap(getFailureReasons)
-    return {
-      enabled: false,
-      reason: reasons[0] ?? null,
-      reasons: reasons.length === 0 ? undefined : reasons,
-    }
+    return combineCompositeResults(metadata.constraint, 'or', branchResults)
   }
 
   if (metadata?.kind === 'requires') {
@@ -216,7 +203,7 @@ export function evaluate<
         reason = result.reason
       }
 
-      reasons.push(...getFailureReasons(result))
+      reasons.push(...getCompositeFailureReasons(result))
     }
 
     if (enabled) {
@@ -242,7 +229,7 @@ export function evaluate<
           reason = result.reason
         }
 
-        reasons.push(...getFailureReasons(result))
+        reasons.push(...getCompositeFailureReasons(result))
       }
     }
 

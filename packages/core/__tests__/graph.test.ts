@@ -1,4 +1,4 @@
-import { check, defineRule, disables, enabledWhen, oneOf, requires } from '../src/rules.js'
+import { check, defineRule, disables, eitherOf, enabledWhen, oneOf, requires } from '../src/rules.js'
 import { buildGraph, detectCycles, exportGraph, topologicalSort } from '../src/graph.js'
 
 type TestFields = {
@@ -201,6 +201,41 @@ describe('graph utilities', () => {
         { from: 'gamma', to: 'beta', type: 'oneOf' },
       ],
     })
+  })
+
+  test('unions eitherOf branch sources into ordering and informational edges', () => {
+    const fields: TestFields = {
+      alpha: {},
+      beta: {},
+      gamma: {},
+      delta: {},
+      epsilon: {},
+    }
+    const graph = buildGraph(fields, [
+      eitherOf<TestFields>('betaPaths', {
+        dependency: [
+          requires('beta', 'alpha'),
+        ],
+        conditional: [
+          enabledWhen('beta', check('gamma', (value) => value === 'ready')),
+        ],
+      }),
+    ])
+
+    expect(graph.edges).toEqual([
+      { from: 'alpha', to: 'beta', type: 'eitherOf', ordering: true },
+      { from: 'gamma', to: 'beta', type: 'eitherOf', ordering: false },
+    ])
+    expect(exportGraph(graph)).toEqual({
+      nodes: ['alpha', 'beta', 'gamma', 'delta', 'epsilon'],
+      edges: [
+        { from: 'alpha', to: 'beta', type: 'eitherOf' },
+        { from: 'gamma', to: 'beta', type: 'eitherOf' },
+      ],
+    })
+
+    const order = topologicalSort(graph, Object.keys(fields))
+    expect(order.indexOf('alpha')).toBeLessThan(order.indexOf('beta'))
   })
 
   test('deduplicates duplicate edges and skips self-references', () => {

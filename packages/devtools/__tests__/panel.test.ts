@@ -1,4 +1,4 @@
-import { umpire } from '@umpire/core'
+import { eitherOf, enabledWhen, umpire } from '@umpire/core'
 import { mount, register, unregister, unmount } from '../src/index.js'
 import { resetRegistry } from '../src/registry.js'
 
@@ -115,5 +115,70 @@ describe('Panel', () => {
     expect(text).toContain('Summary')
     expect(text).toContain('blocked')
     expect(text).toContain('2')
+  })
+
+  it('renders named eitherOf branches in the challenge drawer', async () => {
+    const authUmp = umpire({
+      fields: {
+        email: {},
+        password: {},
+        submit: {},
+      },
+      rules: [
+        eitherOf('submitAuth', {
+          sso: [
+            enabledWhen('submit', () => false, {
+              reason: 'No SSO available for this domain',
+            }),
+          ],
+          password: [
+            enabledWhen('submit', (values) => !!values.email, {
+              reason: 'Enter a valid email address',
+            }),
+            enabledWhen('submit', () => false, {
+              reason: 'Enter a password',
+            }),
+          ],
+        }),
+      ],
+    })
+
+    register('auth', authUmp, {
+      email: '',
+      password: '',
+      submit: undefined,
+    })
+
+    mount()
+
+    const host = document.getElementById('umpire-devtools')
+    const root = host?.shadowRoot
+    const toggle = root?.querySelector('button[aria-expanded="false"]')
+
+    expect(toggle).not.toBeNull()
+
+    toggle?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }))
+    await flushUi()
+
+    const submitRow = [...(root?.querySelectorAll('tr') ?? [])]
+      .find((row) => row.textContent?.includes('submit'))
+
+    expect(submitRow).not.toBeNull()
+
+    submitRow?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }))
+    await flushUi()
+
+    const text = root?.textContent ?? ''
+
+    expect(text).toContain('challenge(submit)')
+    expect(text).toContain('eitherOf')
+    expect(text).toContain('submitAuth')
+    expect(text).toContain('matchedBranches')
+    expect(text).toContain('sso')
+    expect(text).toContain('password')
+    expect(text).toContain('No SSO available for this domain')
+    expect(text).toContain('Enter a valid email address')
+    expect(text).toContain('Enter a password')
+    expect(text).toContain('no match')
   })
 })

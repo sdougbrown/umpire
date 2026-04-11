@@ -7,13 +7,16 @@ import {
   createRules,
   defineRule,
   disables,
+  eitherOf,
   enabledWhen,
+  fairWhen,
   getNamedCheckMetadata,
   inspectPredicate,
   inspectRule,
   oneOf,
   requires,
 } from '../src/rules.js'
+import type { Rule } from '../src/types.js'
 
 type TestFields = {
   alpha: {}
@@ -500,6 +503,127 @@ describe('anyOf', () => {
   })
 })
 
+describe('eitherOf', () => {
+  test('throws when no branches are provided', () => {
+    expect(() => eitherOf<TestFields, TestConditions>('auth', {})).toThrow(
+      'eitherOf("auth") must include at least one branch',
+    )
+  })
+
+  test('throws on empty branches', () => {
+    expect(() =>
+      eitherOf<TestFields, TestConditions>('auth', {
+        sso: [],
+        password: [enabledWhen('alpha', () => true)],
+      }),
+    ).toThrow('eitherOf("auth") branch "sso" must not be empty')
+  })
+
+  test('validates that all inner rules target the same fields', () => {
+    expect(() =>
+      eitherOf<TestFields, TestConditions>('auth', {
+        sso: [enabledWhen('alpha', () => true)],
+        password: [enabledWhen('beta', () => true)],
+      }),
+    ).toThrow('eitherOf("auth") rules must target the same fields')
+  })
+
+  test('validates that all inner rules share the same constraint', () => {
+    expect(() =>
+      eitherOf<TestFields, TestConditions>('auth', {
+        sso: [
+          enabledWhen('alpha', () => true),
+        ],
+        password: [
+          fairWhen('alpha', () => true),
+        ],
+      }),
+    ).toThrow('eitherOf("auth") cannot mix fairWhen rules with availability rules')
+  })
+
+  test('passes if one branch passes', () => {
+    const rule = eitherOf<TestFields, TestConditions>('auth', {
+      sso: [
+        enabledWhen('alpha', () => false, { reason: 'sso unavailable' }),
+      ],
+      password: [
+        enabledWhen('alpha', () => true, { reason: 'need password' }),
+      ],
+    })
+
+    expect(rule.evaluate({}, { allow: false }).get('alpha')).toEqual({
+      enabled: true,
+      reason: null,
+    })
+  })
+
+  test('passes if multiple branches pass', () => {
+    const rule = eitherOf<TestFields, TestConditions>('auth', {
+      sso: [
+        enabledWhen('alpha', () => true, { reason: 'sso unavailable' }),
+      ],
+      password: [
+        enabledWhen('alpha', () => true, { reason: 'need password' }),
+      ],
+      magicLink: [
+        enabledWhen('alpha', () => false, { reason: 'magic link unavailable' }),
+      ],
+    })
+
+    expect(rule.evaluate({}, { allow: false }).get('alpha')).toEqual({
+      enabled: true,
+      reason: null,
+    })
+  })
+
+  test('collects flattened failure reasons in branch order when every branch fails', () => {
+    const rule = eitherOf<TestFields, TestConditions>('auth', {
+      sso: [
+        enabledWhen('alpha', () => false, { reason: 'sso unavailable' }),
+      ],
+      password: [
+        enabledWhen('alpha', () => false, { reason: 'enter a password' }),
+        enabledWhen('alpha', () => false, { reason: 'password too short' }),
+      ],
+    })
+
+    expect(rule.evaluate({}, { allow: false }).get('alpha')).toEqual({
+      enabled: false,
+      reason: 'sso unavailable',
+      reasons: ['sso unavailable', 'enter a password', 'password too short'],
+    })
+  })
+
+  test('supports fair OR logic across named branches', () => {
+    const rule = eitherOf<TestFields, TestConditions>('compatibility', {
+      socket: [
+        fairWhen('alpha', (value, values) => value === values.beta, {
+          reason: 'socket mismatch',
+        }),
+      ],
+      override: [
+        fairWhen('alpha', (_value, values) => values.delta === 'override', {
+          reason: 'override missing',
+        }),
+      ],
+    })
+
+    expect(rule.evaluate({ alpha: 'am5', beta: 'am5' }, { allow: false }).get('alpha')).toEqual({
+      enabled: true,
+      fair: true,
+      reason: null,
+    })
+    expect(
+      rule.evaluate({ alpha: 'am5', beta: 'lga1700', delta: 'missing' }, { allow: false }).get('alpha'),
+    ).toEqual({
+      enabled: true,
+      fair: false,
+      reason: 'socket mismatch',
+      reasons: ['socket mismatch', 'override missing'],
+    })
+  })
+})
+
 describe('defineRule', () => {
   test('creates an enabled custom rule by default', () => {
     const rule = defineRule<TestFields, TestConditions>({
@@ -775,6 +899,60 @@ describe('inspectRule', () => {
       ],
     })
   })
+
+  test('describes eitherOf branches', () => {
+    const rule = eitherOf<TestFields, TestConditions>('auth', {
+      sso: [
+        enabledWhen('alpha', () => false, { reason: 'sso unavailable' }),
+      ],
+      password: [
+        enabledWhen('alpha', () => true),
+      ],
+    })
+
+    expect(inspectRule(rule)).toEqual({
+      kind: 'eitherOf',
+      groupName: 'auth',
+      constraint: 'enabled',
+      branches: {
+        sso: [
+          {
+            kind: 'enabledWhen',
+            target: 'alpha',
+            reason: 'sso unavailable',
+            hasDynamicReason: false,
+          },
+        ],
+        password: [
+          {
+            kind: 'enabledWhen',
+            target: 'alpha',
+            hasDynamicReason: false,
+          },
+        ],
+      },
+    })
+  })
+
+  test('returns undefined when eitherOf contains an uninspectable inner rule', () => {
+    const opaqueRule: Rule<TestFields, TestConditions> = {
+      type: 'opaque',
+      targets: ['alpha'],
+      sources: ['beta'],
+      evaluate: () => new Map([
+        ['alpha', { enabled: true, reason: null }],
+      ]),
+    }
+
+    const rule = eitherOf<TestFields, TestConditions>('auth', {
+      password: [
+        enabledWhen('alpha', () => true),
+      ],
+      opaque: [opaqueRule],
+    })
+
+    expect(inspectRule(rule)).toBeUndefined()
+  })
 })
 
 describe('createRules', () => {
@@ -786,6 +964,7 @@ describe('createRules', () => {
       'check',
       'defineRule',
       'disables',
+      'eitherOf',
       'enabledWhen',
       'fairWhen',
       'oneOf',

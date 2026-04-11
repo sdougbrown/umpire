@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { z } from 'zod'
-import { anyOf, check, disables, enabledWhen, fairWhen, requires, umpire } from '@umpire/core'
+import { check, disables, eitherOf, enabledWhen, fairWhen, requires, umpire } from '@umpire/core'
 import type { FieldValues } from '@umpire/core'
 // useUmpireWithDevtools powers the named instance in the optional panel on this page.
 // Swap back to: import { useUmpire } from '@umpire/react'  (remove leading id arg)
@@ -72,10 +72,6 @@ const hasNumericCompanySize = check('companySize', fieldSchemas.shape.companySiz
 
 type SignupPredicate = (values: FieldValues<typeof signupFields>, conditions: SignupConditions) => boolean
 
-function allowWhenSsoOr(predicate: SignupPredicate): SignupPredicate {
-  return (values, conditions) => conditions.sso || predicate(values, conditions)
-}
-
 function allowWhenNotBusiness(predicate: SignupPredicate): SignupPredicate {
   return (values, conditions) => conditions.plan !== 'business' || predicate(values, conditions)
 }
@@ -103,32 +99,31 @@ const signupUmp = umpire<typeof signupFields, SignupConditions>({
       reason: 'SSO login — no password needed',
     }),
 
-    // Submit is available via EITHER path:
-    //   Path A — standard auth: email passes format validation
-    //   Path B — SSO: the domain is a known SSO provider
-    // anyOf enables submit when at least one path is satisfied.
-    anyOf(
-      enabledWhen('submit', hasValidEmail, {
-        reason: 'Enter a valid email address',
-      }),
-      enabledWhen('submit', (_v, c) => c.sso, {
-        reason: 'No SSO available for this domain',
-      }),
-    ),
-
-    // `oneOf()` does not fit here because it switches field branches, not
-    // predicate branches. These helpers keep the submit-path split readable.
-    enabledWhen('submit', allowWhenSsoOr((v) => !!v.password), {
-      reason: 'Enter a password',
-    }),
-    enabledWhen('submit', allowWhenSsoOr(hasStrongPassword), {
-      reason: 'Use at least 8 password characters',
-    }),
-    enabledWhen('submit', allowWhenSsoOr((v) => !!v.confirmPassword), {
-      reason: 'Confirm your password',
-    }),
-    enabledWhen('submit', allowWhenSsoOr((v) => v.confirmPassword === v.password), {
-      reason: 'Passwords must match',
+    // Submit can unlock through named auth paths without forcing a single
+    // winning branch the way oneOf() would.
+    eitherOf('submitAuth', {
+      sso: [
+        enabledWhen('submit', (_v, c) => c.sso, {
+          reason: 'No SSO available for this domain',
+        }),
+      ],
+      password: [
+        enabledWhen('submit', hasValidEmail, {
+          reason: 'Enter a valid email address',
+        }),
+        enabledWhen('submit', (v) => !!v.password, {
+          reason: 'Enter a password',
+        }),
+        enabledWhen('submit', hasStrongPassword, {
+          reason: 'Use at least 8 password characters',
+        }),
+        enabledWhen('submit', (v) => !!v.confirmPassword, {
+          reason: 'Confirm your password',
+        }),
+        enabledWhen('submit', (v) => v.confirmPassword === v.password, {
+          reason: 'Passwords must match',
+        }),
+      ],
     }),
 
     enabledWhen('submit', allowWhenNotBusiness((v) => !!v.companyName), {

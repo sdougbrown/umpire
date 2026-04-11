@@ -5,6 +5,8 @@ description: Pass if any inner rule passes — OR logic for availability.
 
 Multiple rules targeting the same field are ANDed by default. Wrap them in `anyOf()` when any one successful path should unlock the target.
 
+Use [`eitherOf()`](/umpire/api/rules/either-of/) when those OR paths need names and each path is itself a group of ANDed rules.
+
 ## Signature
 
 ```ts
@@ -31,4 +33,5 @@ Either a password or a bypass flag unlocks submit. When both fail, all inner rea
 ## See also
 
 - [Quick Start: anyOf](/umpire/learn/#anyof) — interactive demo
+- [`eitherOf()`](/umpire/api/rules/either-of/) — named OR branches built from rule groups
 - [`enabledWhen()`](/umpire/api/rules/enabled-when/) — the most common inner rule for `anyOf`

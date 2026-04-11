@@ -89,6 +89,7 @@ See the docs for full type details and behavior notes: https://sdougbrown.github
 - `disables(source, targets, options?)` — active source disables target fields
 - `oneOf(groupName, branches, options?)` — only one branch of fields is active at a time
 - `anyOf(...rules)` — OR logic: pass if any inner rule passes
+- `eitherOf(groupName, branches)` — named OR paths where each branch is a group of ANDed rules
 - `check(field, validator)` — bridge validators into rules with preserved field metadata
 
 Use `field<V>('name')` to create a typed field reference. Pass it to `fairWhen` (or any rule) to get a typed `value` parameter instead of `unknown`.
