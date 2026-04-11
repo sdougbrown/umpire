@@ -29,24 +29,4 @@ export default defineConfig([
     minify: true,
     sourcemap: true,
   },
-  // Bundled convenience build — core inlined, only React external
-  // Fewer script tags for CodePen / quick demos
-  {
-    entry: { 'umpire-react.bundle': 'src/index.ts' },
-    format: ['iife'],
-    globalName: 'UmpireReact',
-    platform: 'browser',
-    deps: {
-      neverBundle: ['react'],
-      alwaysBundle: ['@umpire/core'],
-    },
-    outputOptions: {
-      globals: { react: 'React' },
-    },
-    outDir: 'dist',
-    clean: false,
-    dts: false,
-    minify: true,
-    sourcemap: true,
-  },
 ])
