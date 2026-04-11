@@ -4,14 +4,16 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "browser": "./dist/index.browser.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "browser": "./dist/index.browser.js",
       "import": "./dist/index.js"
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsdown",
     "bench": "yarn build && bun ./scripts/benchmark.mjs",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
@@ -28,5 +30,8 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "tsdown": "^0.21.7"
   }
 }

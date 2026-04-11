@@ -22,6 +22,23 @@ yarn add @umpire/core
 
 Add `@umpire/react` when you want the snapshot-tracking hook used in the final `play()` example.
 
+**No bundler?** Both packages ship browser-ready IIFE and ESM builds. Load them via CDN and the globals are ready to use:
+
+```html
+<!-- Core: umpire(), enabledWhen(), requires(), etc. → window.Umpire -->
+<script src="https://unpkg.com/@umpire/core/dist/index.iife.js"></script>
+
+<!-- React hook: useUmpire() → window.UmpireReact -->
+<script src="https://unpkg.com/@umpire/react/dist/index.iife.js"></script>
+```
+
+Or with ESM imports:
+
+```js
+import { umpire, enabledWhen } from 'https://esm.sh/@umpire/core'
+import { useUmpire } from 'https://esm.sh/@umpire/react'
+```
+
 ## `requires()`
 
 Use `requires()` when one field should stay unavailable until another field is both filled in and still eligible. It is the simplest way to build stepwise flows without mutating the form.
