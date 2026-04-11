@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Umpire starter</title>
+</head>
+<body>
+  <!--
+    Umpire + React CDN starter
+    Swap unpkg URLs to a pinned version once you know which one you want, e.g.:
+      https://unpkg.com/@umpire/react@0.1.0-alpha.9/dist/umpire-react.bundle.iife.js
+  -->
+  <script src="https://unpkg.com/react/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom/umd/react-dom.production.min.js"></script>
+
+  <!-- Bundle build: @umpire/core is inlined, only React is external -->
+  <script src="https://unpkg.com/@umpire/react/dist/umpire-react.bundle.iife.js"></script>
+
+  <div id="root"></div>
+
+  <script>
+    const { useUmpire } = UmpireReact
+    const { useState } = React
+    const { enabledWhen, requires, umpire } = UmpireReact.core ?? {}
+
+    // Start here — define your fields and rules
+    // const ump = umpire({ fields: { ... }, rules: [ ... ] })
+  </script>
+</body>
+</html>
