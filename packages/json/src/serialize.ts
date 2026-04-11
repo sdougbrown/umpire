@@ -10,7 +10,7 @@ import {
 
 import {
   createCheckRuleFromMetadata,
-  createCheckSpecFromMetadata,
+  createValidatorSpecFromMetadata,
   createValidatorDefFromMetadata,
 } from './check-ops.js'
 import { getJsonDef } from './json-def.js'
@@ -121,9 +121,9 @@ function createCheckParamsKeyPart(rule: Extract<JsonRule, { type: 'check' }>): s
 
 function createCheckExprFromMetadata(
   field: string,
-  metadata: Parameters<typeof createCheckSpecFromMetadata>[0],
+  metadata: Parameters<typeof createValidatorSpecFromMetadata>[0],
 ): Extract<JsonExpr, { op: 'check' }> | undefined {
-  const spec = createCheckSpecFromMetadata(metadata)
+  const spec = createValidatorSpecFromMetadata(metadata)
 
   return spec
     ? {
@@ -291,7 +291,7 @@ function serializeValidator(field: string, entry: unknown): SerializeValidatorRe
     return {
       excluded: [createExcluded(
         'field:validator',
-        'Field validator cannot be serialized unless it uses a named check from @umpire/json',
+        'Field validator cannot be serialized unless it uses portable validator metadata from @umpire/json',
         field,
         coverageKey,
       )],
@@ -305,7 +305,7 @@ function serializeValidator(field: string, entry: unknown): SerializeValidatorRe
     return {
       excluded: [createExcluded(
         'field:validator',
-        'Field validator uses named metadata that is not part of the JSON validator spec',
+        'Field validator uses metadata that is not part of the JSON validator spec',
         field,
         coverageKey,
       )],
@@ -374,7 +374,7 @@ function serializeInspection(
 
       return excludeInspection(
         inspection,
-        'enabledWhen() predicates are only serializable when hydrated from JSON or when they map to a named check',
+        'enabledWhen() predicates are only serializable when hydrated from JSON or when they map to a portable validator',
         undefined,
         createKey('rule', 'enabledWhen', inspection.target),
       )
@@ -422,7 +422,7 @@ function serializeInspection(
 
         return excludeInspection(
           inspection,
-          'disables() with predicate sources cannot be serialized unless hydrated from JSON or when they map to a named check',
+          'disables() with predicate sources cannot be serialized unless hydrated from JSON or when they map to a portable validator',
         )
       }
 
@@ -491,7 +491,7 @@ function serializeInspection(
 
       return excludeInspection(
         inspection,
-        'fairWhen() predicates are only serializable when hydrated from JSON or when they map to a named check on the same field',
+        'fairWhen() predicates are only serializable when hydrated from JSON or when they map to a portable validator on the same field',
         '(value, values, conditions) => boolean',
         createKey('rule', 'fairWhen', inspection.target),
       )
@@ -531,7 +531,7 @@ function serializeInspection(
       if (serializedDependencies.some((dependency) => dependency === undefined)) {
         return excludeInspection(
           inspection,
-          'requires() with predicate dependencies cannot be serialized unless hydrated from JSON or when those predicates map to named checks',
+          'requires() with predicate dependencies cannot be serialized unless hydrated from JSON or when those predicates map to portable validators',
           undefined,
         )
       }

@@ -9,7 +9,7 @@ import {
   requires,
 } from '@umpire/core'
 
-import { checks, fromJson, hydrateIsEmptyStrategy, toJson } from '../src/index.js'
+import { fromJson, hydrateIsEmptyStrategy, namedValidators, toJson } from '../src/index.js'
 import type { UmpireJsonSchema } from '../src/index.js'
 
 describe('toJson', () => {
@@ -76,9 +76,9 @@ describe('toJson', () => {
       fields,
       rules: [],
       validators: {
-        email: checks.email(),
+        email: namedValidators.email(),
         username: {
-          validator: checks.minLength(3),
+          validator: namedValidators.minLength(3),
           error: 'Username must be at least 3 characters',
         },
         slug: /^[a-z-]+$/,
@@ -105,7 +105,7 @@ describe('toJson', () => {
         {
           type: 'field:validator',
           field: 'slug',
-          description: 'Field validator cannot be serialized unless it uses a named check from @umpire/json',
+          description: 'Field validator cannot be serialized unless it uses portable validator metadata from @umpire/json',
           key: 'field:slug:validator',
         },
       ],
@@ -127,7 +127,7 @@ describe('toJson', () => {
       requires<typeof fields>('submit', 'email', 'username', {
         reason: 'Need an identity field',
       }),
-      requires<typeof fields>('submit', check('email', checks.email()), 'password', {
+      requires<typeof fields>('submit', check('email', namedValidators.email()), 'password', {
         reason: 'Need a valid email and password',
       }),
       disables<typeof fields>('mode', ['submit']),
@@ -218,7 +218,7 @@ describe('toJson', () => {
         {
           type: 'enabledWhen',
           field: 'submit',
-          description: 'enabledWhen() predicates are only serializable when hydrated from JSON or when they map to a named check',
+          description: 'enabledWhen() predicates are only serializable when hydrated from JSON or when they map to a portable validator',
           key: 'rule:enabledWhen:submit',
         },
       ],

@@ -1,4 +1,8 @@
-export { checks, createNamedCheckFromRule, defaultCheckReason } from './check-ops.js'
+export {
+  namedValidators,
+  createNamedValidatorFromRule,
+  defaultValidatorMessage,
+} from './check-ops.js'
 export {
   anyOfJson,
   createJsonRules,
@@ -18,8 +22,9 @@ export { validateSchema } from './validate.js'
 
 export type {
   ExcludedRule,
-  JsonCheckOp,
-  JsonCheckSpec,
+  JsonValidatorOp,
+  JsonValidatorSpec,
+  JsonValidatorDef,
   JsonCheckRule,
   JsonConditionDef,
   JsonConditionType,
@@ -28,7 +33,6 @@ export type {
   JsonIsEmptyStrategy,
   JsonRequiresDependency,
   JsonRule,
-  JsonValidatorDef,
   UmpireJsonSchema,
 } from './schema.js'
 export type { JsonExprBuilder, PortableRuleOptions } from './builders.js'

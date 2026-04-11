@@ -129,7 +129,7 @@ describe('fromJson', () => {
     ).toThrow('Unknown isEmpty strategy')
   })
 
-  test('round-trips fairWhen check expressions without dropping named-check metadata', () => {
+  test('round-trips fairWhen check expressions without dropping portable-validator metadata', () => {
     const schema: UmpireJsonSchema = {
       version: 1,
       fields: {

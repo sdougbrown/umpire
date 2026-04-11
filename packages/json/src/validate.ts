@@ -5,7 +5,7 @@ import type {
   JsonFieldDef,
   JsonValidatorDef,
 } from './schema.js'
-import { assertValidCheckRule, assertValidCheckSpec } from './check-ops.js'
+import { assertValidCheckRule, assertValidValidatorSpec } from './check-ops.js'
 import { compileExpr } from './expr.js'
 import { isJsonIsEmptyStrategy } from './strategies.js'
 
@@ -59,7 +59,7 @@ function validateValidator(field: string, validator: JsonValidatorDef, fieldName
     throw new Error(`[umpire/json] Validator references unknown field "${field}"`)
   }
 
-  assertValidCheckSpec(validator)
+  assertValidValidatorSpec(validator)
 
   if (validator.error !== undefined && typeof validator.error !== 'string') {
     throw new Error(`[umpire/json] Validator for field "${field}" must use a string error when provided`)

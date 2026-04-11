@@ -42,38 +42,38 @@ Three tiers of output:
 
 - **Hydrated rules** (from `fromJson()`) round-trip exactly. Their original JSON definition is preserved and written back verbatim.
 - **Hydrated validators** (from `fromJson()`) round-trip exactly. Their original JSON definition is preserved and written back verbatim.
-- **Portable hand-written rules** — rules built with `checks.*()`, `expr.*`, and the portable builders — are serialized when they map cleanly to the contract.
-- **Portable hand-written validators** — validators built from `checks.*()` — are serialized when they map cleanly to the contract.
+- **Portable hand-written rules** — rules built with `namedValidators.*()`, `expr.*`, and the portable builders — are serialized when they map cleanly to the contract.
+- **Portable hand-written validators** — validators built from `namedValidators.*()` — are serialized when they map cleanly to the contract.
 - **Everything else** lands in `excluded`, not dropped silently.
 
 When the config started from a `fromJson()` parse, previously declared `conditions` and `excluded` entries carry forward too. If the current runtime can now serialize something that was previously excluded, `toJson()` replaces the old entry instead of duplicating it.
 
-## Portable checks
+## Portable validator helpers
 
-`checks.*()` are named validator helpers that carry stable metadata across the JSON boundary:
+`namedValidators.*()` are portable validator helpers that carry stable metadata across the JSON boundary:
 
 ```ts
 import { check, enabledWhen } from '@umpire/core'
-import { checks } from '@umpire/json'
+import { namedValidators } from '@umpire/json'
 
-enabledWhen('submit', check('email', checks.email()), {
+enabledWhen('submit', check('email', namedValidators.email()), {
   reason: 'Enter a valid email address',
 })
 ```
 
-Plain functions, regexes, Zod schemas, and Yup schemas all work with `check()`. The difference is that `checks.*()` helpers know how to serialize themselves — `toJson()` can write them out and `fromJson()` can rebuild them exactly. Plain validators land in `excluded`.
+Plain functions, regexes, Zod schemas, and Yup schemas all work with `check()`. The difference is that `namedValidators.*()` helpers know how to serialize themselves — `toJson()` can write them out and `fromJson()` can rebuild them exactly. Plain validators land in `excluded`.
 
-Built-in named checks in `version: 1`:
+Built-in portable validators in `version: 1`:
 
-- `checks.email()` — practical email syntax
-- `checks.url()` — absolute URL with a scheme
-- `checks.matches(pattern)` — regex from a serializable pattern string
-- `checks.minLength(n)` — string or array length at least `n`
-- `checks.maxLength(n)` — string or array length at most `n`
-- `checks.min(n)` — number at least `n`
-- `checks.max(n)` — number at most `n`
-- `checks.range(min, max)` — number within an inclusive range
-- `checks.integer()` — number must be an integer
+- `namedValidators.email()` — practical email syntax
+- `namedValidators.url()` — absolute URL with a scheme
+- `namedValidators.matches(pattern)` — regex from a serializable pattern string
+- `namedValidators.minLength(n)` — string or array length at least `n`
+- `namedValidators.maxLength(n)` — string or array length at most `n`
+- `namedValidators.min(n)` — number at least `n`
+- `namedValidators.max(n)` — number at most `n`
+- `namedValidators.range(min, max)` — number within an inclusive range
+- `namedValidators.integer()` — number must be an integer
 
 The surrounding rule owns the reason string — you can pair any portable check with your own product copy.
 
@@ -101,7 +101,7 @@ In `@umpire/core`, `check()` is already doing two things depending on context: i
 { "type": "check", "field": "email", "op": "email" }
 ```
 
-**`expr.check()`** is the portable predicate-source form. It appears inside a predicate expression, letting one field's availability depend on whether another field passes a named check:
+**`expr.check()`** is the portable predicate-source form. It appears inside a predicate expression, letting one field's availability depend on whether another field passes a portable validator:
 
 ```json
 {
@@ -114,7 +114,7 @@ In `@umpire/core`, `check()` is already doing two things depending on context: i
 The modern split is:
 
 - `validators` for field-local validation metadata
-- `expr.check()` for structural predicates that depend on another field passing a named check
+- `expr.check()` for structural predicates that depend on another field passing a portable validator
 - top-level `"check"` only when you need to preserve older JSON schemas
 
 See [DSL & Portable Builders](/umpire/adapters/json/dsl/) for the full expression vocabulary.
@@ -178,7 +178,7 @@ If your Umpire model needs to survive a runtime boundary, write it through the J
 
 The portable toolkit is:
 
-- `checks.*()` for field-local value constraints
+- `namedValidators.*()` for field-local value constraints
 - top-level `validators` for portable field-local validation
 - `expr.*` for predicate expressions inside `enabledWhen`, `requires`, `disables`, and `fairWhen`
 - Portable builders (`requiresJson`, `enabledWhenExpr`, `disablesExpr`, `fairWhenExpr`) for constructing rules that carry their own JSON definition from birth
