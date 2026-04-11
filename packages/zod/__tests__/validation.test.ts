@@ -114,7 +114,7 @@ describe('createZodValidation', () => {
       rules: [
         fairWhen(
           'vehicleType',
-          (values) => values.vehicleType === values.spotType || values.spotType === 'standard',
+          (value, values) => value === values.spotType || values.spotType === 'standard',
           { reason: 'Vehicle type does not match the reserved spot' },
         ),
       ],

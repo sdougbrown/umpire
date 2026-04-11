@@ -215,6 +215,27 @@ describe('activeSchema rejectFoul', () => {
     expect(schema.safeParse({ optionalNickname: 'Doug' }).success).toBe(true)
   })
 
+  test('omitting a foul optional field passes when rejectFoul is true', () => {
+    const schema = activeSchema(
+      createAvailabilityWithFoul({
+        optionalNickname: {
+          enabled: true,
+          fair: false,
+          required: false,
+          reason: 'stale value',
+          reasons: ['stale value'],
+        },
+      }),
+      { optionalNickname: z.string() },
+      { rejectFoul: true },
+    )
+
+    // Clearing the field (absent from submission) should be accepted
+    expect(schema.safeParse({}).success).toBe(true)
+    // Submitting the stale value should be rejected
+    expect(schema.safeParse({ optionalNickname: 'Doug' }).success).toBe(false)
+  })
+
   test('fair fields are unaffected when rejectFoul is true', () => {
     const schema = activeSchema(
       createAvailabilityWithFoul(),

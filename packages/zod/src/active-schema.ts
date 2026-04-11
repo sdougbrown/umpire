@@ -60,7 +60,8 @@ export function activeSchema<F extends Record<string, FieldDef>>(
 
     if (rejectFoul && !status.fair) {
       const message = status.reason ?? 'Value is not valid for the current context'
-      shape[field] = base.refine(() => false, { message })
+      const refined = base.refine(() => false, { message })
+      shape[field] = status.required ? refined : refined.optional()
       continue
     }
 
