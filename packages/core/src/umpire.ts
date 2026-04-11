@@ -415,6 +415,43 @@ function describeRuleForField<
     }
   }
 
+  if (metadata?.kind === 'eitherOf') {
+    const branches = Object.fromEntries(
+      Object.entries(metadata.branches).map(([branchName, branchRules]) => {
+        const inner = branchRules.map((innerRule) =>
+          describeRuleForField(
+            innerRule,
+            field,
+            fields,
+            values,
+            conditions,
+            prev,
+            availability,
+            baseRuleCache,
+          ))
+
+        return [branchName, {
+          passed: inner.every((entry) => entry.passed),
+          inner,
+        }]
+      }),
+    ) as Record<string, { passed: boolean; inner: ChallengeTrace['directReasons'] }>
+
+    const matchedBranches = Object.entries(branches)
+      .filter(([, branch]) => branch.passed)
+      .map(([branchName]) => branchName)
+
+    return {
+      rule: 'eitherOf',
+      passed: didRulePass(rule, evaluation),
+      reason: evaluation.reason,
+      group: metadata.groupName,
+      constraint: metadata.constraint,
+      matchedBranches,
+      branches,
+    }
+  }
+
   return withRuleTrace({
     rule: rule.type,
     passed: didRulePass(rule, evaluation),
@@ -465,6 +502,36 @@ function collectFailedDependenciesForRule<
         baseRuleCache,
       ),
     )
+  }
+
+  if (metadata?.kind === 'eitherOf') {
+    const evaluation = evaluateRuleForField(
+      rule,
+      field,
+      fields,
+      values,
+      conditions,
+      prev,
+      availability,
+      baseRuleCache,
+    )
+
+    if (metadata.constraint === 'fair' ? evaluation.fair !== false : evaluation.enabled) {
+      return []
+    }
+
+    return Object.values(metadata.branches).flatMap((branchRules) =>
+      branchRules.flatMap((innerRule) =>
+        collectFailedDependenciesForRule(
+          innerRule,
+          field,
+          fields,
+          values,
+          conditions,
+          prev,
+          availability,
+          baseRuleCache,
+        )))
   }
 
   if (metadata?.kind !== 'requires') {
@@ -706,8 +773,8 @@ function getStaticOneOfGroupFromRule<
  *   satisfied"
  * - dynamic `oneOf({ activeBranch })` functions, because runtime conditions can
  *   legitimately reopen states that look contradictory from static structure
- * - `anyOf()` and custom rules, because they would require deeper semantic
- *   analysis than this validator is meant to provide
+ * - `anyOf()`, `eitherOf()`, and custom rules, because they would require
+ *   deeper semantic analysis than this validator is meant to provide
  *
  * Future additions here should follow the same bar: only add checks that are
  * provably impossible by construction, with no need to reason about runtime

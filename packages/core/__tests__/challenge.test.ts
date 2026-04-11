@@ -1,4 +1,14 @@
-import { anyOf, check, defineRule, disables, enabledWhen, fairWhen, oneOf, requires } from '../src/rules.js'
+import {
+  anyOf,
+  check,
+  defineRule,
+  disables,
+  eitherOf,
+  enabledWhen,
+  fairWhen,
+  oneOf,
+  requires,
+} from '../src/rules.js'
 import { umpire } from '../src/umpire.js'
 
 type TestFields = {
@@ -250,6 +260,142 @@ describe('challenge', () => {
           expect.objectContaining({ rule: 'enabledWhen', reason: 'first failed', passed: false }),
           expect.objectContaining({ rule: 'enabledWhen', reason: 'second failed', passed: false }),
         ],
+      }),
+    ])
+  })
+
+  test('groups inner results by named branch for eitherOf rules', () => {
+    const ump = umpire<TestFields>({
+      fields: {
+        email: {},
+        password: {},
+        submit: {},
+        dates: {},
+        startTime: {},
+        endTime: {},
+        everyHour: {},
+        repeatEvery: {},
+      },
+      rules: [
+        eitherOf<TestFields>('auth', {
+          sso: [
+            enabledWhen<TestFields>('submit', () => false, {
+              reason: 'No SSO available for this domain',
+            }),
+          ],
+          password: [
+            requires<TestFields>('submit', 'email', {
+              reason: 'Enter a valid email address',
+            }),
+            enabledWhen<TestFields>('submit', () => false, {
+              reason: 'Enter a password',
+            }),
+          ],
+        }),
+      ],
+    })
+
+    const challenge = ump.challenge('submit', {})
+
+    expect(challenge.directReasons).toEqual([
+      expect.objectContaining({
+        rule: 'eitherOf',
+        passed: false,
+        reason: 'No SSO available for this domain',
+        group: 'auth',
+        matchedBranches: [],
+        branches: {
+          sso: {
+            passed: false,
+            inner: [
+              expect.objectContaining({
+                rule: 'enabledWhen',
+                reason: 'No SSO available for this domain',
+                passed: false,
+              }),
+            ],
+          },
+          password: {
+            passed: false,
+            inner: [
+              expect.objectContaining({
+                rule: 'requires',
+                reason: 'Enter a valid email address',
+                passed: false,
+              }),
+              expect.objectContaining({
+                rule: 'enabledWhen',
+                reason: 'Enter a password',
+                passed: false,
+              }),
+            ],
+          },
+        },
+      }),
+    ])
+  })
+
+  test('follows nested requires chains inside eitherOf rules', () => {
+    const ump = umpire<TestFields>({
+      fields: {
+        email: {},
+        password: {},
+        submit: {},
+        dates: {},
+        startTime: {},
+        endTime: {},
+        everyHour: {},
+        repeatEvery: {},
+      },
+      rules: [
+        disables<TestFields>('dates', ['startTime']),
+        eitherOf<TestFields>('endTimePaths', {
+          scheduled: [
+            requires('endTime', 'startTime'),
+          ],
+          fallback: [
+            enabledWhen('endTime', () => false, { reason: 'fallback failed' }),
+          ],
+        }),
+        requires<TestFields>('submit', 'endTime'),
+      ],
+    })
+
+    const challenge = ump.challenge('submit', {
+      dates: ['2026-04-01'],
+      startTime: '09:00',
+      endTime: '10:00',
+    })
+
+    expect(challenge.transitiveDeps).toEqual([
+      expect.objectContaining({
+        field: 'endTime',
+        enabled: false,
+        reason: 'requires startTime',
+        causedBy: [
+          expect.objectContaining({
+            rule: 'eitherOf',
+            branches: {
+              scheduled: {
+                passed: false,
+                inner: [
+                  expect.objectContaining({ rule: 'requires', dependency: 'startTime' }),
+                ],
+              },
+              fallback: {
+                passed: false,
+                inner: [
+                  expect.objectContaining({ rule: 'enabledWhen', reason: 'fallback failed' }),
+                ],
+              },
+            },
+          }),
+        ],
+      }),
+      expect.objectContaining({
+        field: 'startTime',
+        enabled: false,
+        reason: 'overridden by dates',
       }),
     ])
   })

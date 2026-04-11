@@ -3,7 +3,7 @@ title: Rules Overview
 description: The built-in rule helpers for composing field availability.
 ---
 
-Every rule helper returns a `Rule<F, C>` object. Rules are plain values — they can be composed, stored, and combined with `anyOf()`.
+Every rule helper returns a `Rule<F, C>` object. Rules are plain values — they can be composed, stored, and combined with `anyOf()` or `eitherOf()`.
 
 | Rule | Purpose |
 |------|---------|
@@ -13,6 +13,7 @@ Every rule helper returns a `Rule<F, C>` object. Rules are plain values — they
 | [`disables()`](/umpire/api/rules/disables/) | Active source disables target fields |
 | [`oneOf()`](/umpire/api/rules/one-of/) | Only one branch of fields is active at a time |
 | [`anyOf()`](/umpire/api/rules/any-of/) | OR logic — pass if any inner rule passes |
+| [`eitherOf()`](/umpire/api/rules/either-of/) | Named OR paths where each branch is a group of ANDed rules |
 | [`check()`](/umpire/api/rules/check/) | Bridge validators into rules with preserved field metadata |
 
 Try each one interactively on the [Quick Start](/umpire/learn/) page.

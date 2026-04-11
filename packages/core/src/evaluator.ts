@@ -14,6 +14,68 @@ function getFailureReasons(result: RuleEvaluation): string[] {
   return []
 }
 
+function combineOrResults(constraint: 'enabled' | 'fair', results: RuleEvaluation[]): RuleEvaluation {
+  if (constraint === 'fair') {
+    if (results.some((result) => result.fair !== false)) {
+      return {
+        enabled: true,
+        fair: true,
+        reason: null,
+      }
+    }
+
+    const reasons = results.flatMap(getFailureReasons)
+    return {
+      enabled: true,
+      fair: false,
+      reason: reasons[0] ?? null,
+      reasons: reasons.length === 0 ? undefined : reasons,
+    }
+  }
+
+  if (results.some((result) => result.enabled)) {
+    return { enabled: true, reason: null }
+  }
+
+  const reasons = results.flatMap(getFailureReasons)
+  return {
+    enabled: false,
+    reason: reasons[0] ?? null,
+    reasons: reasons.length === 0 ? undefined : reasons,
+  }
+}
+
+function combineAndResults(constraint: 'enabled' | 'fair', results: RuleEvaluation[]): RuleEvaluation {
+  if (constraint === 'fair') {
+    if (results.every((result) => result.fair !== false)) {
+      return {
+        enabled: true,
+        fair: true,
+        reason: null,
+      }
+    }
+
+    const reasons = results.flatMap(getFailureReasons)
+    return {
+      enabled: true,
+      fair: false,
+      reason: reasons[0] ?? null,
+      reasons: reasons.length === 0 ? undefined : reasons,
+    }
+  }
+
+  if (results.every((result) => result.enabled)) {
+    return { enabled: true, reason: null }
+  }
+
+  const reasons = results.flatMap(getFailureReasons)
+  return {
+    enabled: false,
+    reason: reasons[0] ?? null,
+    reasons: reasons.length === 0 ? undefined : reasons,
+  }
+}
+
 function partitionRulesByPhase<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
@@ -88,34 +150,27 @@ export function evaluateRuleForField<
       ),
     )
 
-    if (metadata.constraint === 'fair') {
-      if (innerResults.some((result) => result.fair !== false)) {
-        return {
-          enabled: true,
-          fair: true,
-          reason: null,
-        }
-      }
+    return combineOrResults(metadata.constraint, innerResults)
+  }
 
-      const reasons = innerResults.flatMap(getFailureReasons)
-      return {
-        enabled: true,
-        fair: false,
-        reason: reasons[0] ?? null,
-        reasons: reasons.length === 0 ? undefined : reasons,
-      }
-    }
+  if (metadata?.kind === 'eitherOf') {
+    const branchResults = Object.values(metadata.branches).map((branchRules) =>
+      combineAndResults(
+        metadata.constraint,
+        branchRules.map((innerRule) =>
+          evaluateRuleForField(
+            innerRule,
+            field,
+            fields,
+            values,
+            conditions,
+            prev,
+            availability,
+            baseRuleCache,
+          )),
+      ))
 
-    if (innerResults.some((result) => result.enabled)) {
-      return { enabled: true, reason: null }
-    }
-
-    const reasons = innerResults.flatMap(getFailureReasons)
-    return {
-      enabled: false,
-      reason: reasons[0] ?? null,
-      reasons: reasons.length === 0 ? undefined : reasons,
-    }
+    return combineOrResults(metadata.constraint, branchResults)
   }
 
   if (metadata?.kind === 'requires') {

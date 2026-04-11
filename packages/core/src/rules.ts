@@ -89,6 +89,12 @@ export type RuleInspection<
       rules: Array<RuleInspection<F, C>>
     }
   | {
+      kind: 'eitherOf'
+      groupName: string
+      constraint: RuleConstraint
+      branches: Record<string, Array<RuleInspection<F, C>>>
+    }
+  | {
       kind: 'custom'
       type: string
       constraint: RuleConstraint
@@ -151,6 +157,11 @@ type OneOfBranchesInput<F extends Record<string, FieldDef>> = Record<
   Array<FieldSelector<F>>
 >
 
+type EitherOfBranches<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+> = Record<string, Array<Rule<F, C>>>
+
 type OneOfOptions<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
@@ -212,6 +223,12 @@ export type InternalRuleMetadata<
       constraint: 'enabled' | 'fair'
     }
   | {
+      kind: 'eitherOf'
+      groupName: string
+      branches: EitherOfBranches<F, C>
+      constraint: 'enabled' | 'fair'
+    }
+  | {
       kind: 'custom'
       constraint: RuleConstraint
     }
@@ -219,7 +236,10 @@ export type InternalRuleMetadata<
 type InternalRuleMetadataWithOptions<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
-> = Exclude<InternalRuleMetadata<F, C>, { kind: 'anyOf' } | { kind: 'custom' }>
+> = Exclude<
+  InternalRuleMetadata<F, C>,
+  { kind: 'anyOf' } | { kind: 'eitherOf' } | { kind: 'custom' }
+>
 
 type InternalRuleCarrier<
   F extends Record<string, FieldDef>,
@@ -501,6 +521,60 @@ function cloneBranches<F extends Record<string, FieldDef>>(
   ) as Record<string, Array<keyof F & string>>
 }
 
+function getRuleEvaluationReasons(result: RuleEvaluation): string[] {
+  if (result.reasons && result.reasons.length > 0) {
+    return [...result.reasons]
+  }
+
+  if (result.reason !== null) {
+    return [result.reason]
+  }
+
+  return []
+}
+
+function getBranchRules<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(branches: EitherOfBranches<F, C>): Rule<F, C>[] {
+  return Object.values(branches).flatMap((branchRules) => branchRules)
+}
+
+function validateCompositeTargets<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(label: string, rules: Rule<F, C>[]): Array<keyof F & string> {
+  const expectedTargets = uniqueFields([...rules[0].targets]).sort()
+
+  for (const rule of rules.slice(1)) {
+    const currentTargets = uniqueFields([...rule.targets]).sort()
+
+    if (
+      currentTargets.length !== expectedTargets.length ||
+      currentTargets.some((target, index) => target !== expectedTargets[index])
+    ) {
+      throw new Error(`[umpire] ${label} rules must target the same fields`)
+    }
+  }
+
+  return [...rules[0].targets]
+}
+
+function validateCompositeConstraint<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(label: string, rules: Rule<F, C>[]): RuleConstraint {
+  const constraint = getRuleConstraint(rules[0])
+
+  for (const innerRule of rules.slice(1)) {
+    if (getRuleConstraint(innerRule) !== constraint) {
+      throw new Error(`[umpire] ${label} cannot mix fairWhen rules with availability rules`)
+    }
+  }
+
+  return constraint
+}
+
 export function inspectRule<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
@@ -576,6 +650,29 @@ export function inspectRule<
     }
   }
 
+  if (metadata.kind === 'eitherOf') {
+    const inspectedBranches = Object.fromEntries(
+      Object.entries(metadata.branches).map(([branchName, branchRules]) => [
+        branchName,
+        branchRules.map((innerRule) => inspectRule(innerRule)),
+      ]),
+    ) as Record<string, Array<RuleInspection<F, C> | undefined>>
+
+    if (
+      Object.values(inspectedBranches).some((branchRules) =>
+        branchRules.some((entry) => entry === undefined))
+    ) {
+      return undefined
+    }
+
+    return {
+      kind: 'eitherOf',
+      groupName: metadata.groupName,
+      constraint: metadata.constraint,
+      branches: inspectedBranches as Record<string, Array<RuleInspection<F, C>>>,
+    }
+  }
+
   if (metadata.kind === 'custom') {
     return {
       kind: 'custom',
@@ -631,6 +728,24 @@ export function getGraphSourceInfo<
     const orderingSet = new Set(ordering)
     const informational = uniqueFields(
       metadata.rules
+        .flatMap((innerRule) => getGraphSourceInfo(innerRule).informational)
+        .filter((field) => !orderingSet.has(field)),
+    )
+
+    return {
+      ordering,
+      informational,
+    }
+  }
+
+  if (metadata?.kind === 'eitherOf') {
+    const branchRules = getBranchRules(metadata.branches)
+    const ordering = uniqueFields(
+      branchRules.flatMap((innerRule) => getGraphSourceInfo(innerRule).ordering),
+    )
+    const orderingSet = new Set(ordering)
+    const informational = uniqueFields(
+      branchRules
         .flatMap((innerRule) => getGraphSourceInfo(innerRule).informational)
         .filter((field) => !orderingSet.has(field)),
     )
@@ -722,6 +837,10 @@ export function getRuleConstraint<
     return metadata.constraint
   }
 
+  if (metadata?.kind === 'eitherOf') {
+    return metadata.constraint
+  }
+
   if (metadata?.kind === 'custom') {
     return metadata.constraint
   }
@@ -747,10 +866,10 @@ export function isGateRule<
  * Advanced escape hatch for defining custom low-level rules.
  *
  * Prefer the built-in factories (`enabledWhen`, `fairWhen`, `disables`,
- * `requires`, `oneOf`, and `anyOf`) unless you truly need custom evaluation
+ * `requires`, `oneOf`, `anyOf`, and `eitherOf`) unless you truly need custom evaluation
  * behavior. `defineRule()` is intended for power users who need to plug a rule
  * directly into Umpire's evaluation pipeline while still participating in
- * graphing, `anyOf()`, and `challenge()`.
+ * graphing, composite helpers, and `challenge()`.
  *
  * `defineRule()` supports custom rule `type` labels and `constraint`
  * classification, but it does not expose a public API for defining new
@@ -1209,40 +1328,22 @@ export function anyOf<
     throw new Error('[umpire] anyOf() requires at least one rule')
   }
 
-  const expectedTargets = uniqueFields([...rules[0].targets]).sort()
-
-  for (const rule of rules.slice(1)) {
-    const currentTargets = uniqueFields([...rule.targets]).sort()
-    if (
-      currentTargets.length !== expectedTargets.length ||
-      currentTargets.some((target, index) => target !== expectedTargets[index])
-    ) {
-      throw new Error('[umpire] anyOf() rules must target the same fields')
-    }
-  }
-
+  const targets = validateCompositeTargets('anyOf()', rules)
   const sources = uniqueFields(rules.flatMap((rule) => rule.sources))
-  const constraint = getRuleConstraint(rules[0])
-
-  for (const innerRule of rules.slice(1)) {
-    if (getRuleConstraint(innerRule) !== constraint) {
-      throw new Error('[umpire] anyOf() cannot mix fairWhen rules with availability rules')
-    }
-  }
+  const constraint = validateCompositeConstraint('anyOf()', rules)
 
   const rule: InternalRuleCarrier<F, C> = {
     type: 'anyOf',
-    targets: [...rules[0].targets],
+    targets,
     sources,
     evaluate(values, conditions, prev, fields, availability) {
       const evaluations = rules.map((rule) =>
         rule.evaluate(values, conditions, prev, fields, availability),
       )
 
-      return createResultMap(rules[0].targets, (target) => {
+      return createResultMap(targets, (target) => {
         const targetResults = evaluations
-          .map((evaluation) => evaluation.get(target))
-          .filter((result): result is RuleEvaluation => !!result)
+          .map((evaluation) => evaluation.get(target) ?? { enabled: true, reason: null })
 
         if (constraint === 'fair') {
           if (targetResults.some((result) => result.fair !== false)) {
@@ -1291,6 +1392,113 @@ export function anyOf<
   return rule
 }
 
+export function eitherOf<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown> = Record<string, unknown>,
+>(
+  groupName: string,
+  branches: EitherOfBranches<F, C>,
+): Rule<F, C> {
+  const branchNames = Object.keys(branches)
+
+  if (branchNames.length === 0) {
+    throw new Error(`[umpire] eitherOf("${groupName}") must include at least one branch`)
+  }
+
+  for (const branchName of branchNames) {
+    if (branches[branchName].length === 0) {
+      throw new Error(`[umpire] eitherOf("${groupName}") branch "${branchName}" must not be empty`)
+    }
+  }
+
+  const rules = getBranchRules(branches)
+  const label = `eitherOf("${groupName}")`
+  const targets = validateCompositeTargets(label, rules)
+  const constraint = validateCompositeConstraint(label, rules)
+  const sources = uniqueFields(rules.flatMap((rule) => rule.sources))
+
+  const rule: InternalRuleCarrier<F, C> = {
+    type: 'eitherOf',
+    targets,
+    sources,
+    evaluate(values, conditions, prev, fields, availability) {
+      const branchEvaluations = Object.fromEntries(
+        branchNames.map((branchName) => [
+          branchName,
+          branches[branchName].map((branchRule) =>
+            branchRule.evaluate(values, conditions, prev, fields, availability)),
+        ]),
+      ) as Record<string, Array<Map<string, RuleEvaluation>>>
+
+      return createResultMap(targets, (target) => {
+        const branchResults = branchNames.map((branchName) => {
+          const targetResults = branchEvaluations[branchName].map((evaluation) =>
+            evaluation.get(target) ?? { enabled: true, reason: null })
+
+          if (constraint === 'fair') {
+            const passed = targetResults.every((result) => result.fair !== false)
+            const reasons = targetResults.flatMap(getRuleEvaluationReasons)
+
+            return {
+              enabled: true,
+              fair: passed,
+              reason: passed ? null : reasons[0] ?? null,
+              reasons: passed || reasons.length === 0 ? undefined : reasons,
+            }
+          }
+
+          const passed = targetResults.every((result) => result.enabled)
+          const reasons = targetResults.flatMap(getRuleEvaluationReasons)
+
+          return {
+            enabled: passed,
+            reason: passed ? null : reasons[0] ?? null,
+            reasons: passed || reasons.length === 0 ? undefined : reasons,
+          }
+        })
+
+        if (constraint === 'fair') {
+          if (branchResults.some((result) => result.fair !== false)) {
+            return {
+              enabled: true,
+              fair: true,
+              reason: null,
+            }
+          }
+
+          const reasons = branchResults.flatMap(getRuleEvaluationReasons)
+          return {
+            enabled: true,
+            fair: false,
+            reason: reasons[0] ?? null,
+            reasons: reasons.length === 0 ? undefined : reasons,
+          }
+        }
+
+        if (branchResults.some((result) => result.enabled)) {
+          return { enabled: true, reason: null }
+        }
+
+        const reasons = branchResults.flatMap(getRuleEvaluationReasons)
+        return {
+          enabled: false,
+          reason: reasons[0] ?? null,
+          reasons: reasons.length === 0 ? undefined : reasons,
+        }
+      })
+    },
+  }
+
+  rule._umpire = {
+    kind: 'eitherOf',
+    groupName,
+    branches,
+    constraint,
+  }
+
+  return rule
+}
+
 export function check<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown> = Record<string, unknown>,
@@ -1328,7 +1536,7 @@ export function check<
  * condition types. Purely a type-level convenience — zero runtime overhead.
  *
  * ```ts
- * const { enabledWhen, requires } = createRules<typeof fields, MyConditions>()
+ * const { enabledWhen, requires, eitherOf } = createRules<typeof fields, MyConditions>()
  * // Predicate callbacks now have typed conditions automatically
  * ```
  */
@@ -1344,6 +1552,7 @@ export function createRules<
     requires: requires as typeof requires<F, C>,
     oneOf: oneOf as typeof oneOf<F, C>,
     anyOf: anyOf as typeof anyOf<F, C>,
+    eitherOf: eitherOf as typeof eitherOf<F, C>,
     check: check as typeof check<F, C>,
   }
 }

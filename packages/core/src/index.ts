@@ -55,6 +55,7 @@ export {
   requires,
   oneOf,
   anyOf,
+  eitherOf,
   check,
   createRules,
   getNamedCheckMetadata,
