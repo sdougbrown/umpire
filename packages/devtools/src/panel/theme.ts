@@ -13,6 +13,7 @@ export const theme = {
   fgMuted: '#a8afc5',
   overlay: 'rgba(14, 14, 26, 0.96)',
   ruleDisables: '#ff5f5f',
+  ruleEitherOf: '#5fd7ff',
   ruleEnabledWhen: '#d78fff',
   ruleFairWhen: '#ffd700',
   ruleOneOf: '#87d7d7',
@@ -59,6 +60,10 @@ export function getRuleTone(rule: string) {
 
   if (rule === 'oneOf') {
     return theme.ruleOneOf
+  }
+
+  if (rule === 'eitherOf') {
+    return theme.ruleEitherOf
   }
 
   if (rule === 'disables') {

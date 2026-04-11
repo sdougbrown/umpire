@@ -23,6 +23,11 @@ type ReasonProps = {
   reason: ReasonLike
 }
 
+type BranchReasonGroup = {
+  passed: boolean
+  inner: ReasonLike[]
+}
+
 function MetaRows({
   entries,
 }: {
@@ -56,6 +61,45 @@ function MetaRows({
   )
 }
 
+function BranchGroupsView({
+  branches,
+  depth,
+}: {
+  branches: Record<string, BranchReasonGroup>
+  depth: number
+}) {
+  return (
+    <div style={{ display: 'grid', gap: 10 }}>
+      {Object.entries(branches).map(([branchName, branch]) => (
+        <div
+          key={branchName}
+          style={{
+            background: theme.surfaceMuted,
+            border: `1px solid ${theme.border}`,
+            borderRadius: 10,
+            display: 'grid',
+            gap: 8,
+            padding: 12,
+          }}
+        >
+          <div style={{ alignItems: 'center', display: 'flex', gap: 8, justifyContent: 'space-between' }}>
+            <strong style={{ color: theme.fg, fontSize: 12 }}>{branchName}</strong>
+            <span style={pillStyle(branch.passed ? theme.enabled : theme.disabled, true)}>
+              {branch.passed ? 'match' : 'no match'}
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gap: 0 }}>
+            {branch.inner.map((entry, index) => (
+              <ReasonView key={`${branchName}:${entry.rule}:${index}`} depth={depth + 1} reason={entry} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function TraceAttachmentView({ trace }: { trace: ChallengeTraceAttachment }) {
   return (
     <div
@@ -86,6 +130,13 @@ function TraceAttachmentView({ trace }: { trace: ChallengeTraceAttachment }) {
 function ReasonView({ depth = 0, reason }: ReasonProps) {
   const tone = getRuleTone(reason.rule)
   const inner = Array.isArray(reason.inner) ? reason.inner as ReasonLike[] : []
+  const branches = (
+    reason.branches &&
+    typeof reason.branches === 'object' &&
+    !Array.isArray(reason.branches)
+  )
+    ? reason.branches as Record<string, BranchReasonGroup>
+    : null
   const passed = reason.passed ?? false
 
   return (
@@ -122,6 +173,10 @@ function ReasonView({ depth = 0, reason }: ReasonProps) {
             <TraceAttachmentView key={`${trace.kind}:${trace.id}`} trace={trace} />
           ))}
         </div>
+      )}
+
+      {branches && Object.keys(branches).length > 0 && (
+        <BranchGroupsView branches={branches} depth={depth} />
       )}
 
       {inner.length > 0 && (
