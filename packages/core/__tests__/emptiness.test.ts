@@ -1,4 +1,12 @@
-import { isEmptyArray, isEmptyObject, isEmptyPresent, isEmptyString, isSatisfied } from '../src/index.js'
+import {
+  eitherOf,
+  enabledWhen,
+  isEmptyArray,
+  isEmptyObject,
+  isEmptyPresent,
+  isEmptyString,
+  isSatisfied,
+} from '../src/index.js'
 
 describe('emptiness helpers', () => {
   test('isEmptyPresent matches the default nil-only emptiness semantics', () => {
@@ -34,5 +42,13 @@ describe('emptiness helpers', () => {
     expect(isEmptyObject(undefined)).toBe(true)
     expect(isSatisfied({}, { isEmpty: isEmptyObject })).toBe(false)
     expect(isSatisfied({ theme: 'dark' }, { isEmpty: isEmptyObject })).toBe(true)
+  })
+
+  test('re-exports eitherOf from the public entrypoint', () => {
+    const rule = eitherOf<{ alpha: {} }>('entry', {
+      only: [enabledWhen('alpha', () => true)],
+    })
+
+    expect(rule.type).toBe('eitherOf')
   })
 })

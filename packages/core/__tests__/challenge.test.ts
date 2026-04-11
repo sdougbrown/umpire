@@ -400,6 +400,47 @@ describe('challenge', () => {
     ])
   })
 
+  test('does not recurse into eitherOf branches that already pass', () => {
+    const ump = umpire<TestFields>({
+      fields: {
+        email: {},
+        password: {},
+        submit: {},
+        dates: {},
+        startTime: {},
+        endTime: {},
+        everyHour: {},
+        repeatEvery: {},
+      },
+      rules: [
+        disables<TestFields>('dates', ['endTime']),
+        eitherOf<TestFields>('endTimePaths', {
+          scheduled: [
+            requires('endTime', 'startTime'),
+          ],
+          fallback: [
+            enabledWhen('endTime', () => true),
+          ],
+        }),
+        requires<TestFields>('submit', 'endTime'),
+      ],
+    })
+
+    const challenge = ump.challenge('submit', {
+      dates: ['2026-04-01'],
+      endTime: '10:00',
+    })
+
+    expect(challenge.transitiveDeps).toEqual([
+      expect.objectContaining({
+        field: 'endTime',
+        enabled: false,
+        reason: 'overridden by dates',
+      }),
+    ])
+    expect(challenge.transitiveDeps.map((entry) => entry.field)).not.toContain('startTime')
+  })
+
   test('surfaces preserved field metadata for check()-based predicates', () => {
     const ump = umpire<TestFields>({
       fields: {

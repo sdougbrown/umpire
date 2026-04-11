@@ -16,6 +16,7 @@ import {
   oneOf,
   requires,
 } from '../src/rules.js'
+import type { Rule } from '../src/types.js'
 
 type TestFields = {
   alpha: {}
@@ -931,6 +932,26 @@ describe('inspectRule', () => {
         ],
       },
     })
+  })
+
+  test('returns undefined when eitherOf contains an uninspectable inner rule', () => {
+    const opaqueRule: Rule<TestFields, TestConditions> = {
+      type: 'opaque',
+      targets: ['alpha'],
+      sources: ['beta'],
+      evaluate: () => new Map([
+        ['alpha', { enabled: true, reason: null }],
+      ]),
+    }
+
+    const rule = eitherOf<TestFields, TestConditions>('auth', {
+      password: [
+        enabledWhen('alpha', () => true),
+      ],
+      opaque: [opaqueRule],
+    })
+
+    expect(inspectRule(rule)).toBeUndefined()
   })
 })
 
