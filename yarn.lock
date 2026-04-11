@@ -1346,6 +1346,8 @@ __metadata:
 "@umpire/core@workspace:^, @umpire/core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@umpire/core@workspace:packages/core"
+  dependencies:
+    tsdown: "npm:^0.21.7"
   languageName: unknown
   linkType: soft
 
@@ -1401,6 +1403,7 @@ __metadata:
     "@umpire/core": "workspace:^"
     react: "npm:^19.2.4"
     react-dom: "npm:^19.2.4"
+    tsdown: "npm:^0.21.7"
   peerDependencies:
     react: ^18.0.0 || ^19.0.0
   languageName: unknown
@@ -4565,7 +4568,6 @@ __metadata:
     istanbul-lib-instrument: "npm:^6.0.3"
     istanbul-lib-report: "npm:^3.0.1"
     istanbul-reports: "npm:^3.2.0"
-    tsdown: "npm:^0.21.7"
     turbo: "npm:^2.5.0"
     typescript: "npm:^5.8.3"
   languageName: unknown
