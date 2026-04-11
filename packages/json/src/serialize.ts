@@ -579,6 +579,19 @@ function serializeInspection(
           : [],
       }
     }
+    case 'eitherOf':
+      return {
+        rules: [],
+        excluded: [
+          createExcluded(
+            'eitherOf',
+            'eitherOf() is not part of the JSON spec',
+            undefined,
+            undefined,
+          ),
+        ],
+        coverageKeys: [],
+      }
     case 'custom':
       return {
         rules: [],
