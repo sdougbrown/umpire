@@ -9,7 +9,7 @@ Both `@umpire/core` and `@umpire/react` now ship bundled browser artifacts along
 
 - `dist/index.browser.js` — minified ESM for `<script type="module">` and esm.sh
 - `dist/index.iife.js` — IIFE with `window.Umpire` / `window.UmpireReact` globals
-- `dist/umpire-react.bundle.iife.js` (`@umpire/react` only) — IIFE with `@umpire/core` inlined; only React is external. Fewer script tags for CodePen and quick demos.
+- `dist/umpire-react.bundle.iife.js` (`@umpire/react` only) — IIFE with `@umpire/core` inlined; only React is external. Useful when you want a single script tag for the React adapter without a separate core load, though `window.Umpire` (core) and `window.UmpireReact` (hook) remain separate globals regardless.
 
 Both packages now expose a `browser` field and `"browser"` export condition pointing at the ESM build, so bundlers targeting browser environments resolve the right artifact automatically.
 
