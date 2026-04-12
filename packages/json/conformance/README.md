@@ -102,3 +102,53 @@ yarn turbo run test --filter=@umpire/json -- --runTestsByPath __tests__/conforma
 The TypeScript runner in `__tests__/conformance.test.ts` is the reference
 implementation today. Other runtimes should aim to match the fixture outputs,
 not necessarily the exact structure of the Jest test.
+
+## Writing A Port Runner
+
+No Node.js or TypeScript tooling required. The fixtures are plain JSON and the
+evaluation loop is simple. In pseudocode:
+
+```
+load index.json
+for each entry in index.fixtures:
+    fixture = parse_json(entry.path)         # ConformanceFixture shape
+    validate that fixture.fixtureVersion == 1
+
+    for each case in fixture.cases:
+        result = your_umpire_impl.check(
+            schema   = fixture.schema,
+            values   = case.values,
+            conds    = case.conditions ?? {},
+            prev     = case.prev ?? {},
+        )
+        assert result == case.expectedAvailability, case.id
+
+for each entry in index.failures:
+    fixture = parse_json(entry.path)         # FailureFixture shape
+    for each failure in fixture.failures:
+        if failure.phase == "validate":
+            assert your_validate_schema(failure.schema) raises error
+                   containing failure.errorIncludes
+        else:  # "evaluate"
+            assert your_umpire_impl.check(failure.schema, ...) raises error
+                   containing failure.errorIncludes
+```
+
+The `expectedAvailability` map has one entry per field declared in `schema.fields`.
+Each entry is:
+
+```
+{
+  "enabled":  bool,
+  "fair":     bool,
+  "required": bool,
+  "reason":   string | null,   // first blocking reason, null when enabled
+  "reasons":  string[],        // all blocking reasons, [] when enabled
+  "valid":    bool,            // only present when a validator is attached
+  "error":    string           // only present when a validator fires
+}
+```
+
+`valid` and `error` only appear on fields that have a named validator and are
+both enabled and satisfied. Omit them entirely (do not emit `null`) for fields
+that have no validator or are currently disabled/unsatisfied.
