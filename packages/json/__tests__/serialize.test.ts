@@ -2,6 +2,7 @@ import {
   anyOf,
   check,
   disables,
+  eitherOf,
   enabledWhen,
   isEmptyObject,
   isEmptyString,
@@ -278,6 +279,64 @@ describe('toJson', () => {
     })
   })
 
+  test('drops carried eitherOf exclusions when the group now serializes', () => {
+    const parsed = fromJson({
+      version: 1,
+      fields: {
+        submit: {},
+        email: {},
+        ssoToken: {},
+      },
+      rules: [],
+      excluded: [
+        {
+          type: 'eitherOf',
+          description: 'Prior runtime could not serialize auth branching',
+          key: 'rule:eitherOf:auth',
+        },
+      ],
+    })
+
+    expect(toJson({
+      fields: parsed.fields,
+      rules: [
+        eitherOf('auth', {
+          password: [requires('submit', 'email')],
+          sso: [requires('submit', 'ssoToken')],
+        }),
+      ],
+    })).toEqual({
+      version: 1,
+      fields: {
+        submit: {},
+        email: {},
+        ssoToken: {},
+      },
+      rules: [
+        {
+          type: 'eitherOf',
+          group: 'auth',
+          branches: {
+            password: [
+              {
+                type: 'requires',
+                field: 'submit',
+                dependency: 'email',
+              },
+            ],
+            sso: [
+              {
+                type: 'requires',
+                field: 'submit',
+                dependency: 'ssoToken',
+              },
+            ],
+          },
+        },
+      ],
+    })
+  })
+
   test('replaces carried exclusions with current generated exclusions that share a key', () => {
     const parsed = fromJson({
       version: 1,
@@ -357,5 +416,35 @@ describe('toJson', () => {
         },
       ],
     })
+  })
+
+  test('excludes eitherOf when inner rules contain non-portable predicates', () => {
+    const fields = {
+      submit: {},
+      email: {},
+      ssoToken: {},
+    }
+
+    const rule = eitherOf<typeof fields>('auth', {
+      password: [
+        enabledWhen('submit', (v) => !!v.email, { reason: 'Enter your email' }),
+      ],
+      sso: [
+        enabledWhen('submit', (v) => !!v.ssoToken, { reason: 'No SSO token' }),
+      ],
+    })
+
+    const result = toJson({ fields, rules: [rule] })
+
+    expect(result.rules).toEqual([])
+    expect(result.excluded).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'eitherOf',
+          description: 'eitherOf() contains inner rules that cannot be serialized one-to-one into JSON',
+          key: 'rule:eitherOf:auth',
+        }),
+      ]),
+    )
   })
 })
