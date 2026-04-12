@@ -1,0 +1,234 @@
+---
+title: '@umpire/solid'
+description: Solid adapters for both component-local and shared-store Umpire integrations.
+---
+
+`@umpire/solid` gives Solid apps two integration styles:
+
+- `useUmpire()` for component-local state when one values accessor drives one component subtree
+- `fromSolidStore()` for shared store or context state when many children should read from one Umpire instance
+
+If you want fine-grained field subscriptions without the Solid-specific convenience layer, see [Signals — Solid](/umpire/adapters/signals/solid/).
+
+## Install
+
+```bash
+yarn add @umpire/core @umpire/solid solid-js
+```
+
+## `useUmpire()`
+
+Use `useUmpire()` when your component already owns a single reactive values object and just needs derived availability plus fouls.
+
+```ts
+import type { Accessor } from 'solid-js'
+import { useUmpire } from '@umpire/solid'
+
+function useUmpire<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(
+  ump: Umpire<F, C>,
+  values: Accessor<InputValues<F>>,
+  conditions?: Accessor<C>,
+): {
+  check: Accessor<AvailabilityMap<F>>
+  fouls: Accessor<Foul<F>[]>
+}
+```
+
+### Example
+
+```tsx
+import { createStore } from 'solid-js/store'
+import { enabledWhen, requires, umpire } from '@umpire/core'
+import { useUmpire } from '@umpire/solid'
+
+const signupUmp = umpire({
+  fields: {
+    email:           { required: true, isEmpty: (v: unknown) => !v },
+    password:        { required: true, isEmpty: (v: unknown) => !v },
+    confirmPassword: { required: true, isEmpty: (v: unknown) => !v },
+    companyName:     { isEmpty: (v: unknown) => !v },
+    companySize:     { isEmpty: (v: unknown) => !v },
+  },
+  rules: [
+    requires('confirmPassword', 'password'),
+    enabledWhen('companyName', (_v, conditions) => conditions.plan === 'business', {
+      reason: 'business plan required',
+    }),
+    enabledWhen('companySize', (_v, conditions) => conditions.plan === 'business', {
+      reason: 'business plan required',
+    }),
+    requires('companySize', 'companyName'),
+  ],
+})
+
+type SignupConditions = { plan: 'personal' | 'business' }
+
+function SignupForm(props: { plan: Accessor<SignupConditions['plan']> }) {
+  const [values, setValues] = createStore(signupUmp.init())
+
+  const { check, fouls } = useUmpire(
+    signupUmp,
+    () => values,
+    () => ({ plan: props.plan() }),
+  )
+
+  function applyResets() {
+    for (const foul of fouls()) {
+      setValues(foul.field, foul.suggestedValue as never)
+    }
+  }
+
+  return (
+    <form>
+      <input
+        value={String(values.password ?? '')}
+        onInput={(e) => setValues('password', e.currentTarget.value)}
+      />
+
+      <input
+        value={String(values.confirmPassword ?? '')}
+        disabled={!check().confirmPassword.enabled}
+        onInput={(e) => setValues('confirmPassword', e.currentTarget.value)}
+      />
+
+      {!check().companyName.enabled && <p>{check().companyName.reason}</p>}
+
+      {fouls().length > 0 && (
+        <button type="button" onClick={applyResets}>Apply resets</button>
+      )}
+    </form>
+  )
+}
+```
+
+### Behavior
+
+- `values` and `conditions` are accessors.
+- `check()` and `fouls()` are accessors.
+- The hook tracks the previous snapshot internally.
+- There is no `createEffect()` requirement in consumer code.
+
+This is the closest Solid equivalent to `@umpire/react`.
+
+## `fromSolidStore()`
+
+Use `fromSolidStore()` when one shared Solid store or provider should back a single Umpire instance for many child components.
+
+It is built on top of `@umpire/signals` internally, but the API is shaped for Solid stores and context rather than generic signal plumbing.
+
+```ts
+import type { Accessor } from 'solid-js'
+import { fromSolidStore } from '@umpire/solid'
+
+function fromSolidStore<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown> = Record<string, unknown>,
+>(
+  ump: Umpire<F, C>,
+  options: {
+    values: InputValues<F>
+    set(name: keyof F & string, value: unknown): void
+    conditions?: Partial<{ [K in keyof C & string]: Accessor<C[K]> }>
+  },
+): SolidStoreUmpire<F>
+```
+
+### Example
+
+```tsx
+import { createContext, useContext, createSignal } from 'solid-js'
+import { createStore } from 'solid-js/store'
+import { enabledWhen, umpire } from '@umpire/core'
+import { fromSolidStore, type SolidStoreUmpire } from '@umpire/solid'
+
+const eventUmp = umpire({
+  fields: {
+    allDay: { default: false },
+    startTime: { default: '' },
+    endTime: { default: '' },
+  },
+  rules: [
+    enabledWhen('startTime', (values) => !values.allDay, { reason: 'all-day events do not use times' }),
+    enabledWhen('endTime', (values) => !values.allDay, { reason: 'all-day events do not use times' }),
+  ],
+})
+
+type EventFields = typeof eventUmp extends Umpire<infer F, any> ? F : never
+
+const EventFormContext = createContext<{
+  values: { allDay: boolean; startTime: string; endTime: string }
+  set(name: keyof EventFields & string, value: unknown): void
+  form: SolidStoreUmpire<EventFields>
+}>()
+
+function EventFormProvider(props: { children: JSX.Element }) {
+  const [values, setValues] = createStore({
+    allDay: false,
+    startTime: '09:00',
+    endTime: '10:00',
+  })
+  const [tier] = createSignal<'free' | 'pro'>('pro')
+
+  const form = fromSolidStore(eventUmp, {
+    values,
+    set: (name, value) => setValues(name, value as never),
+    conditions: {
+      tier,
+    },
+  })
+
+  return (
+    <EventFormContext.Provider value={{ values, set: (name, value) => setValues(name, value as never), form }}>
+      {props.children}
+    </EventFormContext.Provider>
+  )
+}
+
+function EndTimeField() {
+  const ctx = useContext(EventFormContext)!
+  const status = () => ctx.form.field('endTime')
+
+  return (
+    <input
+      value={ctx.values.endTime}
+      disabled={!status().enabled}
+      onInput={(e) => ctx.set('endTime', e.currentTarget.value)}
+    />
+  )
+}
+```
+
+### Return surface
+
+```ts
+type SolidStoreUmpire<F extends Record<string, FieldDef>> = {
+  field(name: keyof F & string): {
+    readonly enabled: boolean
+    readonly fair: boolean
+    readonly required: boolean
+    readonly reason: string | null
+    readonly reasons: string[]
+  }
+  foul(name: keyof F & string): Foul<F> | undefined
+  set(name: keyof F & string, value: unknown): void
+  update(partial: Partial<Record<keyof F & string, unknown>>): void
+  readonly values: Record<keyof F & string, unknown>
+  readonly fouls: Foul<F>[]
+  dispose(): void
+}
+```
+
+### When to pick which
+
+- Choose `useUmpire()` when one component owns the form state and wants snapshot-style derivation.
+- Choose `fromSolidStore()` when many child components should read from one shared Umpire instance.
+- Choose [`@umpire/signals/solid`](/umpire/adapters/signals/solid/) when you want the raw signal adapter surface without the Solid-specific wrapper package.
+
+## Notes
+
+- `@umpire/solid` does not use `@umpire/store`; Solid stores are a different integration shape.
+- `fromSolidStore()` uses `@umpire/signals` internally so field reads stay fine-grained.
+- Call `dispose()` for long-lived shared instances you create outside component cleanup.

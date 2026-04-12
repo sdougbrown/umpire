@@ -132,6 +132,7 @@ export default defineConfig({
           items: [
             { label: 'UI', collapsed: false, items: [
               { label: 'React', slug: 'adapters/react' },
+              { label: 'Solid', slug: 'adapters/solid' },
               { label: 'Signals', collapsed: true, items: [
                 { label: 'Overview', slug: 'adapters/signals' },
                 { label: 'Preact', slug: 'adapters/signals/preact' },

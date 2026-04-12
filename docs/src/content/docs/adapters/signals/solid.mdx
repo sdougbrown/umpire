@@ -3,6 +3,8 @@ title: 'Signals — Solid'
 description: Using @umpire/signals with SolidJS.
 ---
 
+If you want a Solid-specific wrapper package with `useUmpire()` and `fromSolidStore()`, see [`@umpire/solid`](/umpire/adapters/solid/). This page is about the lower-level signal adapter.
+
 ## Install
 
 ```bash
@@ -40,6 +42,8 @@ function FieldControl(props) {
 ```
 
 Solid tracks reactive reads during render automatically — no explicit subscriptions needed.
+
+This is the right layer when you want the raw `reactiveUmp()` surface. If your app would rather work with a Solid-focused package API, `@umpire/solid` wraps this adapter for you.
 
 ## Reactive root
 
