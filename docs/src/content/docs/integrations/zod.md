@@ -83,7 +83,7 @@ if (!result.success) {
 
 ### `deriveErrors(availability, errors)`
 
-Filters normalized error pairs to only include enabled fields. Returns `Partial<Record<string, string>>`.
+Filters normalized error pairs to only include enabled fields and keeps the first message per field. Returns `Partial<Record<string, string>>`.
 
 ```ts
 const errors = deriveErrors(availability, zodErrors(result.error))

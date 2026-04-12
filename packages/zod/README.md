@@ -83,7 +83,7 @@ Throws if you accidentally pass a `z.object()` instead of its `.shape` — the e
 
 ### `deriveErrors(availability, errors)`
 
-Filters normalized field errors to only include enabled fields. Returns `Partial<Record<field, message>>`.
+Filters normalized field errors to only include enabled fields and keeps the first message per field. Returns `Partial<Record<field, message>>`.
 
 ### `zodErrors(error)`
 
