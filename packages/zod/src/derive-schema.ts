@@ -6,7 +6,7 @@ type FieldSchemas<F extends Record<string, FieldDef>> = Partial<
   Record<keyof F & string, z.ZodTypeAny>
 >
 
-export type ActiveSchemaOptions = {
+export type DeriveSchemaOptions = {
   /**
    * When true, enabled fields whose value is foul (`fair: false`) are
    * included in the schema with a refinement that always fails, using the
@@ -25,21 +25,21 @@ export type ActiveSchemaOptions = {
  *
  * ```ts
  * // Per-field
- * activeSchema(availability, { email: z.string().email() })
+ * deriveSchema(availability, { email: z.string().email() })
  *
  * // From an existing z.object()
- * activeSchema(availability, formSchema.shape)
+ * deriveSchema(availability, formSchema.shape)
  *
  * // Server guard — reject foul values outright
- * activeSchema(availability, schemas, { rejectFoul: true })
+ * deriveSchema(availability, schemas, { rejectFoul: true })
  * ```
  */
-export function activeSchema<F extends Record<string, FieldDef>>(
+export function deriveSchema<F extends Record<string, FieldDef>>(
   availability: AvailabilityMap<F>,
   schemas: FieldSchemas<F>,
-  options?: ActiveSchemaOptions,
+  options?: DeriveSchemaOptions,
 ): z.ZodObject<Record<string, z.ZodTypeAny>> {
-  assertFieldSchemas(schemas, 'activeSchema')
+  assertFieldSchemas(schemas, 'deriveSchema')
 
   const fieldSchemas = schemas
   const rejectFoul = options?.rejectFoul ?? false

@@ -21,6 +21,6 @@ _Version skipped (internal)_
 ### Minor Changes
 
 - Initial release: availability-aware Zod validation helpers
-- `activeSchema()` — builds a Zod schema from only the currently-enabled fields
+- Schema derivation from only the currently-enabled fields
 - Detects `z.object()` passed instead of `.shape` with a helpful error
 - `reactive foul()` integration for live validation feedback

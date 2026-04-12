@@ -1,6 +1,6 @@
 import type { AvailabilityMap } from '@umpire/core'
 import { z } from 'zod'
-import { activeErrors, zodErrors } from '../src/active-errors.js'
+import { deriveErrors, zodErrors } from '../src/derive-errors.js'
 
 type TestFields = {
   name: {}
@@ -34,10 +34,10 @@ function createAvailability(
   }
 }
 
-describe('activeErrors', () => {
+describe('deriveErrors', () => {
   test('filters out errors for disabled fields', () => {
     expect(
-      activeErrors(createAvailability(), [
+      deriveErrors(createAvailability(), [
         { field: 'inviteCode', message: 'Invite code is invalid' },
         { field: 'name', message: 'Name is required' },
       ]),
@@ -48,7 +48,7 @@ describe('activeErrors', () => {
 
   test('passes through errors for enabled fields', () => {
     expect(
-      activeErrors(createAvailability(), [
+      deriveErrors(createAvailability(), [
         { field: 'name', message: 'Name is required' },
         { field: 'notes', message: 'Notes are too long' },
       ]),
@@ -60,7 +60,7 @@ describe('activeErrors', () => {
 
   test('keeps the first error per field', () => {
     expect(
-      activeErrors(createAvailability(), [
+      deriveErrors(createAvailability(), [
         { field: 'name', message: 'Name is required' },
         { field: 'name', message: 'Name must be at least 2 characters' },
       ]),
@@ -95,6 +95,6 @@ describe('activeErrors', () => {
   })
 
   test('returns an empty object when no errors are provided', () => {
-    expect(activeErrors(createAvailability(), [])).toEqual({})
+    expect(deriveErrors(createAvailability(), [])).toEqual({})
   })
 })

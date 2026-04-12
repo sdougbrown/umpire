@@ -1,10 +1,10 @@
 import { enabledWhen, fairWhen, umpire } from '@umpire/core'
 import { z } from 'zod'
-import { createZodValidation } from '../src/validation.js'
+import { createZodAdapter } from '../src/adapter.js'
 
-describe('createZodValidation', () => {
+describe('createZodAdapter', () => {
   test('creates core validators that surface the first Zod issue', () => {
-    const validation = createZodValidation({
+    const validation = createZodAdapter({
       schemas: {
         email: z.string().email('Enter a valid email'),
       },
@@ -27,7 +27,7 @@ describe('createZodValidation', () => {
     })
   })
 
-  test('runs active schema validation and returns filtered field errors', () => {
+  test('runs derived schema validation and returns filtered field errors', () => {
     const fields = {
       email: { required: true, isEmpty: (value: unknown) => !value },
       password: { required: true, isEmpty: (value: unknown) => !value },
@@ -35,7 +35,7 @@ describe('createZodValidation', () => {
       companyName: { required: true, isEmpty: (value: unknown) => !value },
     }
 
-    const validation = createZodValidation({
+    const validation = createZodAdapter({
       schemas: {
         email: z.string().email('Enter a valid email'),
         password: z.string().min(8, 'At least 8 characters'),
@@ -79,20 +79,20 @@ describe('createZodValidation', () => {
   })
 
   test('throws if given a z.object instead of per-field schemas', () => {
-    expect(() => createZodValidation({
+    expect(() => createZodAdapter({
       schemas: z.object({
         email: z.string().email(),
       }) as never,
     })).toThrow(
-      'createZodValidation() expects per-field schemas, not a z.object(). ' +
+      'createZodAdapter() expects per-field schemas, not a z.object(). ' +
       'Pass formSchema.shape instead of formSchema.',
     )
   })
 
   test('throws if given a non-object instead of per-field schemas', () => {
-    expect(() => createZodValidation({
+    expect(() => createZodAdapter({
       schemas: undefined as never,
-    })).toThrow('createZodValidation() expects a per-field schema map object.')
+    })).toThrow('createZodAdapter() expects a per-field schema map object.')
   })
 
   test('rejects foul field values when rejectFoul is true', () => {
@@ -101,7 +101,7 @@ describe('createZodValidation', () => {
       vehicleType: {},
     }
 
-    const validation = createZodValidation({
+    const validation = createZodAdapter({
       schemas: {
         spotType: z.enum(['electric', 'standard']),
         vehicleType: z.enum(['electric', 'gas']),

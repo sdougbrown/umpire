@@ -15,7 +15,7 @@ A validator integration does three things:
 
 ## Client vs server usage
 
-On the **client**, you call `engine.check(values)` during the render cycle and pass the resulting availability map to your validator. The active schema changes as the user changes fields.
+On the **client**, you call `engine.check(values)` during the render cycle and pass the resulting availability map to your validator. The derived schema changes as the user changes fields.
 
 On the **server**, the same pattern acts as a guard. The incoming request body drives `engine.check()`, which returns the same availability map the client would have produced for that data. Any inconsistency — a required field missing, a foul value present — fails validation.
 
@@ -27,11 +27,11 @@ export const schemas = { /* per-field schemas */ }
 // Server handler
 const body = await req.json()
 const availability = engine.check(body)
-const schema = activeSchema(availability, schemas, { rejectFoul: true })
+const schema = deriveSchema(availability, schemas, { rejectFoul: true })
 const result = schema.safeParse(body)
 ```
 
-`engine.check()` is deterministic: the same values produce the same availability map. If the client and server share the engine definition, they will always agree on which fields are active and required.
+`engine.check()` is deterministic: the same values produce the same availability map. If the client and server share the engine definition, they will always agree on which fields are enabled and required.
 
 ## Foul values and server guards
 
@@ -41,10 +41,10 @@ The `rejectFoul` option handles this:
 
 ```ts
 // Without rejectFoul (default) — foul values pass base schema, behave like fair fields
-activeSchema(availability, schemas)
+deriveSchema(availability, schemas)
 
 // With rejectFoul — foul fields get an always-failing refinement
-activeSchema(availability, schemas, { rejectFoul: true })
+deriveSchema(availability, schemas, { rejectFoul: true })
 ```
 
 When `rejectFoul: true`:

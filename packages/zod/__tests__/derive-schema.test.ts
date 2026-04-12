@@ -1,6 +1,6 @@
 import type { AvailabilityMap } from '@umpire/core'
 import { z } from 'zod'
-import { activeSchema } from '../src/active-schema.js'
+import { deriveSchema } from '../src/derive-schema.js'
 
 type TestFields = {
   requiredName: {}
@@ -43,9 +43,9 @@ function createAvailability(
   }
 }
 
-describe('activeSchema', () => {
+describe('deriveSchema', () => {
   test('omits disabled fields from the schema', () => {
-    const schema = activeSchema(
+    const schema = deriveSchema(
       createAvailability(),
       {
         requiredName: z.string(),
@@ -58,7 +58,7 @@ describe('activeSchema', () => {
   })
 
   test('keeps enabled required fields required', () => {
-    const schema = activeSchema(
+    const schema = deriveSchema(
       createAvailability(),
       {
         requiredName: z.string(),
@@ -70,7 +70,7 @@ describe('activeSchema', () => {
   })
 
   test('makes enabled non-required fields optional', () => {
-    const schema = activeSchema(
+    const schema = deriveSchema(
       createAvailability(),
       {
         optionalNickname: z.string(),
@@ -82,14 +82,14 @@ describe('activeSchema', () => {
   })
 
   test('returns an empty object schema for empty availability', () => {
-    const schema = activeSchema({} as AvailabilityMap<EmptyFields>, {})
+    const schema = deriveSchema({} as AvailabilityMap<EmptyFields>, {})
 
     expect(Object.keys(schema.shape)).toEqual([])
     expect(schema.safeParse({}).success).toBe(true)
   })
 
   test('skips enabled fields that do not have a matching schema', () => {
-    const schema = activeSchema(
+    const schema = deriveSchema(
       createAvailability(),
       {
         requiredName: z.string(),
@@ -101,19 +101,19 @@ describe('activeSchema', () => {
   })
 
   test('throws if given a z.object instead of per-field schemas', () => {
-    expect(() => activeSchema(
+    expect(() => deriveSchema(
       createAvailability(),
       z.object({
         requiredName: z.string(),
       }) as never,
     )).toThrow(
-      'activeSchema() expects per-field schemas, not a z.object(). ' +
+      'deriveSchema() expects per-field schemas, not a z.object(). ' +
       'Pass formSchema.shape instead of formSchema.',
     )
   })
 })
 
-describe('activeSchema rejectFoul', () => {
+describe('deriveSchema rejectFoul', () => {
   function createAvailabilityWithFoul(
     overrides: Partial<AvailabilityMap<TestFields>> = {},
   ): AvailabilityMap<TestFields> {
@@ -151,7 +151,7 @@ describe('activeSchema rejectFoul', () => {
   }
 
   test('rejects a foul field value when rejectFoul is true', () => {
-    const schema = activeSchema(
+    const schema = deriveSchema(
       createAvailabilityWithFoul({
         optionalNickname: {
           enabled: true,
@@ -175,7 +175,7 @@ describe('activeSchema rejectFoul', () => {
   })
 
   test('uses a fallback message when reason is null', () => {
-    const schema = activeSchema(
+    const schema = deriveSchema(
       createAvailabilityWithFoul({
         optionalNickname: {
           enabled: true,
@@ -199,7 +199,7 @@ describe('activeSchema rejectFoul', () => {
   })
 
   test('passes through foul fields without error when rejectFoul is false', () => {
-    const schema = activeSchema(
+    const schema = deriveSchema(
       createAvailabilityWithFoul({
         optionalNickname: {
           enabled: true,
@@ -216,7 +216,7 @@ describe('activeSchema rejectFoul', () => {
   })
 
   test('omitting a foul optional field passes when rejectFoul is true', () => {
-    const schema = activeSchema(
+    const schema = deriveSchema(
       createAvailabilityWithFoul({
         optionalNickname: {
           enabled: true,
@@ -237,7 +237,7 @@ describe('activeSchema rejectFoul', () => {
   })
 
   test('fair fields are unaffected when rejectFoul is true', () => {
-    const schema = activeSchema(
+    const schema = deriveSchema(
       createAvailabilityWithFoul(),
       { requiredName: z.string() },
       { rejectFoul: true },

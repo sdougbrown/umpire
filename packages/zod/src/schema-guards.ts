@@ -8,7 +8,7 @@ export function isZodObjectSchema(value: unknown): boolean {
 
 export function assertFieldSchemas(
   schemas: unknown,
-  caller: 'activeSchema' | 'createZodValidation',
+  caller: 'deriveSchema' | 'createZodAdapter',
 ): asserts schemas is Record<string, unknown> {
   if (isZodObjectSchema(schemas)) {
     throw new Error(

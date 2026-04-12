@@ -142,14 +142,14 @@ These are value-shape checks — is the email well-formed, is the password long 
 ## Composing Them
 
 ```ts
-import { activeSchema, activeErrors, zodErrors } from '@umpire/zod'
+import { deriveErrors, deriveSchema, zodErrors } from '@umpire/zod'
 
 const availability = signupUmp.check(values, { plan, sso })
 
 // Build a Zod schema that only validates enabled fields.
 // Enabled + required → base schema. Enabled + optional → .optional().
 // Disabled → excluded entirely.
-const schema = activeSchema(availability, fieldSchemas.shape)
+const schema = deriveSchema(availability, fieldSchemas.shape)
   .refine(
     (data) => !data.confirmPassword || !data.password
       || data.confirmPassword === data.password,
@@ -160,7 +160,7 @@ const result = schema.safeParse(values)
 
 if (!result.success) {
   // Filter to enabled fields only — disabled fields produce no errors
-  const errors = activeErrors(availability, zodErrors(result.error))
+  const errors = deriveErrors(availability, zodErrors(result.error))
   // errors.email → 'Enter a valid email'
   // errors.companyName → undefined (disabled on personal plan)
 }
@@ -168,11 +168,11 @@ if (!result.success) {
 
 Three functions from `@umpire/zod`:
 
-- **`activeSchema`** builds a Zod object from availability. Disabled fields are excluded. Required/optional follows Umpire's output. Pass `fieldSchemas.shape` (not the `z.object()` directly).
+- **`deriveSchema`** builds a Zod object from availability. Disabled fields are excluded. Required/optional follows Umpire's output. Pass `fieldSchemas.shape` (not the `z.object()` directly).
 - **`zodErrors`** normalizes Zod's issue array into `{ field, message }` pairs.
-- **`activeErrors`** filters those pairs to only include enabled fields.
+- **`deriveErrors`** filters those pairs to only include enabled fields.
 
-Cross-field refinements (like password matching) chain normally on the result of `activeSchema`. The refinement references `confirmPassword` — if that field is disabled (SSO active, or no password yet), `activeSchema` excludes it and the refinement sees `undefined`, which the guard handles.
+Cross-field refinements (like password matching) chain normally on the result of `deriveSchema`. The refinement references `confirmPassword` — if that field is disabled (SSO active, or no password yet), `deriveSchema` excludes it and the refinement sees `undefined`, which the guard handles.
 
 ## The Render Loop
 

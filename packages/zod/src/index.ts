@@ -1,10 +1,10 @@
-export { activeSchema } from './active-schema.js'
-export type { ActiveSchemaOptions } from './active-schema.js'
-export { activeErrors, zodErrors } from './active-errors.js'
-export type { NormalizedFieldError } from './active-errors.js'
-export { createZodValidation } from './validation.js'
+export { deriveSchema } from './derive-schema.js'
+export type { DeriveSchemaOptions } from './derive-schema.js'
+export { deriveErrors, zodErrors } from './derive-errors.js'
+export type { NormalizedFieldError } from './derive-errors.js'
+export { createZodAdapter } from './adapter.js'
 export type {
-  CreateZodValidationOptions,
-  ZodValidationAdapter,
-  ZodValidationRunResult,
-} from './validation.js'
+  CreateZodAdapterOptions,
+  ZodAdapter,
+  ZodAdapterRunResult,
+} from './adapter.js'
