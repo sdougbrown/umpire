@@ -5,7 +5,7 @@ import type { FieldValues } from '@umpire/core'
 // useUmpireWithDevtools powers the named instance in the optional panel on this page.
 // Swap back to: import { useUmpire } from '@umpire/react'  (remove leading id arg)
 import { useUmpireWithDevtools } from '@umpire/devtools/react'
-import { createZodValidation } from '@umpire/zod'
+import { createZodAdapter } from '@umpire/zod'
 import { zodValidationExtension } from '@umpire/zod/devtools'
 
 // ── Known SSO domains ─────────────────────────────────────────────────────────
@@ -53,7 +53,7 @@ const fieldSchemas = z.object({
   companySize: z.string().regex(/^\d+$/, 'Must be a number'),
 })
 
-const signupValidation = createZodValidation({
+const signupValidation = createZodAdapter({
   schemas: fieldSchemas.shape,
   build(baseSchema) {
     // Keep the schema-level refinement too: Umpire owns availability and

@@ -15,7 +15,7 @@ yarn add @umpire/core @umpire/zod zod
 
 ## API
 
-### `activeSchema(availability, shape, options?)`
+### `deriveSchema(availability, shape, options?)`
 
 Builds a `z.object()` from the availability map:
 
@@ -26,7 +26,7 @@ Builds a `z.object()` from the availability map:
 
 ```ts
 import { z } from 'zod'
-import { activeSchema } from '@umpire/zod'
+import { deriveSchema } from '@umpire/zod'
 
 const fieldSchemas = {
   email:       z.string().email('Enter a valid email'),
@@ -35,7 +35,7 @@ const fieldSchemas = {
 }
 
 const availability = ump.check(values, conditions)
-const schema = activeSchema(availability, fieldSchemas)
+const schema = deriveSchema(availability, fieldSchemas)
 const result = schema.safeParse(values)
 ```
 
@@ -47,14 +47,14 @@ const myFormSchema = z.object({
   companyName: z.string().min(1),
 })
 
-// ✗ Wrong — activeSchema expects a shape, not a z.object()
-activeSchema(availability, myFormSchema)
+// ✗ Wrong — deriveSchema expects a shape, not a z.object()
+deriveSchema(availability, myFormSchema)
 
 // ✓ Correct
-activeSchema(availability, myFormSchema.shape)
+deriveSchema(availability, myFormSchema.shape)
 ```
 
-`activeSchema` throws a descriptive error if it detects a Zod object was passed instead of its shape.
+`deriveSchema` throws a descriptive error if it detects a Zod object was passed instead of its shape.
 
 #### `rejectFoul` option
 
@@ -63,7 +63,7 @@ Fields where `fair: false` hold values that were once valid but are now contextu
 ```ts
 // Server handler — rejects any submission containing a foul value
 const availability = engine.check(body)
-const schema = activeSchema(availability, fieldSchemas, { rejectFoul: true })
+const schema = deriveSchema(availability, fieldSchemas, { rejectFoul: true })
 const result = schema.safeParse(body)
 ```
 
@@ -81,12 +81,12 @@ if (!result.success) {
 }
 ```
 
-### `activeErrors(availability, errors)`
+### `deriveErrors(availability, errors)`
 
 Filters normalized error pairs to only include enabled fields. Returns `Partial<Record<string, string>>`.
 
 ```ts
-const errors = activeErrors(availability, zodErrors(result.error))
+const errors = deriveErrors(availability, zodErrors(result.error))
 // { email: 'Enter a valid email' }
 // companyName omitted if disabled on the current plan
 ```
@@ -108,7 +108,7 @@ const ump = umpire({
     email: { required: true, isEmpty: isEmptyString },
   },
   rules: [],
-  validators: createZodValidation({
+  validators: createZodAdapter({
     schemas: { email: z.string().email('Enter a valid email') },
   }).validators,
 })
@@ -119,10 +119,10 @@ actually satisfied under your chosen emptiness rule.
 
 ## Chaining refinements
 
-Cross-field refinements chain normally on the result of `activeSchema`:
+Cross-field refinements chain normally on the result of `deriveSchema`:
 
 ```ts
-const schema = activeSchema(availability, fieldSchemas)
+const schema = deriveSchema(availability, fieldSchemas)
   .refine(
     (data) => !data.confirmPassword || !data.password
       || data.confirmPassword === data.password,
@@ -130,7 +130,7 @@ const schema = activeSchema(availability, fieldSchemas)
   )
 ```
 
-If `confirmPassword` is disabled, `activeSchema` excludes it and the refinement sees `undefined`. Guard against that — `!data.confirmPassword` in the predicate covers it.
+If `confirmPassword` is disabled, `deriveSchema` excludes it and the refinement sees `undefined`. Guard against that — `!data.confirmPassword` in the predicate covers it.
 
 ## When to use the manual pattern instead
 
@@ -140,4 +140,4 @@ If `confirmPassword` is disabled, `activeSchema` excludes it and the refinement 
 
 - [Validator Integrations](/umpire/integrations/validators/) — the general contract and how it extends to other libraries
 - [Composing with Validation](/umpire/concepts/validation/) — conceptual boundary and manual patterns
-- [Signup Form + Zod](/umpire/examples/signup/) — full walkthrough with `activeSchema`, the render loop, and foul handling
+- [Signup Form + Zod](/umpire/examples/signup/) — full walkthrough with `deriveSchema`, the render loop, and foul handling

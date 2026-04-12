@@ -1,7 +1,7 @@
 import type { AvailabilityMap } from '@umpire/core'
 import { enabledWhen, umpire } from '@umpire/core'
 import { z } from 'zod'
-import { activeSchema } from '../src/active-schema.js'
+import { deriveSchema } from '../src/derive-schema.js'
 import { zodValidationExtension } from '../src/devtools.js'
 
 type TestFields = {
@@ -97,12 +97,12 @@ describe('zodValidationExtension', () => {
       ]),
     })
 
-    expect(view?.sections[1]?.title).toBe('Active Error Map')
-    expect(view?.sections[2]?.title).toBe('Active Schema')
+    expect(view?.sections[1]?.title).toBe('Derived Error Map')
+    expect(view?.sections[2]?.title).toBe('Derived Schema')
 
     expect(view?.sections).toContainEqual({
       kind: 'rows',
-      title: 'Active Error Map',
+      title: 'Derived Error Map',
       rows: [
         { label: 'email', value: 'Enter a valid email' },
         { label: 'companySize', value: 'Company size is required' },
@@ -210,10 +210,10 @@ describe('zodValidationExtension', () => {
       ]),
     })
 
-    expect(view?.sections.find((section) => section.title === 'Active Error Map')).toBeUndefined()
+    expect(view?.sections.find((section) => section.title === 'Derived Error Map')).toBeUndefined()
     expect(view?.sections).toContainEqual({
       kind: 'rows',
-      title: 'Active Schema',
+      title: 'Derived Schema',
       rows: [
         { label: 'field count', value: 3 },
         { label: 'fields', value: 'email, companyName, companySize' },
@@ -245,7 +245,7 @@ describe('zodValidationExtension', () => {
 
     const extension = zodValidationExtension({
       resolve({ scorecard, values }) {
-        const baseSchema = activeSchema(scorecard.check, {
+        const baseSchema = deriveSchema(scorecard.check, {
           email: z.string().email('Enter a valid email'),
           companyName: z.string().min(1, 'Company name is required'),
         })
@@ -278,7 +278,7 @@ describe('zodValidationExtension', () => {
 
     expect(view?.sections).toContainEqual({
       kind: 'rows',
-      title: 'Active Error Map',
+      title: 'Derived Error Map',
       rows: [
         { label: 'email', value: 'Enter a valid email' },
       ],
@@ -286,7 +286,7 @@ describe('zodValidationExtension', () => {
 
     expect(view?.sections).toContainEqual({
       kind: 'rows',
-      title: 'Active Schema',
+      title: 'Derived Schema',
       rows: [
         { label: 'field count', value: 1 },
         { label: 'fields', value: 'email' },

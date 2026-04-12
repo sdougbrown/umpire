@@ -14,7 +14,7 @@ type ZodErrorLike = {
   issues: readonly ZodIssueLike[]
 }
 
-export function activeErrors<F extends Record<string, FieldDef>>(
+export function deriveErrors<F extends Record<string, FieldDef>>(
   availability: AvailabilityMap<F>,
   errors: NormalizedFieldError[],
 ): Partial<Record<keyof F & string, string>> {

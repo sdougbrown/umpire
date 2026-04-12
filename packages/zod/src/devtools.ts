@@ -6,8 +6,8 @@ import type {
   Snapshot,
   Umpire,
 } from '@umpire/core'
-import { activeErrors, zodErrors } from './active-errors.js'
-import type { NormalizedFieldError } from './active-errors.js'
+import { deriveErrors, zodErrors } from './derive-errors.js'
+import type { NormalizedFieldError } from './derive-errors.js'
 
 type ZodIssueLike = {
   path: readonly (string | number)[]
@@ -173,9 +173,9 @@ export function zodValidationExtension<
       const availability = resolved.availability ?? context.scorecard.check
       const normalizedErrors = resolved.normalizedErrors ??
         (resolved.result.success ? [] : zodErrors(resolved.result.error))
-      const activeErrorMap = activeErrors(availability, normalizedErrors)
-      const activeFieldCount = Object.values(availability).filter((field) => field.enabled).length
-      const activeErrorCount = Object.keys(activeErrorMap).length
+      const derivedErrorMap = deriveErrors(availability, normalizedErrors)
+      const enabledFieldCount = Object.values(availability).filter((field) => field.enabled).length
+      const derivedErrorCount = Object.keys(derivedErrorMap).length
       const { suppressedIssues, unknownIssues } = sectionRows(availability, normalizedErrors)
       const sections: ValidationExtensionSection[] = [{
         kind: 'badges',
@@ -187,7 +187,7 @@ export function zodValidationExtension<
           },
           {
             tone: 'accent',
-            value: `errors ${activeErrorCount}`,
+            value: `errors ${derivedErrorCount}`,
           },
           {
             tone: 'muted',
@@ -199,16 +199,16 @@ export function zodValidationExtension<
           },
           {
             tone: 'fair',
-            value: `fields ${activeFieldCount}`,
+            value: `fields ${enabledFieldCount}`,
           },
         ],
       }]
 
-      if (Object.keys(activeErrorMap).length > 0) {
+      if (Object.keys(derivedErrorMap).length > 0) {
         sections.push({
           kind: 'rows',
-          title: 'Active Error Map',
-          rows: Object.entries(activeErrorMap).map(([field, message]) => ({
+          title: 'Derived Error Map',
+          rows: Object.entries(derivedErrorMap).map(([field, message]) => ({
             label: field,
             value: message,
           })),
@@ -218,7 +218,7 @@ export function zodValidationExtension<
       if (resolved.schemaFields && resolved.schemaFields.length > 0) {
         sections.push({
           kind: 'rows',
-          title: 'Active Schema',
+          title: 'Derived Schema',
           rows: [
             { label: 'field count', value: resolved.schemaFields.length },
             { label: 'fields', value: resolved.schemaFields.join(', ') },

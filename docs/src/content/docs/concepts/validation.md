@@ -98,7 +98,7 @@ Two rules apply at the boundary between Umpire and your validation library:
 
 **`required` follows Umpire's output, not your static schema.** A field can be declared `required: true` in the engine config but report `required: false` when disabled. Your validation layer should respect this — `status.required` is the authoritative signal.
 
-`@umpire/zod`'s `activeSchema` and `activeErrors` encode both rules directly. If you need the manual version — for a library without a first-class integration, or to understand what's happening under the hood:
+`@umpire/zod`'s `deriveSchema` and `deriveErrors` encode both rules directly. If you need the manual version — for a library without a first-class integration, or to understand what's happening under the hood:
 
 ```ts
 const availability = ump.check(values, conditions)
@@ -114,18 +114,18 @@ const schema = z.object(shape)
 const result = schema.safeParse(values)
 
 // Filter errors to enabled fields only
-const activeErrors: Record<string, string> = {}
+const derivedErrors: Record<string, string> = {}
 if (!result.success) {
   for (const issue of result.error.issues) {
     const field = issue.path[0] as string
     if (availability[field]?.enabled) {
-      activeErrors[field] = issue.message
+      derivedErrors[field] = issue.message
     }
   }
 }
 ```
 
-This is exactly what `activeSchema` and `activeErrors` do. See [Validator Integrations](/umpire/integrations/validators/) for the general pattern and how it extends to other libraries.
+This is exactly what `deriveSchema` and `deriveErrors` do. See [Validator Integrations](/umpire/integrations/validators/) for the general pattern and how it extends to other libraries.
 
 ## What stays in userspace
 
@@ -141,7 +141,7 @@ These are all form-framework concerns. Umpire's job ends at "is this field avail
 ## See also
 
 - [Validator Integrations](/umpire/integrations/validators/) — the integration contract and how it applies to any library
-- [`@umpire/zod`](/umpire/integrations/zod/) — first-class Zod integration with `activeSchema` and `activeErrors`
+- [`@umpire/zod`](/umpire/integrations/zod/) — first-class Zod integration with `deriveSchema` and `deriveErrors`
 - [Satisfaction semantics](/umpire/concepts/satisfaction/) — how Umpire defines "present"
 - [`check()` in the rules API](/umpire/api/rules/check/) — full signature and validator shapes
 - [`@umpire/json`](/umpire/adapters/json/) — portable schemas, named checks, and `excluded`

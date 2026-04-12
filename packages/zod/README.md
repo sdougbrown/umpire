@@ -17,7 +17,7 @@ npm install @umpire/core @umpire/zod zod
 ```ts
 import { z } from 'zod'
 import { umpire, enabledWhen, requires } from '@umpire/core'
-import { activeSchema, activeErrors, createZodValidation, zodErrors } from '@umpire/zod'
+import { createZodAdapter, deriveErrors, deriveSchema, zodErrors } from '@umpire/zod'
 
 // 1. Define availability rules
 const ump = umpire({
@@ -41,16 +41,16 @@ const fieldSchemas = {
 // 3. Compose at render time
 const availability = ump.check(values, { plan })
 
-const schema = activeSchema(availability, fieldSchemas)
+const schema = deriveSchema(availability, fieldSchemas)
 const result = schema.safeParse(values)
 
 if (!result.success) {
-  const errors = activeErrors(availability, zodErrors(result.error))
+  const errors = deriveErrors(availability, zodErrors(result.error))
   // errors.email → 'Enter a valid email' (only if email is enabled)
   // errors.companyName → undefined (disabled on personal plan)
 }
 
-const validation = createZodValidation({
+const validation = createZodAdapter({
   schemas: fieldSchemas,
 })
 
@@ -70,7 +70,7 @@ const umpWithValidation = umpire({
 
 ## API
 
-### `activeSchema(availability, schemas)`
+### `deriveSchema(availability, schemas)`
 
 Builds a `z.object()` from the availability map:
 - **Disabled fields** are excluded entirely
@@ -81,21 +81,21 @@ Pass per-field schemas directly, or use `formSchema.shape` to extract from an ex
 
 Throws if you accidentally pass a `z.object()` instead of its `.shape` — the error message tells you what to do.
 
-### `activeErrors(availability, errors)`
+### `deriveErrors(availability, errors)`
 
 Filters normalized field errors to only include enabled fields. Returns `Partial<Record<field, message>>`.
 
 ### `zodErrors(error)`
 
-Normalizes a Zod error's `issues` array into `{ field, message }[]` pairs for use with `activeErrors`.
+Normalizes a Zod error's `issues` array into `{ field, message }[]` pairs for use with `deriveErrors`.
 
-### `createZodValidation({ schemas, build? })`
+### `createZodAdapter({ schemas, build? })`
 
 Creates a convenience adapter with:
 - `validators` for `umpire({ validators })`, surfacing the first field-level Zod issue as `error`
-- `run(availability, values)` for the full `activeSchema() -> safeParse() -> activeErrors()` flow
+- `run(availability, values)` for the full `deriveSchema() -> safeParse() -> deriveErrors()` flow
 
-If you need every issue or deeper control, you can still use `activeSchema()` and `safeParse()` directly.
+If you need every issue or deeper control, you can still use `deriveSchema()` and `safeParse()` directly.
 
 ### Blank strings and `isEmpty`
 
@@ -109,7 +109,7 @@ For form-style inputs, define an explicit empty-state rule:
 ```ts
 import { isEmptyString, umpire } from '@umpire/core'
 
-const validation = createZodValidation({
+const validation = createZodAdapter({
   schemas: {
     email: z.string().email('Enter a valid email'),
   },
@@ -135,7 +135,7 @@ If you use `@umpire/devtools`, `@umpire/zod/devtools` can expose validation stat
 import { useUmpireWithDevtools } from '@umpire/devtools/react'
 import { zodValidationExtension } from '@umpire/zod/devtools'
 
-const validation = createZodValidation({
+const validation = createZodAdapter({
   schemas: fieldSchemas,
   build(baseSchema) {
     return baseSchema.refine(
@@ -162,8 +162,8 @@ The first pass shows:
 - valid/invalid
 - surfaced error count
 - suppressed and unmapped issue counts
-- the active error map after availability filtering
-- optional active schema field names
+- the derived error map after availability filtering
+- optional derived schema field names
 
 It does not currently detect skipped `refine()`/`superRefine()` execution on its own. If we want that, we will likely need richer validation instrumentation than a plain `safeParse()` result exposes.
 

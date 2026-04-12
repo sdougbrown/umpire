@@ -5,8 +5,8 @@ import type {
   ValidationMap,
 } from '@umpire/core'
 import type { z } from 'zod'
-import { activeErrors, zodErrors, type NormalizedFieldError } from './active-errors.js'
-import { activeSchema, type ActiveSchemaOptions } from './active-schema.js'
+import { deriveErrors, zodErrors, type NormalizedFieldError } from './derive-errors.js'
+import { deriveSchema, type DeriveSchemaOptions } from './derive-schema.js'
 import { assertFieldSchemas, isRecord } from './schema-guards.js'
 
 type FieldSchemas<F extends Record<string, FieldDef>> = Partial<
@@ -30,23 +30,23 @@ type ZodSchemaLike = {
   safeParse(value: unknown): ZodSafeParseResultLike
 }
 
-export type CreateZodValidationOptions<F extends Record<string, FieldDef>> = {
+export type CreateZodAdapterOptions<F extends Record<string, FieldDef>> = {
   schemas: FieldSchemas<F>
   build?(schema: z.ZodObject<Record<string, z.ZodTypeAny>>): ZodSchemaLike
-} & ActiveSchemaOptions
+} & DeriveSchemaOptions
 
-export type ZodValidationRunResult<F extends Record<string, FieldDef>> = {
+export type ZodAdapterRunResult<F extends Record<string, FieldDef>> = {
   errors: Partial<Record<keyof F & string, string>>
   normalizedErrors: NormalizedFieldError[]
   result: ZodSafeParseResultLike
   schemaFields: Array<keyof F & string>
 }
 
-export type ZodValidationAdapter<F extends Record<string, FieldDef>> = {
+export type ZodAdapter<F extends Record<string, FieldDef>> = {
   run(
     availability: AvailabilityMap<F>,
     values: InputValues<F>,
-  ): ZodValidationRunResult<F>
+  ): ZodAdapterRunResult<F>
   validators: ValidationMap<F>
 }
 
@@ -61,10 +61,10 @@ function isFailedParseResult(result: unknown): result is Extract<ZodSafeParseRes
     Array.isArray(result.error.issues)
 }
 
-export function createZodValidation<F extends Record<string, FieldDef>>(
-  options: CreateZodValidationOptions<F>,
-): ZodValidationAdapter<F> {
-  assertFieldSchemas(options.schemas, 'createZodValidation')
+export function createZodAdapter<F extends Record<string, FieldDef>>(
+  options: CreateZodAdapterOptions<F>,
+): ZodAdapter<F> {
+  assertFieldSchemas(options.schemas, 'createZodAdapter')
 
   const {
     schemas,
@@ -96,13 +96,13 @@ export function createZodValidation<F extends Record<string, FieldDef>>(
   return {
     validators,
     run(availability, values) {
-      const baseSchema = activeSchema(availability, schemas, { rejectFoul })
+      const baseSchema = deriveSchema(availability, schemas, { rejectFoul })
       const schema = build ? build(baseSchema) : baseSchema
       const result = schema.safeParse(values)
       const normalizedErrors = isFailedParseResult(result) ? zodErrors(result.error) : []
 
       return {
-        errors: activeErrors(availability, normalizedErrors),
+        errors: deriveErrors(availability, normalizedErrors),
         normalizedErrors,
         result,
         schemaFields: Object.keys(baseSchema.shape) as Array<keyof F & string>,
