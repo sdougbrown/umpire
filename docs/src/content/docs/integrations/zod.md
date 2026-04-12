@@ -71,7 +71,7 @@ When `rejectFoul: true`, a foul field with a present value fails with the field'
 
 ### `zodErrors(error)`
 
-Normalizes a `ZodError` into `{ field, message }[]` pairs. Only the first error per field is kept.
+Normalizes a `ZodError` into `{ field, message }[]` pairs.
 
 ```ts
 const result = schema.safeParse(values)
