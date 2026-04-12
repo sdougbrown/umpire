@@ -42,6 +42,17 @@ And `@umpire/react`:
   previous snapshot; the hook tracks that internally.
 ```
 
+And `@umpire/solid`:
+
+```
+- Use useUmpire(ump, values, conditions?) inside Solid
+  components for local state.
+- Use fromSolidStore(ump, { values, set, conditions? }) when
+  the form lives in shared store or context state.
+- check() and fouls() are accessors; read them directly instead
+  of mirroring them into other state.
+```
+
 No prompt engineering required. Agents that look for `AGENTS.md` get the canonical file. Claude-oriented tooling still finds the compatibility rule file.
 
 ## What this means in practice
@@ -61,6 +72,7 @@ These are the exact mistakes that are easy to make and hard to debug. The packag
 | --- | --- | --- |
 | `@umpire/core` | `AGENTS.md` | Satisfaction semantics, `requires` vs `disables`, `check()` vs `play()` vs `challenge()` |
 | `@umpire/react` | `AGENTS.md` | `useUmpire()`, derived render-time availability, internal previous-snapshot tracking |
+| `@umpire/solid` | `AGENTS.md` | `useUmpire()`, `fromSolidStore()`, direct accessor reads, shared store integration |
 | `@umpire/signals` | `AGENTS.md` | `reactiveUmp()`, fine-grained reads, `effect()` requirement for fouls |
 | `@umpire/store` | `AGENTS.md` | Strict `fromStore()` contract, `select()` as the aggregation point |
 | `@umpire/zustand` | `AGENTS.md` | Native `fromStore()` fit, no manual previous-state bookkeeping |
