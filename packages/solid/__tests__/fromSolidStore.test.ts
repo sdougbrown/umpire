@@ -1,6 +1,7 @@
 import { createRoot, createSignal } from 'solid-js'
 import { enabledWhen, umpire } from '@umpire/core'
 import type { FieldDef } from '@umpire/core'
+import { solidAdapter } from '@umpire/signals/solid'
 import { fromSolidStore } from '../src/fromSolidStore.js'
 
 function withRoot<T>(run: () => T) {
@@ -73,9 +74,72 @@ describe('fromSolidStore', () => {
       value.setName('')
 
       expect(value.form.field('phone').enabled).toBe(false)
+    } finally {
+      value.form.dispose()
+      dispose()
+    }
+  })
+
+  it('tracks foul transitions from shared reactive values', () => {
+    const ump = umpire({
+      fields,
+      rules: [
+        enabledWhen('phone', (values) => !!values.name),
+      ],
+    })
+
+    const { value, dispose } = withRoot(() => {
+      const [name, setName] = createSignal('Alice')
+      const [email, setEmail] = createSignal('')
+      const [phone, setPhone] = createSignal('555-1234')
+
+      const values = {
+        get name() {
+          return name()
+        },
+        get email() {
+          return email()
+        },
+        get phone() {
+          return phone()
+        },
+      }
+
+      const set = (field: keyof typeof fields & string, next: unknown) => {
+        switch (field) {
+          case 'name':
+            setName(String(next))
+            return
+          case 'email':
+            setEmail(String(next))
+            return
+          case 'phone':
+            setPhone(String(next))
+            return
+        }
+      }
+
+      return {
+        setName,
+        form: fromSolidStore(ump, { values, set }),
+      }
+    })
+
+    try {
+      expect(value.form.fouls).toEqual([])
+
+      value.setName('')
+
+      expect(value.form.field('phone').enabled).toBe(false)
       expect(value.form.fouls).toHaveLength(1)
       expect(value.form.fouls[0].field).toBe('phone')
-      expect(value.form.foul('phone')?.field).toBe('phone')
+      expect(value.form.foul('phone')?.suggestedValue).toBe('')
+
+      value.setName('Alice')
+
+      expect(value.form.field('phone').enabled).toBe(true)
+      expect(value.form.fouls).toEqual([])
+      expect(value.form.foul('phone')).toBeUndefined()
     } finally {
       value.form.dispose()
       dispose()
@@ -205,6 +269,81 @@ describe('fromSolidStore', () => {
     } finally {
       value.form.dispose()
       dispose()
+    }
+  })
+
+  it('dispose() cleans up Solid effect tracking once', () => {
+    const ump = umpire({
+      fields,
+      rules: [
+        enabledWhen('phone', (values) => !!values.name),
+      ],
+    })
+
+    const originalEffect = solidAdapter.effect
+    if (!originalEffect) {
+      throw new Error('solidAdapter.effect is required for this test')
+    }
+
+    let disposeCalls = 0
+    solidAdapter.effect = (fn) => {
+      const disposeEffect = originalEffect(fn)
+      return () => {
+        disposeCalls += 1
+        disposeEffect()
+      }
+    }
+
+    try {
+      const { value, dispose } = withRoot(() => {
+        const [name, setName] = createSignal('Alice')
+        const [email, setEmail] = createSignal('')
+        const [phone, setPhone] = createSignal('555-1234')
+
+        const values = {
+          get name() {
+            return name()
+          },
+          get email() {
+            return email()
+          },
+          get phone() {
+            return phone()
+          },
+        }
+
+        const set = (field: keyof typeof fields & string, next: unknown) => {
+          switch (field) {
+            case 'name':
+              setName(String(next))
+              return
+            case 'email':
+              setEmail(String(next))
+              return
+            case 'phone':
+              setPhone(String(next))
+              return
+          }
+        }
+
+        return {
+          setName,
+          form: fromSolidStore(ump, { values, set }),
+        }
+      })
+
+      try {
+        value.form.dispose()
+        value.form.dispose()
+        value.setName('')
+
+        expect(disposeCalls).toBe(1)
+        expect(value.form.field('phone').enabled).toBe(false)
+      } finally {
+        dispose()
+      }
+    } finally {
+      solidAdapter.effect = originalEffect
     }
   })
 })
