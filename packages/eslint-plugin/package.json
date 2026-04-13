@@ -17,8 +17,7 @@
   },
   "files": [
     "dist",
-    "AGENTS.md",
-    ".claude"
+    "AGENTS.md"
   ],
   "peerDependencies": {
     "eslint": ">=9.0.0"

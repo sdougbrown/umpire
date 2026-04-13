@@ -25,8 +25,7 @@
   },
   "files": [
     "dist",
-    "AGENTS.md",
-    ".claude"
+    "AGENTS.md"
   ],
   "repository": {
     "type": "git",

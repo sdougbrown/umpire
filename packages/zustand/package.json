@@ -19,8 +19,7 @@
   },
   "files": [
     "dist",
-    "AGENTS.md",
-    ".claude"
+    "AGENTS.md"
   ],
   "dependencies": {
     "@umpire/store": "workspace:^"

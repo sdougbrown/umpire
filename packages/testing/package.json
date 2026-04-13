@@ -17,8 +17,7 @@
   },
   "files": [
     "dist",
-    "AGENTS.md",
-    ".claude"
+    "AGENTS.md"
   ],
   "peerDependencies": {
     "@umpire/core": "^0.1.0-alpha.10"

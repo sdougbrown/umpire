@@ -41,8 +41,7 @@
   },
   "files": [
     "dist",
-    "AGENTS.md",
-    ".claude"
+    "AGENTS.md"
   ],
   "dependencies": {
     "@umpire/core": "workspace:^"

@@ -20,8 +20,7 @@
   "files": [
     "dist",
     "conformance",
-    "AGENTS.md",
-    ".claude"
+    "AGENTS.md"
   ],
   "dependencies": {
     "@umpire/core": "workspace:^"
