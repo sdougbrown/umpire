@@ -144,11 +144,13 @@ Each entry is:
   "required": bool,
   "reason":   string | null,   // first blocking reason, null when enabled
   "reasons":  string[],        // all blocking reasons, [] when enabled
-  "valid":    bool,            // only present when a validator is attached
-  "error":    string           // only present when a validator fires
+  "valid":    bool,            // only present when a validator is attached to this field
+  "error":    string           // only present when validation fails (valid is false)
 }
 ```
 
-`valid` and `error` only appear on fields that have a named validator and are
-both enabled and satisfied. Omit them entirely (do not emit `null`) for fields
-that have no validator or are currently disabled/unsatisfied.
+`valid` appears on any field that has a named validator and is currently enabled
+and satisfied. `error` appears only when `valid` is `false` — do not emit
+`"error": null` for a field that passes validation. Omit both `valid` and
+`error` entirely for fields that have no validator or are currently
+disabled/unsatisfied.
