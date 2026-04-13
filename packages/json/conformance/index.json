@@ -1,0 +1,67 @@
+{
+  "fixtureVersion": 1,
+  "fixtures": [
+    {
+      "id": "auth-either-of",
+      "path": "fixtures/auth-either-of.json",
+      "description": "eitherOf() with named auth paths: submit is enabled when any branch's ANDed rules all pass. Covers single-branch pass, multi-branch pass, all-branches-fail, and a three-branch scenario."
+    },
+    {
+      "id": "box-score-checks",
+      "path": "fixtures/box-score-checks.json",
+      "description": "Named portable checks should behave the same way everywhere and use the same default reasons when no rule-level override is supplied."
+    },
+    {
+      "id": "bullpen-structural",
+      "path": "fixtures/bullpen-structural.json",
+      "description": "Structural availability, conditions, oneOf prev resolution, anyOf, fairWhen, and excluded carry-forward."
+    },
+    {
+      "id": "dsl-matrix",
+      "path": "fixtures/dsl-matrix.json",
+      "description": "Expression DSL coverage across comparisons, presence checks, membership, conditions, combinators, and predicate-form rules."
+    },
+    {
+      "id": "dugout-emptiness",
+      "path": "fixtures/dugout-emptiness.json",
+      "description": "Portable isEmpty strategies should agree on what counts as present before a dependency can unlock a target field."
+    },
+    {
+      "id": "plan-either-of-fair",
+      "path": "fixtures/plan-either-of-fair.json",
+      "description": "eitherOf() should also support fairWhen branches, keeping a field fair when any named branch's ANDed fairness checks pass."
+    },
+    {
+      "id": "rain-delay-chain",
+      "path": "fixtures/rain-delay-chain.json",
+      "description": "A disabled field can knock out a whole downstream requires chain, even when stale values are still present."
+    },
+    {
+      "id": "rotation-cascade",
+      "path": "fixtures/rotation-cascade.json",
+      "description": "A foul field can stay enabled itself while still cascading availability failures through downstream requires links."
+    },
+    {
+      "id": "scoreboard-source-checks",
+      "path": "fixtures/scoreboard-source-checks.json",
+      "description": "Portable named checks can act as field-bound sources inside other rules, not just as top-level same-field checks."
+    },
+    {
+      "id": "stale-signal-disables",
+      "path": "fixtures/stale-signal-disables.json",
+      "description": "A disabled source field can still disable its own targets when it holds a satisfied stale value."
+    },
+    {
+      "id": "validator-surface",
+      "path": "fixtures/validator-surface.json",
+      "description": "Portable validators should only surface valid/error for enabled, satisfied fields and should not change structural availability."
+    }
+  ],
+  "failures": [
+    {
+      "id": "bad-call-sheet-failures",
+      "path": "failures/bad-call-sheet-failures.json",
+      "description": "Invalid references, invalid check patterns, wrong condition types, and missing runtime conditions should fail descriptively."
+    }
+  ]
+}

@@ -102,3 +102,61 @@ yarn turbo run test --filter=@umpire/json -- --runTestsByPath __tests__/conforma
 The TypeScript runner in `__tests__/conformance.test.ts` is the reference
 implementation today. Other runtimes should aim to match the fixture outputs,
 not necessarily the exact structure of the Jest test.
+
+## Writing A Port Runner
+
+No Node.js or TypeScript tooling required. The fixtures are plain JSON and the
+evaluation loop is simple. In pseudocode:
+
+All paths in `index.json` are relative to `index.json` itself (i.e., relative
+to the `conformance/` directory). Resolve them against the directory that
+contains `index.json`, not the repo root or the working directory of your test
+runner.
+
+```
+load index.json                              # located at conformance/index.json
+base_dir = directory containing index.json  # i.e. conformance/
+for each entry in index.fixtures:
+    fixture = parse_json(base_dir / entry.path)   # ConformanceFixture shape
+    validate that fixture.fixtureVersion == 1
+
+    for each case in fixture.cases:
+        result = your_umpire_impl.check(
+            schema   = fixture.schema,
+            values   = case.values,
+            conds    = case.conditions ?? {},
+            prev     = case.prev ?? {},
+        )
+        assert result == case.expectedAvailability, case.id
+
+for each entry in index.failures:
+    fixture = parse_json(base_dir / entry.path)   # FailureFixture shape
+    for each failure in fixture.failures:
+        if failure.phase == "validate":
+            assert your_validate_schema(failure.schema) raises error
+                   containing failure.errorIncludes
+        else:  # "evaluate"
+            assert your_umpire_impl.check(failure.schema, ...) raises error
+                   containing failure.errorIncludes
+```
+
+The `expectedAvailability` map has one entry per field declared in `schema.fields`.
+Each entry is:
+
+```
+{
+  "enabled":  bool,
+  "fair":     bool,
+  "required": bool,
+  "reason":   string | null,   // first blocking reason, null when enabled
+  "reasons":  string[],        // all blocking reasons, [] when enabled
+  "valid":    bool,            // only present when a validator is attached to this field
+  "error":    string           // only present when validation fails (valid is false)
+}
+```
+
+`valid` appears on any field that has a named validator and is currently enabled
+and satisfied. `error` appears only when `valid` is `false` — do not emit
+`"error": null` for a field that passes validation. Omit both `valid` and
+`error` entirely for fields that have no validator or are currently
+disabled/unsatisfied.
