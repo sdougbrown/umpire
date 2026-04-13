@@ -98,16 +98,20 @@ if (action === 'prepack') {
   restoreAllFromStateFile();
 
   const agents = readFileSync(agentsPath, 'utf8');
+  const paths = resolvedCompatPaths();
   const savedState = {};
 
-  for (const compatPath of resolvedCompatPaths()) {
+  for (const compatPath of paths) {
     savedState[compatPath] = captureCompatState(compatPath);
+  }
+
+  writeFileSync(statePath, JSON.stringify(savedState));
+
+  for (const compatPath of paths) {
     mkdirSync(dirname(compatPath), { recursive: true });
     rmSync(compatPath, { force: true, recursive: true });
     writeFileSync(compatPath, agents);
   }
-
-  writeFileSync(statePath, JSON.stringify(savedState));
 } else {
   restoreAllFromStateFile();
 }
