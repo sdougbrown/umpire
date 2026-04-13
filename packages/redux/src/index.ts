@@ -1,4 +1,5 @@
 import type { FieldDef, Umpire } from '@umpire/core'
+import { snapshotValue } from '@umpire/core/snapshot'
 import {
   fromStore,
   type FromStoreOptions,
@@ -19,7 +20,7 @@ export function fromReduxStore<
   store: ReduxStoreApi<S>,
   options: FromStoreOptions<S, F, C>,
 ): UmpireStore<F> {
-  let prevState = store.getState()
+  let prevState = snapshotValue(store.getState())
 
   return fromStore(ump, {
     getState: () => store.getState(),
@@ -28,7 +29,7 @@ export function fromReduxStore<
         const nextState = store.getState()
         const currentPrevState = prevState
 
-        prevState = nextState
+        prevState = snapshotValue(nextState)
         listener(nextState, currentPrevState)
       })
     },
