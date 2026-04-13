@@ -5,6 +5,7 @@ const require = createRequire(import.meta.url)
 
 if (process.env.BUN_DISABLE_WORKSPACE_MOCKS !== 'true') {
   mock.module('@umpire/core', () => require('../packages/core/src/index.js'))
+  mock.module('@umpire/core/snapshot', () => require('../packages/core/src/snapshot.js'))
   mock.module('@umpire/store', () => require('../packages/store/src/index.js'))
   mock.module('@umpire/reads', () => require('../packages/reads/src/index.js'))
   mock.module('@umpire/react', () => require('../packages/react/src/index.js'))
