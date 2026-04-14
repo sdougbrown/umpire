@@ -64,3 +64,4 @@ export {
 } from './rules.js'
 export { scorecard } from './scorecard.js'
 export { umpire } from './umpire.js'
+export { snapshotValue } from './snapshot.js'
