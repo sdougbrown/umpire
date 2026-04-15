@@ -22,7 +22,7 @@ export function useUmpire<
 } {
   const [currentCheck, setCheck] = createSignal<AvailabilityMap<F>>()
   const [fouls, setFouls] = createSignal<Foul<F>[]>([])
-  let previousSnapshot: Snapshot<F, C> | undefined
+  let previousSnapshot: Snapshot<C> | undefined
 
   createComputed(() => {
     const currentValues = snapshotRecord(values())

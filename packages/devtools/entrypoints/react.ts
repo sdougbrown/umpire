@@ -42,7 +42,7 @@ export function useUmpireWithDevtools<
   conditions?: C,
   options?: RegisterOptions<F, C, ReadInput, Reads>,
 ) {
-  const prevRef = useRef<Snapshot<F, C> | undefined>(undefined)
+  const prevRef = useRef<Snapshot<C> | undefined>(undefined)
 
   const check = useMemo(
     () => ump.check(values, conditions, prevRef.current?.values),

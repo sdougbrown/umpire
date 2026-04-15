@@ -67,7 +67,7 @@ type ValidationExtensionInspectContext<
   C extends Record<string, unknown>,
 > = {
   conditions?: C
-  previous: Snapshot<F, C> | null
+  previous: Snapshot<C> | null
   scorecard: ScorecardResult<F, C>
   ump: Umpire<F, C>
   values: InputValues

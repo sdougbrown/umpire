@@ -149,7 +149,7 @@ function resolveExtensions<
   ump: Umpire<F, C>,
   values: InputValues,
   conditions: C | undefined,
-  previous: Snapshot<F, C> | null,
+  previous: Snapshot<C> | null,
   scorecard: ScorecardResult<F, C>,
   readsInspection: AnyReadInspection | null,
   options?: RegisterOptions<F, C, ReadInput, Reads>,
@@ -228,8 +228,8 @@ export const register: RegisterFn = <
   }
 
   const existing = registry.get(id)
-  const previous = (existing?.snapshot as Snapshot<F, C> | null) ?? null
-  const currentSnapshot: Snapshot<F, C> = {
+  const previous = (existing?.snapshot as Snapshot<C> | null) ?? null
+  const currentSnapshot: Snapshot<C> = {
     values,
     conditions,
   }

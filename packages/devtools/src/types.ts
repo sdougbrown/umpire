@@ -71,7 +71,7 @@ export type DevtoolsExtensionInspectContext<
   C extends Record<string, unknown>,
 > = {
   conditions?: C
-  previous: Snapshot<F, C> | null
+  previous: Snapshot<C> | null
   scorecard: ScorecardResult<F, C>
   ump: Umpire<F, C>
   values: InputValues
@@ -108,7 +108,7 @@ export type DevtoolsFoulEvent = {
   timestamp: number
 }
 
-export type AnySnapshot = Snapshot<Record<string, FieldDef>, Record<string, unknown>>
+export type AnySnapshot = Snapshot<Record<string, unknown>>
 export type AnyScorecard = ScorecardResult<Record<string, FieldDef>, Record<string, unknown>>
 export type AnyUmpire = Umpire<Record<string, FieldDef>, Record<string, unknown>>
 export type AnyReadInspection = ReadTableInspection<Record<string, unknown>, Record<string, unknown>>
