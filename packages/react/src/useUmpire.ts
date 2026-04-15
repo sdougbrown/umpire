@@ -15,7 +15,7 @@ export function useUmpire<
   C extends Record<string, unknown>,
 >(
   ump: Umpire<F, C>,
-  values: InputValues<F>,
+  values: InputValues,
   conditions?: C,
 ): {
   check: AvailabilityMap<F>

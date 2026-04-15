@@ -79,7 +79,9 @@ export type FieldValues<F extends Record<string, FieldDef>> = {
   [K in keyof F]?: FieldValue<F[K]>
 }
 
-export type InputValues<
+export type InputValues = Record<string, unknown>
+
+export type InputValuesWithDefaults<
   F extends Record<string, FieldDef> = Record<string, FieldDef>,
 > = FieldValues<F>
 
@@ -87,7 +89,7 @@ export type Snapshot<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
 > = {
-  values: InputValues<F>
+  values: InputValues
   conditions?: C
 }
 
@@ -250,18 +252,18 @@ export interface Umpire<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown> = Record<string, unknown>,
 > {
-  check(values: InputValues<F>, conditions?: C, prev?: InputValues<F>): AvailabilityMap<F>
+  check(values: InputValues, conditions?: C, prev?: InputValues): AvailabilityMap<F>
   play(before: Snapshot<F, C>, after: Snapshot<F, C>): Foul<F>[]
-  init(overrides?: InputValues<F>): FieldValues<F>
+  init(overrides?: InputValues): FieldValues<F>
   scorecard(
     snapshot: Snapshot<F, C>,
     options?: ScorecardOptions<F, C>,
   ): ScorecardResult<F, C>
   challenge(
     field: keyof F & string,
-    values: InputValues<F>,
+    values: InputValues,
     conditions?: C,
-    prev?: InputValues<F>,
+    prev?: InputValues,
   ): ChallengeTrace
   graph(): UmpireGraph
 }
