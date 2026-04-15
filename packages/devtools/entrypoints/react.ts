@@ -33,12 +33,12 @@ function formatUmpireDebugValue<
 export function useUmpireWithDevtools<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
-  ReadInput extends Record<string, unknown> = InputValues<F>,
+  ReadInput extends Record<string, unknown> = InputValues,
   Reads extends Record<string, unknown> = Record<string, unknown>,
 >(
   id: string,
   ump: Umpire<F, C>,
-  values: InputValues<F>,
+  values: InputValues,
   conditions?: C,
   options?: RegisterOptions<F, C, ReadInput, Reads>,
 ) {
@@ -88,11 +88,11 @@ let nextId = 0
 export function useUmpire<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
-  ReadInput extends Record<string, unknown> = InputValues<F>,
+  ReadInput extends Record<string, unknown> = InputValues,
   Reads extends Record<string, unknown> = Record<string, unknown>,
 >(
   ump: Umpire<F, C>,
-  values: InputValues<F>,
+  values: InputValues,
   conditions?: C,
   options?: RegisterOptions<F, C, ReadInput, Reads>,
 ) {

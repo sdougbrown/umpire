@@ -74,7 +74,7 @@ export type DevtoolsExtensionInspectContext<
   previous: Snapshot<F, C> | null
   scorecard: ScorecardResult<F, C>
   ump: Umpire<F, C>
-  values: InputValues<F>
+  values: InputValues
 }
 
 export type DevtoolsExtension<
@@ -136,12 +136,12 @@ export type RegistryEntry = {
 export type RegisterFn = <
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
-  ReadInput extends Record<string, unknown> = InputValues<F>,
+  ReadInput extends Record<string, unknown> = InputValues,
   Reads extends Record<string, unknown> = Record<string, unknown>,
 >(
   id: string,
   ump: Umpire<F, C>,
-  values: InputValues<F>,
+  values: InputValues,
   conditions?: C,
   options?: RegisterOptions<F, C, ReadInput, Reads>,
 ) => void

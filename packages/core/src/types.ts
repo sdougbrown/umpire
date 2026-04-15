@@ -81,9 +81,6 @@ export type FieldValues<F extends Record<string, FieldDef>> = {
 
 export type InputValues = Record<string, unknown>
 
-export type InputValuesWithDefaults<
-  F extends Record<string, FieldDef> = Record<string, FieldDef>,
-> = FieldValues<F>
 
 export type Snapshot<
   F extends Record<string, FieldDef>,

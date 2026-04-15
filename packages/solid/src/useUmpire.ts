@@ -14,7 +14,7 @@ export function useUmpire<
   C extends Record<string, unknown>,
 >(
   ump: Umpire<F, C>,
-  values: Accessor<InputValues<F>>,
+  values: Accessor<InputValues>,
   conditions?: Accessor<C>,
 ): {
   check: Accessor<AvailabilityMap<F>>
