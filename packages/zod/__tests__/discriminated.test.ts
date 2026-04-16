@@ -167,7 +167,7 @@ describe('deriveDiscriminatedFields', () => {
       rules: [rule],
     })
 
-    const withCard = u.check({ method: 'creditCard' })
+    const withCard = u.check({ method: 'card' })
     expect(withCard.cardNumber.enabled).toBe(true)
     expect(withCard.cvv.enabled).toBe(true)
     expect(withCard.routingNumber.enabled).toBe(false)

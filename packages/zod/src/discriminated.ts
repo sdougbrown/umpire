@@ -39,6 +39,12 @@ function extractBranches(
     const shape = variant.shape
     const literalField = shape[discriminator] as any
     const rawValue: string = literalField._def?.value ?? literalField.value
+    if (rawValue == null) {
+      throw new Error(
+        `[@umpire/zod] Could not extract literal value from discriminator field "${discriminator}". ` +
+          `Expected a ZodLiteral with ._def.value (v3) or .value (v4).`,
+      )
+    }
     const branchName = options.branchNames?.[rawValue] ?? rawValue
     const branchFields: string[] = []
 
