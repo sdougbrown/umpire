@@ -17,16 +17,6 @@ ump.scorecard(
 ): ScorecardResult<F, C>
 ```
 
-Also available as a standalone function:
-
-```ts
-import { scorecard } from '@umpire/core'
-
-scorecard(ump, snapshot, options)
-```
-
-Both forms return identical results.
-
 ## Return Shape
 
 ```ts

@@ -62,5 +62,4 @@ export {
   inspectPredicate,
   inspectRule,
 } from './rules.js'
-export { scorecard } from './scorecard.js'
 export { umpire } from './umpire.js'
