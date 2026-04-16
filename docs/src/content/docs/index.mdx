@@ -45,7 +45,7 @@ import LineupCard from '../../components/LineupCard.tsx'
 
 ## Try It Live — Tonight's Lineup
 
-<div class="umpire-content">
+<div class="o-umpire-content">
 Tonight's card is set — full roster against a right-handed pitcher. Now break it. Toggle Morrison to fatigued and watch him get pulled from the mound. Flip the opposing pitcher to a lefty and the platoon swaps kick in. Hit "Random injury" a few times and see slots empty out as players land on the IL.
 </div>
 
@@ -53,11 +53,11 @@ Tonight's card is set — full roster against a right-handed pitcher. Now break 
   <LineupCard client:load />
 </div>
 
-<div class="umpire-content">
+<div class="o-umpire-content">
 Three rule types drive the whole card: **`enabledWhen`** (injuries and fatigue scratch players), **`oneOf`** (platoon matchups swap batters when the pitcher flips), and **`requires`** (Morrison needs rest before he can start). Every change produces fouls — fields that just lost their player and need a replacement. Clear the card and rebuild from scratch if you want to see it from the other direction.
 </div>
 
-<div class="umpire-content">
+<div class="o-umpire-content">
 ## How the Demo Works
 
 The lineup card is a React component backed by a real `@umpire/core` instance. Here's how the state flows:
@@ -140,7 +140,7 @@ import MinesweeperDemo from '../../components/MinesweeperDemo.tsx'
 
 ## Signup Example
 
-<div class="umpire-columns">
+<div class="o-umpire-columns">
 <div>
 
 ```ts title="Define rules"
@@ -205,13 +205,13 @@ ump.play(
 </div>
 </div>
 
-<div class="umpire-content">
+<div class="o-umpire-content">
 This example is intentionally about availability, not validation. `confirmPassword` depends on `password` being present, but Umpire does not check whether the two values match. That belongs in your validation layer.
 </div>
 
 <div class="umpire-divider"></div>
 
-<div class="umpire-content">
+<div class="o-umpire-content">
 ## What It Does
 
 Umpire answers one question: given the current field values and conditions, which fields should be *enabled*, **required**, or due for cleanup?
@@ -228,7 +228,7 @@ Umpire is intentionally small — it handles availability so you can handle ever
 
 <div class="umpire-divider"></div>
 
-<div class="umpire-content">
+<div class="o-umpire-content">
 ## Install
 
 ```bash

@@ -1,0 +1,119 @@
+.umpire-scoreboard {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--umpire-demo-green-16);
+  border-radius: 1.5rem;
+  padding: 1.25rem;
+  min-width: 20rem;
+  max-width: 24rem;
+  background:
+    linear-gradient(135deg, var(--umpire-demo-green-8), transparent 45%),
+    linear-gradient(180deg, var(--umpire-demo-white-3), rgba(26, 26, 26, 0.96));
+  box-shadow: var(--umpire-glow);
+}
+
+.umpire-scoreboard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 22px,
+      var(--umpire-demo-white-2) 22px,
+      var(--umpire-demo-white-2) 23px
+    );
+  pointer-events: none;
+}
+
+.umpire-scoreboard__top,
+.umpire-scoreboard__call,
+.umpire-scoreboard__meta {
+  position: relative;
+  z-index: 1;
+}
+
+.umpire-scoreboard__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-family: var(--umpire-font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sl-color-gray-2);
+}
+
+.umpire-scoreboard__status {
+  color: var(--umpire-yellow);
+}
+
+.umpire-scoreboard__call {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.umpire-scoreboard__pill {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border-radius: 999rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--umpire-demo-red-12);
+  color: var(--umpire-red);
+  font-family: var(--umpire-font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.umpire-scoreboard__headline {
+  margin: 0;
+  font-family: var(--umpire-font-heading);
+  font-size: clamp(1.5rem, 2vw, 2rem);
+  line-height: 1.05;
+  color: var(--sl-color-white);
+}
+
+.umpire-scoreboard__body {
+  margin: 0;
+  color: var(--sl-color-gray-1);
+}
+
+.umpire-scoreboard__meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.umpire-scoreboard__meta > div {
+  border-radius: 1rem;
+  padding: 0.75rem;
+  background: var(--umpire-demo-white-3);
+}
+
+.umpire-scoreboard__label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sl-color-gray-2);
+}
+
+.umpire-scoreboard__value {
+  font-family: var(--umpire-font-mono);
+  font-size: 0.8rem;
+  color: var(--sl-color-white);
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 50rem) {
+  .umpire-scoreboard__meta {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,10 @@
+.umpire-lineup-demo {
+  position: relative;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--umpire-demo-green-12);
+  border-radius: 1rem;
+  background:
+    linear-gradient(135deg, var(--umpire-demo-green-4), transparent 40%),
+    rgba(14, 14, 14, 0.96);
+  box-shadow: var(--umpire-glow);
+}

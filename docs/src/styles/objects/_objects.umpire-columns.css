@@ -1,0 +1,25 @@
+.o-umpire-columns {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: start;
+  gap: 1rem;
+}
+
+.o-umpire-columns > div {
+  margin: 0;
+  padding: 0;
+}
+
+.o-umpire-columns > div > *:first-child {
+  margin-top: 0;
+}
+
+.o-umpire-columns > div > .expressive-code {
+  margin-top: 0;
+}
+
+@media (min-width: 60rem) {
+  .o-umpire-columns {
+    grid-template-columns: 1fr 1fr;
+  }
+}

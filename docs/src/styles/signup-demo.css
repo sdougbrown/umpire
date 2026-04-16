@@ -58,6 +58,7 @@
 
 .signup-demo__panel-body--table {
   padding-top: 0.9rem;
+  overflow-x: auto;
 }
 
 .signup-demo__required {

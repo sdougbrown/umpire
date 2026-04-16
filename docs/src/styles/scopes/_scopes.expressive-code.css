@@ -1,0 +1,56 @@
+.expressive-code {
+  box-shadow: var(--umpire-glow);
+}
+
+.expressive-code .ec-line {
+  color: #e0e0e0;
+}
+
+/* Stadium scoreboard syntax highlighting overrides */
+.expressive-code span[style*="--0:#ff7b72"],
+.expressive-code span[style*="--0:#ff7b72;"] {
+  --0: #6bfe9c !important;
+  color: #6bfe9c !important;
+}
+
+/* Strings and template literals: foul yellow */
+.expressive-code span[style*="--0:#a5d6ff"],
+.expressive-code span[style*="--0:#a5d6ff;"] {
+  --0: #fed023 !important;
+  color: #fed023 !important;
+}
+
+/* Types, classes, interfaces: soft coral */
+.expressive-code span[style*="--0:#ffa657"],
+.expressive-code span[style*="--0:#ffa657;"] {
+  --0: #ff716c !important;
+  color: #ff716c !important;
+}
+
+/* Constants and booleans: bright coral */
+.expressive-code span[style*="--0:#79c0ff"],
+.expressive-code span[style*="--0:#79c0ff;"] {
+  --0: #ff9e6c !important;
+  color: #ff9e6c !important;
+}
+
+/* Comments: muted blue-grey */
+.expressive-code span[style*="--0:#8b949e"],
+.expressive-code span[style*="--0:#8b949e;"] {
+  --0: #6e7b91 !important;
+  color: #6e7b91 !important;
+}
+
+/* Function names: soft mint */
+.expressive-code span[style*="--0:#d2a8ff"],
+.expressive-code span[style*="--0:#d2a8ff;"] {
+  --0: #a8e6cf !important;
+  color: #a8e6cf !important;
+}
+
+/* Properties and fields: clean white */
+.expressive-code span[style*="--0:#c9d1d9"],
+.expressive-code span[style*="--0:#c9d1d9;"] {
+  --0: #e0e0e0 !important;
+  color: #e0e0e0 !important;
+}
