@@ -194,7 +194,7 @@ function ProfileSection({
     <section className="account-settings-demo__section">
       <div className="account-settings-demo__section-header">
         <div>
-          <div className="account-settings-demo__section-kicker">ProfileSection</div>
+          <div className="account-settings-demo__section-kicker umpire-demo__eyebrow">ProfileSection</div>
           <h3 className="account-settings-demo__section-title">Owns profile fields</h3>
         </div>
         <code className="account-settings-demo__section-code">state.profile</code>
@@ -242,7 +242,7 @@ function PlanSection({ store }: { store: DemoModel['store'] }) {
     <section className="account-settings-demo__section">
       <div className="account-settings-demo__section-header">
         <div>
-          <div className="account-settings-demo__section-kicker">PlanSection</div>
+          <div className="account-settings-demo__section-kicker umpire-demo__eyebrow">PlanSection</div>
           <h3 className="account-settings-demo__section-title">Owns billing plan</h3>
         </div>
         <code className="account-settings-demo__section-code">state.billing</code>
@@ -287,7 +287,7 @@ function TeamSection({
     <section className="account-settings-demo__section">
       <div className="account-settings-demo__section-header">
         <div>
-          <div className="account-settings-demo__section-kicker">TeamSection</div>
+          <div className="account-settings-demo__section-kicker umpire-demo__eyebrow">TeamSection</div>
           <h3 className="account-settings-demo__section-title">Owns team fields</h3>
         </div>
         <code className="account-settings-demo__section-code">state.team</code>
@@ -422,13 +422,13 @@ export default function AccountSettingsDemo() {
           <div className="umpire-demo__panel-body account-settings-demo__panel-body">
             <div className="account-settings-demo__summary-grid">
               <div className="account-settings-demo__summary-card">
-                <span className="account-settings-demo__summary-label">Condition</span>
+                <span className="account-settings-demo__summary-label umpire-demo__eyebrow">Condition</span>
                 <code className="account-settings-demo__summary-code">
                   {`{ plan: '${state.billing.plan}' }`}
                 </code>
               </div>
               <div className="account-settings-demo__summary-card">
-                <span className="account-settings-demo__summary-label">Anywhere read</span>
+                <span className="account-settings-demo__summary-label umpire-demo__eyebrow">Anywhere read</span>
                 <code className="account-settings-demo__summary-code">
                   {`field('teamSize') => ${teamSizeRead.enabled ? 'enabled' : 'disabled'}`}
                 </code>

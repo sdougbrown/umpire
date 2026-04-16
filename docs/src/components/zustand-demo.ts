@@ -328,11 +328,11 @@ function renderShell(): string {
         <div class="umpire-demo__panel-body">
           <div class="zustand-demo__summary">
             <div class="zustand-demo__summary-card">
-              <div class="zustand-demo__summary-label">Adapter</div>
+              <div class="zustand-demo__summary-label umpire-demo__eyebrow">Adapter</div>
               <code class="zustand-demo__summary-code">fromStore(ump, store, …)</code>
             </div>
             <div class="zustand-demo__summary-card">
-              <div class="zustand-demo__summary-label">Enabled</div>
+              <div class="zustand-demo__summary-label umpire-demo__eyebrow">Enabled</div>
               <div class="zustand-demo__summary-value">
                 <span class="zustand-demo__enabled-count">2</span>
                 <span class="zustand-demo__summary-total"> / ${fieldOrder.length}</span>

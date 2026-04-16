@@ -237,7 +237,7 @@ export default function ReactAdapterDemo() {
 
           <div className="umpire-demo__panel-body react-demo__panel-body--output">
             <div className="react-demo__hook-line">
-              <span className="react-demo__hook-label">Hook</span>
+              <span className="react-demo__hook-label umpire-demo__eyebrow">Hook</span>
               <code className="react-demo__hook-code">
                 {'const { check, fouls } = useUmpire(demoUmp, values, conditions)'}
               </code>

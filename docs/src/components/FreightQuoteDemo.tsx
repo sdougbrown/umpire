@@ -476,7 +476,7 @@ export default function FreightQuoteDemo() {
           </div>
 
           <section class="freight-demo__field-group">
-            <div class="freight-demo__group-label">Conditions</div>
+            <div class="freight-demo__group-label umpire-demo__eyebrow">Conditions</div>
             <div class="freight-demo__group-fields">
               <ConditionToggle
                 label="Admin Mode"
@@ -530,7 +530,7 @@ export default function FreightQuoteDemo() {
 
               return (
                 <section key={group.label} class="freight-demo__field-group">
-                  <div class="freight-demo__group-label">{group.label}</div>
+                  <div class="freight-demo__group-label umpire-demo__eyebrow">{group.label}</div>
                   <div class="freight-demo__group-fields">
                     {group.fields.map((field) => (
                       <FieldControl

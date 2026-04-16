@@ -374,7 +374,7 @@ export default function MinesweeperDemo({
               </div>
 
               <div className="minesweeper-demo__status">
-                <span className="minesweeper-demo__status-label">
+                <span className="minesweeper-demo__status-label umpire-demo__eyebrow">
                   {STATUS_LABEL[conditions.gameStatus]}
                 </span>
                 <span className="minesweeper-demo__face" aria-hidden="true">
@@ -383,7 +383,7 @@ export default function MinesweeperDemo({
               </div>
 
               <div className="minesweeper-demo__counter">
-                <span className="minesweeper-demo__counter-label">
+                <span className="minesweeper-demo__counter-label umpire-demo__eyebrow">
                   Mines
                 </span>
                 <span
@@ -482,7 +482,7 @@ export default function MinesweeperDemo({
                   <div className="minesweeper-demo__inspector-body">
                     <div className="minesweeper-demo__inspector-meta">
                       <div className="minesweeper-demo__inspector-row">
-                        <span className="minesweeper-demo__inspector-label">
+                        <span className="minesweeper-demo__inspector-label umpire-demo__eyebrow">
                           Coords
                         </span>
                         <span className="minesweeper-demo__inspector-value">
@@ -490,7 +490,7 @@ export default function MinesweeperDemo({
                         </span>
                       </div>
                       <div className="minesweeper-demo__inspector-row">
-                        <span className="minesweeper-demo__inspector-label">
+                        <span className="minesweeper-demo__inspector-label umpire-demo__eyebrow">
                           Value
                         </span>
                         <span className="minesweeper-demo__inspector-value">
@@ -498,7 +498,7 @@ export default function MinesweeperDemo({
                         </span>
                       </div>
                       <div className="minesweeper-demo__inspector-row">
-                        <span className="minesweeper-demo__inspector-label">
+                        <span className="minesweeper-demo__inspector-label umpire-demo__eyebrow">
                           Board
                         </span>
                         <span className="minesweeper-demo__inspector-value">
@@ -513,7 +513,7 @@ export default function MinesweeperDemo({
                         </span>
                       </div>
                       <div className="minesweeper-demo__inspector-row">
-                        <span className="minesweeper-demo__inspector-label">
+                        <span className="minesweeper-demo__inspector-label umpire-demo__eyebrow">
                           Preview
                         </span>
                         <span className="minesweeper-demo__inspector-value">

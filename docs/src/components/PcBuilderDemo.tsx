@@ -650,7 +650,7 @@ function SelectField({
     >
       <div className="pc-builder__field-header">
         <div className="pc-builder__field-copy">
-          <label className="pc-builder__field-label" htmlFor={id}>
+          <label className="pc-builder__field-label umpire-demo__eyebrow" htmlFor={id}>
             {label}
           </label>
           <p className="pc-builder__field-detail">{detail}</p>
@@ -1255,7 +1255,7 @@ export default function PcBuilderDemo() {
                       onClick={() => setCurrentStep(step.index)}
                     >
                       <div className="pc-builder__summary-row">
-                        <span className="pc-builder__summary-step">
+                        <span className="pc-builder__summary-step umpire-demo__eyebrow">
                           {String(step.index + 1).padStart(2, '0')} · {step.title}
                         </span>
                         {activeFouls.length > 0 && (
@@ -1270,28 +1270,28 @@ export default function PcBuilderDemo() {
 
               <div className="pc-builder__metrics">
                 <div className="pc-builder__metric">
-                  <span className="pc-builder__metric-label">Boards</span>
+                  <span className="pc-builder__metric-label umpire-demo__eyebrow">Boards</span>
                   <strong className="pc-builder__metric-value">
                     {compatibleMotherboards.length}
                   </strong>
                 </div>
 
                 <div className="pc-builder__metric">
-                  <span className="pc-builder__metric-label">RAM kits</span>
+                  <span className="pc-builder__metric-label umpire-demo__eyebrow">RAM kits</span>
                   <strong className="pc-builder__metric-value">
                     {compatibleRamKits.length}
                   </strong>
                 </div>
 
                 <div className="pc-builder__metric">
-                  <span className="pc-builder__metric-label">Cases</span>
+                  <span className="pc-builder__metric-label umpire-demo__eyebrow">Cases</span>
                   <strong className="pc-builder__metric-value">
                     {compatibleCases.length}
                   </strong>
                 </div>
 
                 <div className="pc-builder__metric">
-                  <span className="pc-builder__metric-label">PSU</span>
+                  <span className="pc-builder__metric-label umpire-demo__eyebrow">PSU</span>
                   <strong className="pc-builder__metric-value">
                     {psuRecommendation}
                   </strong>

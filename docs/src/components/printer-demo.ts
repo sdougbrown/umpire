@@ -743,7 +743,7 @@ function renderShell(): string {
           </div>
 
           <section class="printer-demo__field-group">
-            <div class="printer-demo__group-label">Printer</div>
+            <div class="printer-demo__group-label umpire-demo__eyebrow">Printer</div>
             <div class="printer-demo__selector" role="group" aria-label="Printer">
               ${printers.map((printer) => `
                 <button
@@ -772,7 +772,7 @@ function renderShell(): string {
           <div class="umpire-demo__fields printer-demo__groups">
             ${groupOrder.map((group) => `
               <section class="printer-demo__field-group" data-field-group="${group.key}">
-                <div class="printer-demo__group-label">${group.label}</div>
+                <div class="printer-demo__group-label umpire-demo__eyebrow">${group.label}</div>
                 <div class="printer-demo__group-fields">
                   ${group.fields.map((field) => renderFieldShell(field)).join('')}
                 </div>

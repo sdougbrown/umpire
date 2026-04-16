@@ -373,10 +373,10 @@ export default function SignupDemo() {
               <table className="signup-demo__table">
                 <thead>
                   <tr>
-                    <th>Field</th>
-                    <th>Enabled</th>
-                    <th>Valid</th>
-                    <th>Status</th>
+                    <th className="signup-demo__table-heading umpire-demo__eyebrow">Field</th>
+                    <th className="signup-demo__table-heading umpire-demo__eyebrow">Enabled</th>
+                    <th className="signup-demo__table-heading umpire-demo__eyebrow">Valid</th>
+                    <th className="signup-demo__table-heading umpire-demo__eyebrow">Status</th>
                   </tr>
                 </thead>
                 <tbody>

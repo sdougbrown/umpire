@@ -562,7 +562,7 @@ export default function CalendarDemo() {
       <section className="calendar-demo__panel calendar-demo__panel--preview">
         <div className="calendar-demo__panel-header">
           <div>
-            <div className="calendar-demo__eyebrow">daywatch preview</div>
+            <div className="calendar-demo__eyebrow umpire-demo__eyebrow">daywatch preview</div>
             <h3 className="calendar-demo__panel-title">{previewMonth.label}</h3>
           </div>
           <div className="calendar-demo__nav">
@@ -573,7 +573,7 @@ export default function CalendarDemo() {
         <div className="calendar-demo__panel-body">
           <div className="calendar-demo__weekday-row">
             {weekdayHeaders.map((weekday) => (
-              <div key={weekday} className="calendar-demo__weekday">{weekday}</div>
+              <div key={weekday} className="calendar-demo__weekday umpire-demo__eyebrow">{weekday}</div>
             ))}
           </div>
           <div className="calendar-demo__month-grid">
@@ -650,7 +650,7 @@ export default function CalendarDemo() {
       <section className="calendar-demo__strip">
         <div className="calendar-demo__strip-header">
           <div>
-            <div className="calendar-demo__eyebrow">Live config</div>
+            <div className="calendar-demo__eyebrow umpire-demo__eyebrow">Live config</div>
             <h2 className="calendar-demo__title">Calendar recurrence</h2>
           </div>
           <span className="calendar-demo__accent">14 fields / useUmpire()</span>
@@ -669,7 +669,7 @@ export default function CalendarDemo() {
                 !check.fromDate.enabled && 'calendar-demo__control--disabled',
               )}
             >
-              <span className="calendar-demo__label" title={fieldMeta.fromDate.detail}>
+              <span className="calendar-demo__label umpire-demo__eyebrow" title={fieldMeta.fromDate.detail}>
                 {fieldMeta.fromDate.label}
               </span>
               <input
@@ -690,7 +690,7 @@ export default function CalendarDemo() {
                 !check.toDate.enabled && 'calendar-demo__control--disabled',
               )}
             >
-              <span className="calendar-demo__label" title={fieldMeta.toDate.detail}>
+              <span className="calendar-demo__label umpire-demo__eyebrow" title={fieldMeta.toDate.detail}>
                 {fieldMeta.toDate.label}
               </span>
               <input
@@ -713,7 +713,7 @@ export default function CalendarDemo() {
               )}
             >
               <div className="calendar-demo__control-copy">
-                <span className="calendar-demo__label" title={fieldMeta.fixedBetween.detail}>
+                <span className="calendar-demo__label umpire-demo__eyebrow" title={fieldMeta.fixedBetween.detail}>
                   {fieldMeta.fixedBetween.label}
                 </span>
                 {!check.fixedBetween.enabled && check.fixedBetween.reason && (
@@ -751,7 +751,7 @@ export default function CalendarDemo() {
                 !check.dates.enabled && 'calendar-demo__control--disabled',
               )}
             >
-              <span className="calendar-demo__label" title={fieldMeta.dates.detail}>
+              <span className="calendar-demo__label umpire-demo__eyebrow" title={fieldMeta.dates.detail}>
                 {fieldMeta.dates.label}
               </span>
               <div className="calendar-demo__input-row">
@@ -809,7 +809,7 @@ export default function CalendarDemo() {
                 !check.everyWeekday.enabled && 'calendar-demo__control--disabled',
               )}
             >
-              <span className="calendar-demo__label" title={fieldMeta.everyWeekday.detail}>
+              <span className="calendar-demo__label umpire-demo__eyebrow" title={fieldMeta.everyWeekday.detail}>
                 {fieldMeta.everyWeekday.label}
               </span>
               <div className="calendar-demo__toggle-grid calendar-demo__toggle-grid--weekdays">
@@ -840,7 +840,7 @@ export default function CalendarDemo() {
                 !check.everyMonth.enabled && 'calendar-demo__control--disabled',
               )}
             >
-              <span className="calendar-demo__label" title={fieldMeta.everyMonth.detail}>
+              <span className="calendar-demo__label umpire-demo__eyebrow" title={fieldMeta.everyMonth.detail}>
                 {fieldMeta.everyMonth.label}
               </span>
               <div className="calendar-demo__toggle-grid calendar-demo__toggle-grid--months">
@@ -877,7 +877,7 @@ export default function CalendarDemo() {
                 !check.everyDate.enabled && 'calendar-demo__control--disabled',
               )}
             >
-              <span className="calendar-demo__label" title={fieldMeta.everyDate.detail}>
+              <span className="calendar-demo__label umpire-demo__eyebrow" title={fieldMeta.everyDate.detail}>
                 {fieldMeta.everyDate.label}
               </span>
               <div className="calendar-demo__toggle-grid calendar-demo__toggle-grid--days">
@@ -955,7 +955,7 @@ export default function CalendarDemo() {
                 !check.exceptDates.enabled && 'calendar-demo__control--disabled',
               )}
             >
-              <span className="calendar-demo__label" title={fieldMeta.exceptDates.detail}>
+              <span className="calendar-demo__label umpire-demo__eyebrow" title={fieldMeta.exceptDates.detail}>
                 {fieldMeta.exceptDates.label}
               </span>
               <div className="calendar-demo__input-row">
@@ -1005,7 +1005,7 @@ export default function CalendarDemo() {
                 !check.exceptBetween.enabled && 'calendar-demo__control--disabled',
               )}
             >
-              <span className="calendar-demo__label" title={fieldMeta.exceptBetween.detail}>
+              <span className="calendar-demo__label umpire-demo__eyebrow" title={fieldMeta.exceptBetween.detail}>
                 {fieldMeta.exceptBetween.label}
               </span>
               <div className="calendar-demo__split-inputs">
