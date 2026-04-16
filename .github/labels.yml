@@ -32,9 +32,9 @@
   description: Refinement and cleanup
 
 # ── Meta ─────────────────────────────────────────────
-- name: "\U0001F680 release"
-  color: 1cd862
-  description: Release tracking
+- name: "\U0001F42A bump"
+  color: c4a882
+  description: Version bump / changeset release
 
 - name: "\U0001F501 duplicate"
   color: bcbcbc

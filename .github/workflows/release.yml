@@ -29,6 +29,7 @@ jobs:
         run: yarn install --immutable
 
       - name: Create Version PR
+        id: changesets
         uses: changesets/action@v1
         # No `publish` input -- version PR only. Publishing is handled by publish.yml
         # when the version bump lands on main (uses provenance, no NPM_TOKEN needed).
@@ -40,5 +41,11 @@ jobs:
         with:
           title: "🐪 Version Packages"
           version: yarn changeset version && yarn install
+        env:
+          GITHUB_TOKEN: ${{ secrets.CHANGESETS_GITHUB_TOKEN != '' && secrets.CHANGESETS_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Label Version PR
+        if: steps.changesets.outputs.pullRequestNumber
+        run: gh pr edit ${{ steps.changesets.outputs.pullRequestNumber }} --add-label "🐪 bump"
         env:
           GITHUB_TOKEN: ${{ secrets.CHANGESETS_GITHUB_TOKEN != '' && secrets.CHANGESETS_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
