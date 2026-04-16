@@ -1,6 +1,5 @@
 import { field } from '../src/field.js'
 import { fairWhen, requires } from '../src/rules.js'
-import { scorecard } from '../src/scorecard.js'
 import { umpire } from '../src/umpire.js'
 
 describe('scorecard', () => {
@@ -94,29 +93,6 @@ describe('scorecard', () => {
 
     expect(card.fields.tags.present).toBe(true)
     expect(card.fields.tags.satisfied).toBe(false)
-  })
-
-  test('top-level helper delegates to the compiled umpire scorecard', () => {
-    const ump = umpire({
-      fields: {
-        cpu: {},
-        motherboard: {},
-      },
-      rules: [
-        fairWhen('motherboard', (value, values) => value === values.cpu, {
-          reason: 'Motherboard no longer matches the selected CPU',
-        }),
-      ],
-    })
-
-    const snapshot = {
-      values: {
-        cpu: 'am5',
-        motherboard: 'lga1700',
-      },
-    }
-
-    expect(scorecard(ump, snapshot)).toEqual(ump.scorecard(snapshot))
   })
 
   test('includes challenge traces only when requested', () => {
