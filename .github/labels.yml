@@ -1,0 +1,61 @@
+# GitHub label definitions for umpire.
+# These are applied manually — no sync workflow.
+# To apply:  .github/scripts/sync-labels.sh
+
+# ── Type ─────────────────────────────────────────────
+- name: "\U0001F41B bug"
+  color: D3F0AA
+  description: Something isn't working
+
+- name: "\u2728 feature"
+  color: 8AC4FF
+  description: New functionality
+
+- name: "\U0001F4DD docs"
+  color: 87d7d7
+  description: Documentation only
+
+- name: "\U0001F527 chore"
+  color: B8DBFF
+  description: Maintenance and housekeeping
+
+- name: "\u2699\uFE0F refactor"
+  color: B8DBFF
+  description: Code restructuring, no behavior change
+
+- name: "\U0001F4D0 types"
+  color: B8DBFF
+  description: Type system changes
+
+- name: "\U0001F485 polish"
+  color: FFB8F5
+  description: Refinement and cleanup
+
+# ── Meta ─────────────────────────────────────────────
+- name: "\U0001F680 release"
+  color: 1cd862
+  description: Release tracking
+
+- name: "\U0001F501 duplicate"
+  color: bcbcbc
+  description: Already exists
+
+- name: "\U0001F645 wontfix"
+  color: 3a3a4a
+  description: Will not be worked on
+
+- name: "\u274C invalid"
+  color: e4e669
+  description: Not valid
+
+- name: "\u2753 question"
+  color: d78fff
+  description: Needs more information
+
+- name: "\U0001F44B good first issue"
+  color: 7057ff
+  description: Good for newcomers
+
+- name: "\U0001F64F help wanted"
+  color: 1cd862
+  description: Extra attention needed
