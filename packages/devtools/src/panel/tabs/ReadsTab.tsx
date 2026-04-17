@@ -1,3 +1,4 @@
+import { useState } from 'preact/hooks'
 import type { AnyReadInspection } from '../../types.js'
 import { formatValue } from '../format.js'
 import { pillStyle, scrollPaneStyle, theme } from '../theme.js'
@@ -11,6 +12,8 @@ function join(values: string[]) {
 }
 
 export function ReadsTab({ inspection }: Props) {
+  const [showAllReads, setShowAllReads] = useState(false)
+
   if (!inspection) {
     return (
       <div
@@ -28,6 +31,11 @@ export function ReadsTab({ inspection }: Props) {
       </div>
     )
   }
+
+  const MAX_READ_ITEMS = 200
+  const allReadIds = inspection.graph.nodes
+  const visibleReadIds = showAllReads ? allReadIds : allReadIds.slice(0, MAX_READ_ITEMS)
+  const hiddenCount = allReadIds.length - visibleReadIds.length
 
   return (
     <div style={scrollPaneStyle()}>
@@ -50,7 +58,7 @@ export function ReadsTab({ inspection }: Props) {
         </div>
       )}
 
-      {inspection.graph.nodes.map((readId) => {
+      {visibleReadIds.map((readId) => {
         const node = inspection.nodes[readId]
 
         return (
@@ -78,6 +86,38 @@ export function ReadsTab({ inspection }: Props) {
           </div>
         )
       })}
+
+      {hiddenCount > 0 && (
+        <div
+          style={{
+            borderTop: `1px solid ${theme.border}`,
+            display: 'grid',
+            gap: 8,
+            padding: 12,
+          }}
+        >
+          <div style={{ color: theme.fgMuted, fontSize: 11 }}>
+            Showing {visibleReadIds.length} of {allReadIds.length} reads.
+          </div>
+          <button
+            onClick={() => setShowAllReads((current) => !current)}
+            style={{
+              appearance: 'none',
+              background: theme.surface,
+              border: `1px solid ${theme.border}`,
+              borderRadius: 8,
+              color: theme.fg,
+              cursor: 'pointer',
+              fontSize: 11,
+              justifySelf: 'start',
+              padding: '6px 10px',
+            }}
+            type="button"
+          >
+            {showAllReads ? 'Show fewer reads' : `Show all reads (+${hiddenCount})`}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
