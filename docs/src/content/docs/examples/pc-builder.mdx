@@ -157,7 +157,7 @@ And the active hint stays derived while the hint input is powered by coach outpu
 ```ts
 const hintInput = {
   cpuBrand: buildReads.selections.cpu?.brand,
-  hasRamSelection: scorecard.fields.ram.satisfied,
+  hasRamSelection: check.ram.satisfied,
   sawTransitiveCascade: hintMarkers.sawTransitiveCascade || hasLiveTransitiveCascade,
   sawAppliedResets: hintMarkers.sawAppliedResets,
 }
