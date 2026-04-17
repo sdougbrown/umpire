@@ -923,7 +923,7 @@ export function umpire<
 
       // Validation metadata only applies once a field is structurally active
       // and has a satisfied value to validate.
-      if (!validator || !status.enabled || !isSatisfied(values[field], fields[field])) {
+      if (!validator || !status.enabled || !status.satisfied) {
         validated[field] = status
         continue
       }
@@ -974,7 +974,7 @@ export function umpire<
       const currentValue = after.values[field]
       const suggestedValue = fields[field].default
 
-      if (!isSatisfied(currentValue, fields[field])) {
+      if (!afterAvailability[field].satisfied) {
         continue
       }
 
@@ -1122,12 +1122,11 @@ export function umpire<
         const availability = check[field]
         const value = typedValues[field]
         const present = isPresent(value)
-        const satisfied = isSatisfied(value, fields[field])
         const scorecardField: ScorecardResult<NormalizeFields<FInput>, C>['fields'][typeof field] = {
           field,
           value,
           present,
-          satisfied,
+          satisfied: availability.satisfied,
           enabled: availability.enabled,
           fair: availability.fair,
           required: availability.required,

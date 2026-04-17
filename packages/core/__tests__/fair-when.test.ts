@@ -31,6 +31,7 @@ describe('fairWhen', () => {
 
     expect(result.motherboard).toEqual({
       enabled: true,
+      satisfied: true,
       fair: false,
       required: true,
       reason: 'Motherboard no longer matches the selected CPU',
@@ -38,6 +39,7 @@ describe('fairWhen', () => {
     })
     expect(result.ram).toEqual({
       enabled: false,
+      satisfied: true,
       fair: true,
       required: false,
       reason: 'Pick a valid motherboard first',
@@ -66,6 +68,7 @@ describe('fairWhen', () => {
 
     expect(ump.check({ motherboard: '' }).motherboard).toEqual({
       enabled: true,
+      satisfied: false,
       fair: true,
       required: false,
       reason: null,
@@ -163,6 +166,7 @@ describe('fairWhen', () => {
 
     expect(ump.check({ selection: 'omega' }).selection).toEqual({
       enabled: true,
+      satisfied: true,
       fair: true,
       required: false,
       reason: null,
@@ -171,6 +175,7 @@ describe('fairWhen', () => {
 
     expect(ump.check({ selection: 'beta' }).selection).toEqual({
       enabled: true,
+      satisfied: true,
       fair: false,
       required: false,
       reason: 'Must be alpha',
@@ -215,6 +220,7 @@ describe('field()', () => {
     })
     expect(ump.check({ toggle: false, details: 'manual' }).details).toEqual({
       enabled: false,
+      satisfied: true,
       fair: true,
       required: false,
       reason: 'Turn the toggle on first',
@@ -246,6 +252,7 @@ describe('field()', () => {
       }).motherboard,
     ).toEqual({
       enabled: true,
+      satisfied: true,
       fair: false,
       required: true,
       reason: 'Motherboard no longer matches the selected CPU',
@@ -272,6 +279,7 @@ describe('field()', () => {
 
     expect(ump.check({}).motherboard).toEqual({
       enabled: false,
+      satisfied: false,
       fair: true,
       required: false,
       reason: 'Pick a CPU first',

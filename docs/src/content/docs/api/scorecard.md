@@ -30,6 +30,8 @@ type ScorecardResult<F, C> = {
 
 `check` and `graph` are the same values you would get from `ump.check()` and `ump.graph()` directly. The addition is `fields` — a per-field view that cross-references all of them — and `transition`, which describes what changed.
 
+Since `FieldStatus` now includes `satisfied`, use `check()` for render-time availability/completion state. Reach for `scorecard()` when you also need `value`, `present`, transition, foul, or graph context.
+
 ## Per-Field State
 
 Each entry in `fields` is a `ScorecardField`:
@@ -73,7 +75,7 @@ type ScorecardField<F> = {
 These are two distinct concepts.
 
 - `present` is raw JS presence: `value !== null && value !== undefined`.
-- `satisfied` additionally respects the field's `isEmpty` definition. An empty array or empty string can be `present` but not `satisfied` if the field definition treats them as empty.
+- `satisfied` additionally respects the field's `isEmpty` definition. An empty array or empty string can be `present` but not `satisfied` if the field definition treats them as empty. In scorecard output, this mirrors `check[field].satisfied`.
 
 `fair` only applies to fields that are `satisfied`. An unsatisfied field is never `fair` or `unfair` — it simply has no value to judge.
 
