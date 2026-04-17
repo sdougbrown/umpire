@@ -346,6 +346,10 @@ type LiveFormInnerProps = {
 function LiveFormInner({ ump, fieldOrder }: LiveFormInnerProps) {
   const [values, setValues] = useState<InputValues>(() => initValuesFrom(fieldOrder))
   const { check, fouls } = useUmpire(ump, values)
+  // Scorecard gives us Umpire's own `satisfied` per field — whatever `isEmpty`
+  // strategy the schema declares. Hand-rolling string-length checks would drift
+  // the moment a reader edits the JSON to use a different strategy.
+  const scorecard = useMemo(() => ump.scorecard({ values }), [ump, values])
 
   function setField(field: string, next: string) {
     setValues((current) => ({ ...current, [field]: next }))
@@ -363,10 +367,9 @@ function LiveFormInner({ ump, fieldOrder }: LiveFormInnerProps) {
 
   const allRequired = fieldOrder.filter((field) => check[field]?.required)
   const availableRequired = allRequired.filter((field) => check[field]?.enabled)
-  const satisfiedCount = availableRequired.filter((field) => {
-    const v = values[field]
-    return typeof v === 'string' && v.length > 0
-  }).length
+  const satisfiedCount = availableRequired.filter(
+    (field) => scorecard.fields[field]?.satisfied,
+  ).length
 
   return (
     <>
@@ -476,17 +479,23 @@ function UmpireCall({ check, fieldOrder }: UmpireCallProps) {
   const rows = fieldOrder.map((field) => {
     const av = check[field]
     if (!av) return null
-    let verdict: 'in-play' | 'out' | 'invalid' = 'in-play'
+    // Verdicts mirror Umpire's own `check()` fields in priority order: a
+    // disabled field is out of play entirely, a foul ball (fairWhen failure)
+    // ranks next, and only then do we look at validator results.
+    let verdict: 'in-play' | 'out' | 'foul' | 'invalid' = 'in-play'
     let copy = av.required ? 'in play · required' : 'in play'
     if (!av.enabled) {
       verdict = 'out'
       copy = av.reason ?? 'out of play'
+    } else if (!av.fair) {
+      verdict = 'foul'
+      copy = av.reason ?? 'foul — value fails a fairness rule'
     } else if (av.valid === false) {
       verdict = 'invalid'
       copy = av.error ?? av.reason ?? 'fails validator'
     }
     return { field, verdict, copy }
-  }).filter((row): row is { field: string; verdict: 'in-play' | 'out' | 'invalid'; copy: string } => row !== null)
+  }).filter((row): row is { field: string; verdict: 'in-play' | 'out' | 'foul' | 'invalid'; copy: string } => row !== null)
 
   return (
     <div className="c-config-demo__call">

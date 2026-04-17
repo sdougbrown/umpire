@@ -343,6 +343,11 @@
   color: rgba(255, 204, 200, 0.78);
 }
 
+.c-config-demo__call-row--foul {
+  background: rgba(255, 170, 90, 0.06);
+  color: rgba(255, 225, 195, 0.84);
+}
+
 .c-config-demo__call-row--invalid {
   background: rgba(254, 208, 35, 0.06);
   color: rgba(255, 240, 184, 0.84);
