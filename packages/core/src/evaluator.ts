@@ -1,6 +1,6 @@
 import {
+  appendCompositeFailureReasons,
   combineCompositeResults,
-  getCompositeFailureReasons,
 } from './composite.js'
 import { getInternalRuleMetadata, isFairRule, isGateRule, resolveReason } from './rules.js'
 import { isSatisfied } from './satisfaction.js'
@@ -93,28 +93,34 @@ export function evaluateRuleForField<
   const metadata = getInternalRuleMetadata(rule)
 
   if (metadata?.kind === 'anyOf') {
-    const innerResults = metadata.rules.map((innerRule) =>
-      evaluateRuleForField(
-        innerRule,
-        field,
-        fields,
-        values,
-        conditions,
-        prev,
-        availability,
-        baseRuleCache,
-      ),
-    )
+    const innerResults: RuleEvaluation[] = []
+
+    for (const innerRule of metadata.rules) {
+      innerResults.push(
+        evaluateRuleForField(
+          innerRule,
+          field,
+          fields,
+          values,
+          conditions,
+          prev,
+          availability,
+          baseRuleCache,
+        ),
+      )
+    }
 
     return combineCompositeResults(metadata.constraint, 'or', innerResults)
   }
 
   if (metadata?.kind === 'eitherOf') {
-    const branchResults = Object.values(metadata.branches).map((branchRules) =>
-      combineCompositeResults(
-        metadata.constraint,
-        'and',
-        branchRules.map((innerRule) =>
+    const branchResults: RuleEvaluation[] = []
+
+    for (const branchRules of Object.values(metadata.branches)) {
+      const innerResults: RuleEvaluation[] = []
+
+      for (const innerRule of branchRules) {
+        innerResults.push(
           evaluateRuleForField(
             innerRule,
             field,
@@ -124,9 +130,12 @@ export function evaluateRuleForField<
             prev,
             availability,
             baseRuleCache,
-          )),
-      ),
-    )
+          ),
+        )
+      }
+
+      branchResults.push(combineCompositeResults(metadata.constraint, 'and', innerResults))
+    }
 
     return combineCompositeResults(metadata.constraint, 'or', branchResults)
   }
@@ -147,7 +156,7 @@ export function evaluateRuleForField<
     enabled: result.enabled,
     fair: result.fair,
     reason: result.reason,
-    reasons: result.reasons && result.reasons.length > 0 ? [...result.reasons] : undefined,
+    reasons: result.reasons && result.reasons.length > 0 ? result.reasons : undefined,
   }
 }
 
@@ -199,7 +208,7 @@ export function evaluate<
         reason = result.reason
       }
 
-      reasons.push(...getCompositeFailureReasons(result))
+      appendCompositeFailureReasons(result, reasons)
     }
 
     if (enabled) {
@@ -225,7 +234,7 @@ export function evaluate<
           reason = result.reason
         }
 
-        reasons.push(...getCompositeFailureReasons(result))
+        appendCompositeFailureReasons(result, reasons)
       }
     }
 

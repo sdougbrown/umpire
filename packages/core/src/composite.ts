@@ -3,16 +3,24 @@ import type { RuleEvaluation } from './types.js'
 export type CompositeConstraint = 'enabled' | 'fair'
 export type CompositeMode = 'and' | 'or'
 
-export function getCompositeFailureReasons(result: RuleEvaluation): string[] {
+export function appendCompositeFailureReasons(result: RuleEvaluation, reasons: string[]): void {
   if (result.reasons && result.reasons.length > 0) {
-    return [...result.reasons]
+    for (const reason of result.reasons) {
+      reasons.push(reason)
+    }
+
+    return
   }
 
   if (result.reason !== null) {
-    return [result.reason]
+    reasons.push(result.reason)
   }
+}
 
-  return []
+export function getCompositeFailureReasons(result: RuleEvaluation): string[] {
+  const reasons: string[] = []
+  appendCompositeFailureReasons(result, reasons)
+  return reasons
 }
 
 export function combineCompositeResults(
@@ -20,14 +28,25 @@ export function combineCompositeResults(
   mode: CompositeMode,
   results: RuleEvaluation[],
 ): RuleEvaluation {
-  const passed =
-    constraint === 'fair'
-      ? mode === 'and'
-        ? results.every((result) => result.fair !== false)
-        : results.some((result) => result.fair !== false)
-      : mode === 'and'
-        ? results.every((result) => result.enabled)
-        : results.some((result) => result.enabled)
+  let passed = mode === 'and'
+
+  for (const result of results) {
+    const currentPassed = constraint === 'fair' ? result.fair !== false : result.enabled
+
+    if (mode === 'and') {
+      if (!currentPassed) {
+        passed = false
+        break
+      }
+
+      continue
+    }
+
+    if (currentPassed) {
+      passed = true
+      break
+    }
+  }
 
   if (passed) {
     return constraint === 'fair'
@@ -42,7 +61,11 @@ export function combineCompositeResults(
         }
   }
 
-  const reasons = results.flatMap(getCompositeFailureReasons)
+  const reasons: string[] = []
+
+  for (const result of results) {
+    appendCompositeFailureReasons(result, reasons)
+  }
 
   return constraint === 'fair'
     ? {

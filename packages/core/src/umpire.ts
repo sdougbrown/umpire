@@ -490,18 +490,24 @@ function collectFailedDependenciesForRule<
       return []
     }
 
-    return metadata.rules.flatMap((innerRule) =>
-      collectFailedDependenciesForRule(
-        innerRule,
-        field,
-        fields,
-        values,
-        conditions,
-        prev,
-        availability,
-        baseRuleCache,
-      ),
-    )
+    const failedDependencies: Array<keyof F & string> = []
+
+    for (const innerRule of metadata.rules) {
+      failedDependencies.push(
+        ...collectFailedDependenciesForRule(
+          innerRule,
+          field,
+          fields,
+          values,
+          conditions,
+          prev,
+          availability,
+          baseRuleCache,
+        ),
+      )
+    }
+
+    return failedDependencies
   }
 
   if (metadata?.kind === 'eitherOf') {
@@ -520,18 +526,26 @@ function collectFailedDependenciesForRule<
       return []
     }
 
-    return Object.values(metadata.branches).flatMap((branchRules) =>
-      branchRules.flatMap((innerRule) =>
-        collectFailedDependenciesForRule(
-          innerRule,
-          field,
-          fields,
-          values,
-          conditions,
-          prev,
-          availability,
-          baseRuleCache,
-        )))
+    const failedDependencies: Array<keyof F & string> = []
+
+    for (const branchRules of Object.values(metadata.branches)) {
+      for (const innerRule of branchRules) {
+        failedDependencies.push(
+          ...collectFailedDependenciesForRule(
+            innerRule,
+            field,
+            fields,
+            values,
+            conditions,
+            prev,
+            availability,
+            baseRuleCache,
+          ),
+        )
+      }
+    }
+
+    return failedDependencies
   }
 
   if (metadata?.kind !== 'requires') {
@@ -578,24 +592,32 @@ function describeCausedBy<
   availability: AvailabilityMap<F>,
   baseRuleCache: Map<Rule<F, C>, Map<string, RuleEvaluation>>,
 ): ChallengeTrace['transitiveDeps'][number]['causedBy'] {
-  return (rulesByTarget.get(field) ?? [])
-    .map((rule) =>
-      describeRuleForField(
-        rule,
-        field,
-        fields,
-        values,
-        conditions,
-        prev,
-        availability,
-        baseRuleCache,
-      ),
-    )
-    .filter((entry) => entry.passed === false)
-    .map(({ rule, ...details }) => ({
+  const causedBy: ChallengeTrace['transitiveDeps'][number]['causedBy'] = []
+
+  for (const rule of rulesByTarget.get(field) ?? []) {
+    const entry = describeRuleForField(
       rule,
+      field,
+      fields,
+      values,
+      conditions,
+      prev,
+      availability,
+      baseRuleCache,
+    )
+
+    if (entry.passed) {
+      continue
+    }
+
+    const { rule: ruleName, ...details } = entry
+    causedBy.push({
+      rule: ruleName,
       ...details,
-    }))
+    })
+  }
+
+  return causedBy
 }
 
 function buildTransitiveDeps<
@@ -626,12 +648,7 @@ function buildTransitiveDeps<
         availability,
         baseRuleCache,
       )) {
-        const dependencySatisfied = isSatisfied(values[dependency], fields[dependency])
         const dependencyAvailability = availability[dependency]
-
-        if (dependencySatisfied && dependencyAvailability.enabled && dependencyAvailability.fair) {
-          continue
-        }
 
         if (visited.has(dependency)) {
           continue
@@ -964,10 +981,12 @@ export function umpire<
     const recommendations: Foul<NormalizeFields<FInput>>[] = []
 
     for (const field of fieldNames) {
+      const beforeStatus = beforeAvailability[field]
+      const afterStatus = afterAvailability[field]
       const disabledTransition =
-        beforeAvailability[field].enabled && !afterAvailability[field].enabled
+        beforeStatus.enabled && !afterStatus.enabled
       const foulTransition =
-        beforeAvailability[field].fair && afterAvailability[field].fair === false
+        beforeStatus.fair && afterStatus.fair === false
 
       if (!disabledTransition && !foulTransition) {
         continue
@@ -976,7 +995,7 @@ export function umpire<
       const currentValue = after.values[field]
       const suggestedValue = fields[field].default
 
-      if (!afterAvailability[field].satisfied) {
+      if (!afterStatus.satisfied) {
         continue
       }
 
@@ -986,7 +1005,7 @@ export function umpire<
 
       recommendations.push({
         field,
-        reason: afterAvailability[field].reason ?? (disabledTransition ? 'field disabled' : 'field fouled'),
+        reason: afterStatus.reason ?? (disabledTransition ? 'field disabled' : 'field fouled'),
         suggestedValue,
       })
     }
@@ -1029,7 +1048,8 @@ export function umpire<
     const typedPrev = prev as FieldValues<NormalizeFields<FInput>> | undefined
     const availability = checkAvailability(typedValues, resolvedConditions, typedPrev)
     const baseRuleCache = new Map<Rule<NormalizeFields<FInput>, C>, Map<string, RuleEvaluation>>()
-    const directReasons = (rulesByTarget.get(field) ?? [])
+    const targetRules = rulesByTarget.get(field) ?? []
+    const directReasons = targetRules
       .map((rule) =>
         describeRuleForField(
           rule,
@@ -1043,7 +1063,7 @@ export function umpire<
         ),
       )
 
-    const oneOfRule = (rulesByTarget.get(field) ?? []).find((rule) => {
+    const oneOfRule = targetRules.find((rule) => {
       const metadata = getInternalRuleMetadata(rule)
       return metadata?.kind === 'oneOf'
     })

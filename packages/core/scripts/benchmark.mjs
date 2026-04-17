@@ -34,15 +34,94 @@ function benchmark(name, iterations, fn) {
   }
 }
 
-function printResults(results) {
+function average(values) {
+  if (values.length === 0) {
+    return 0
+  }
+
+  return values.reduce((sum, value) => sum + value, 0) / values.length
+}
+
+function variance(values, mean) {
+  if (values.length === 0) {
+    return 0
+  }
+
+  return values.reduce((sum, value) => {
+    const delta = value - mean
+    return sum + delta * delta
+  }, 0) / values.length
+}
+
+function summarizeScenarioRuns(scenario, runCount) {
+  const runs = []
+
+  for (let run = 0; run < runCount; run += 1) {
+    runs.push(benchmark(scenario.name, scenario.iterations, scenario.run))
+  }
+
+  const totalMsValues = runs.map((result) => result.totalMs)
+  const avgMsValues = runs.map((result) => result.avgMs)
+  const opsPerSecValues = runs.map((result) => result.opsPerSec)
+  const meanTotalMs = average(totalMsValues)
+
+  return {
+    name: scenario.name,
+    category: scenario.category,
+    iterations: scenario.iterations,
+    runs,
+    checksum: runs[0]?.checksum ?? 0,
+    avgTotalMs: meanTotalMs,
+    varTotalMs: variance(totalMsValues, meanTotalMs),
+    avgMs: average(avgMsValues),
+    avgOpsPerSec: average(opsPerSecValues),
+  }
+}
+
+function printScenarioResults(results, runCount) {
   const table = results.map((result) => ({
     benchmark: result.name,
+    category: result.category,
+    runs: runCount,
     iterations: result.iterations,
-    total_ms: result.totalMs.toFixed(2),
+    avg_total_ms: result.avgTotalMs.toFixed(2),
+    var_total_ms: result.varTotalMs.toFixed(4),
     avg_ms: result.avgMs.toFixed(3),
-    ops_sec: result.opsPerSec.toFixed(2),
+    avg_ops_sec: result.avgOpsPerSec.toFixed(2),
     checksum: result.checksum,
   }))
+
+  console.table(table)
+}
+
+function printCategoryTotals(results, runCount) {
+  const categories = ['construction-heavy', 'runtime-heavy']
+  const table = categories.map((category) => {
+    const totalsByRun = []
+
+    for (let run = 0; run < runCount; run += 1) {
+      let total = 0
+
+      for (const result of results) {
+        if (result.category !== category) {
+          continue
+        }
+
+        total += result.runs[run]?.totalMs ?? 0
+      }
+
+      totalsByRun.push(total)
+    }
+
+    const avgTotalMs = average(totalsByRun)
+
+    return {
+      category,
+      runs: runCount,
+      avg_total_ms: avgTotalMs.toFixed(2),
+      var_total_ms: variance(totalsByRun, avgTotalMs).toFixed(4),
+    }
+  })
 
   console.table(table)
 }
@@ -321,64 +400,104 @@ const schedulerRuntime = makeSchedulerScenario(60)
 const challengeField = 'review_28'
 const minesweeper = createExpertMinesweeperScenario()
 
-const results = [
-  benchmark('create/scheduler-60-sections', 25, () => {
-    const scenario = makeSchedulerScenario(60)
-    const graph = scenario.engine.graph()
-    return graph.nodes.length + graph.edges.length
-  }),
-  benchmark('check/scheduler/pro-plan', 150, () => {
-    const availability = schedulerRuntime.engine.check(
-      schedulerRuntime.beforeValues,
-      schedulerRuntime.beforeConditions,
-    )
-    return sumAvailability(availability)
-  }),
-  benchmark('check/scheduler/basic-readonly', 150, () => {
-    const availability = schedulerRuntime.engine.check(
-      schedulerRuntime.afterValues,
-      schedulerRuntime.afterConditions,
-      schedulerRuntime.beforeValues,
-    )
-    return sumAvailability(availability)
-  }),
-  benchmark('challenge/review-lock-chain', 100, () => {
-    const trace = schedulerRuntime.engine.challenge(
-      challengeField,
-      schedulerRuntime.afterValues,
+const runCount = Number(process.env.BENCH_RUNS ?? '5')
+
+const scenarios = [
+  {
+    name: 'create/scheduler-60-sections',
+    category: 'construction-heavy',
+    iterations: 25,
+    run: () => {
+      const scenario = makeSchedulerScenario(60)
+      const graph = scenario.engine.graph()
+      return graph.nodes.length + graph.edges.length
+    },
+  },
+  {
+    name: 'check/scheduler/pro-plan',
+    category: 'runtime-heavy',
+    iterations: 150,
+    run: () => {
+      const availability = schedulerRuntime.engine.check(
+        schedulerRuntime.beforeValues,
+        schedulerRuntime.beforeConditions,
+      )
+      return sumAvailability(availability)
+    },
+  },
+  {
+    name: 'check/scheduler/basic-readonly',
+    category: 'runtime-heavy',
+    iterations: 150,
+    run: () => {
+      const availability = schedulerRuntime.engine.check(
+        schedulerRuntime.afterValues,
+        schedulerRuntime.afterConditions,
+        schedulerRuntime.beforeValues,
+      )
+      return sumAvailability(availability)
+    },
+  },
+  {
+    name: 'challenge/review-lock-chain',
+    category: 'runtime-heavy',
+    iterations: 100,
+    run: () => {
+      const trace = schedulerRuntime.engine.challenge(
+        challengeField,
+        schedulerRuntime.afterValues,
       schedulerRuntime.afterConditions,
       schedulerRuntime.beforeValues,
     )
 
-    return (
-      (trace.enabled ? 1 : 0) +
-      trace.directReasons.length +
-      trace.transitiveDeps.length +
-      (trace.oneOfResolution ? Object.keys(trace.oneOfResolution.branches).length : 0)
-    )
-  }),
-  benchmark('play/plan-downgrade', 100, () => {
-    const fouls = schedulerRuntime.engine.play(
-      {
-        values: schedulerRuntime.beforeValues,
+      return (
+        (trace.enabled ? 1 : 0) +
+        trace.directReasons.length +
+        trace.transitiveDeps.length +
+        (trace.oneOfResolution ? Object.keys(trace.oneOfResolution.branches).length : 0)
+      )
+    },
+  },
+  {
+    name: 'play/plan-downgrade',
+    category: 'runtime-heavy',
+    iterations: 100,
+    run: () => {
+      const fouls = schedulerRuntime.engine.play(
+        {
+          values: schedulerRuntime.beforeValues,
         conditions: schedulerRuntime.beforeConditions,
       },
       {
         values: schedulerRuntime.afterValues,
         conditions: schedulerRuntime.afterConditions,
       },
-    )
+      )
 
-    return fouls.length + fouls.reduce((sum, foul) => sum + foul.field.length, 0)
-  }),
-  benchmark('graph/export-scheduler', 100, () => {
-    const graph = schedulerConstructionFields.engine.graph()
-    return graph.nodes.length + graph.edges.length
-  }),
-  benchmark('check/minesweeper-expert-board', 100, () => {
-    const availability = minesweeper.engine.check(minesweeper.values, minesweeper.conditions)
-    return sumAvailability(availability)
-  }),
+      return fouls.length + fouls.reduce((sum, foul) => sum + foul.field.length, 0)
+    },
+  },
+  {
+    name: 'graph/export-scheduler',
+    category: 'construction-heavy',
+    iterations: 100,
+    run: () => {
+      const graph = schedulerConstructionFields.engine.graph()
+      return graph.nodes.length + graph.edges.length
+    },
+  },
+  {
+    name: 'check/minesweeper-expert-board',
+    category: 'runtime-heavy',
+    iterations: 100,
+    run: () => {
+      const availability = minesweeper.engine.check(minesweeper.values, minesweeper.conditions)
+      return sumAvailability(availability)
+    },
+  },
 ]
 
-printResults(results)
+const results = scenarios.map((scenario) => summarizeScenarioRuns(scenario, runCount))
+
+printScenarioResults(results, runCount)
+printCategoryTotals(results, runCount)
