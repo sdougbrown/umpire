@@ -34,7 +34,7 @@ This means `check('email', validator)` is doing two jobs at once: it reads from 
 ## Supported validators
 
 - `(value: unknown) => boolean` — plain function
-- `checks.email()` and other named checks from `@umpire/json`
+- `namedValidators.email()` and other named validators from `@umpire/json`
 - `{ safeParse(value): { success: boolean } }` — Zod schemas
 - `{ test(value): boolean }` — RegExp and similar
 
@@ -49,9 +49,9 @@ For `enabledWhen()`, that field relationship is informational: it appears in the
 If you want a `check()` predicate to survive `toJson()` / `fromJson()`, use a named check from `@umpire/json`:
 
 ```ts
-import { checks } from '@umpire/json'
+import { namedValidators } from '@umpire/json'
 
-enabledWhen('submit', check('email', checks.email()), {
+enabledWhen('submit', check('email', namedValidators.email()), {
   reason: 'Enter a valid email address',
 })
 ```

@@ -1,4 +1,5 @@
 import type { JsonPrimitive } from '@umpire/core'
+import type { Expr } from '@umpire/dsl'
 
 export type JsonConditionType = 'boolean' | 'string' | 'number' | 'string[]' | 'number[]'
 
@@ -15,27 +16,9 @@ export interface JsonFieldDef {
   isEmpty?: JsonIsEmptyStrategy
 }
 
-export type JsonExpr =
-  | { op: 'eq'; field: string; value: JsonPrimitive }
-  | { op: 'neq'; field: string; value: JsonPrimitive }
-  | { op: 'gt'; field: string; value: number }
-  | { op: 'gte'; field: string; value: number }
-  | { op: 'lt'; field: string; value: number }
-  | { op: 'lte'; field: string; value: number }
-  | { op: 'present'; field: string }
-  | { op: 'absent'; field: string }
-  | { op: 'truthy'; field: string }
-  | { op: 'falsy'; field: string }
-  | { op: 'in'; field: string; values: JsonPrimitive[] }
-  | { op: 'notIn'; field: string; values: JsonPrimitive[] }
-  | { op: 'check'; field: string; check: JsonValidatorSpec }
-  | { op: 'cond'; condition: string }
-  | { op: 'condEq'; condition: string; value: JsonPrimitive }
-  | { op: 'condIn'; condition: string; values: JsonPrimitive[] }
-  | { op: 'fieldInCond'; field: string; condition: string }
-  | { op: 'and'; exprs: JsonExpr[] }
-  | { op: 'or'; exprs: JsonExpr[] }
-  | { op: 'not'; expr: JsonExpr }
+type JsonCheckExpr = { op: 'check'; field: string; check: JsonValidatorSpec }
+
+export type JsonExpr = Expr | JsonCheckExpr
 
 export type JsonValidatorOp =
   | 'email'

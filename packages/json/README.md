@@ -2,12 +2,15 @@
 
 Portable schema parsing and serialization for [@umpire/core](https://www.npmjs.com/package/@umpire/core), plus portable `namedValidators.*()` helpers that round-trip cleanly through JSON.
 
+`@umpire/dsl` now owns the pure expression layer (`Expr`, `expr.*`, `compileExpr()`, `getExprFieldRefs()`).
+`@umpire/json` owns the JSON-aware additions: `expr.check()`, `namedValidators.*()`, and portable JSON rule builders.
+
 [Docs](https://sdougbrown.github.io/umpire/adapters/json/) · [Quick Start](https://sdougbrown.github.io/umpire/learn/)
 
 ## Install
 
 ```bash
-npm install @umpire/core @umpire/json
+npm install @umpire/core @umpire/dsl @umpire/json
 ```
 
 ## Usage
@@ -81,6 +84,14 @@ Named validators for use with `check(field, validator)` and JSON `validators`:
 - `namedValidators.integer()`
 
 Use these when you want a validator or check-backed rule to survive the JSON boundary. Plain functions, regexes, and library schemas still work at runtime, but they stay TypeScript-specific.
+
+### `expr.check()` and JSON-aware builders
+
+`expr.check()` is JSON-specific and remains in `@umpire/json`.
+
+Use it with JSON-aware builders such as `enabledWhenExpr`, `requiresExpr`, `disablesExpr`, and `fairWhenExpr` when a rule must round-trip through JSON.
+
+For non-`check` expression authoring and compilation, import from `@umpire/dsl`.
 
 ## `validators`
 

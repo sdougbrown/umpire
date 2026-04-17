@@ -59,8 +59,8 @@ check('email', z.string().email())
 check('zipCode', yup.string().matches(/^\d{5}$/))
 
 // Named check — portable through @umpire/json
-import { checks } from '@umpire/json'
-check('email', checks.email())
+import { namedValidators } from '@umpire/json'
+check('email', namedValidators.email())
 ```
 
 The key insight: `check()` preserves the field name internally. The dependency graph knows this predicate reads from `email`, so `challenge()` can explain why `submit` is disabled and trace it back to the email field.
