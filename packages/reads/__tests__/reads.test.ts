@@ -398,6 +398,7 @@ describe('@umpire/reads', () => {
 
       expect(ump.check({ cpu: 'am5', motherboard: 'am5' }).motherboard).toEqual({
         enabled: true,
+        satisfied: true,
         fair: true,
         required: false,
         reason: null,
@@ -423,6 +424,7 @@ describe('@umpire/reads', () => {
 
       expect(ump.check({ cpu: 'am5', motherboard: 'lga1700' }).motherboard).toEqual({
         enabled: true,
+        satisfied: true,
         fair: false,
         required: false,
         reason: 'Selected motherboard no longer matches the CPU socket',
@@ -451,6 +453,7 @@ describe('@umpire/reads', () => {
 
       expect(ump.check({ cpu: 'am5', motherboard: 'am5' }).motherboard).toEqual({
         enabled: true,
+        satisfied: true,
         fair: true,
         required: false,
         reason: null,
@@ -458,6 +461,7 @@ describe('@umpire/reads', () => {
       })
       expect(ump.check({ motherboard: 'am5' }).motherboard).toEqual({
         enabled: false,
+        satisfied: true,
         fair: true,
         required: false,
         reason: 'Pick a CPU first',
@@ -491,6 +495,7 @@ describe('@umpire/reads', () => {
 
       expect(ump.check({}, { allowMotherboard: true }).motherboard).toEqual({
         enabled: true,
+        satisfied: false,
         fair: true,
         required: false,
         reason: null,
@@ -498,6 +503,7 @@ describe('@umpire/reads', () => {
       })
       expect(ump.check({}, { allowMotherboard: false }).motherboard).toEqual({
         enabled: false,
+        satisfied: false,
         fair: true,
         required: false,
         reason: 'Pick a supported platform first',
@@ -538,6 +544,7 @@ describe('@umpire/reads', () => {
         ).motherboard,
       ).toEqual({
         enabled: true,
+        satisfied: true,
         fair: true,
         required: false,
         reason: null,
@@ -550,6 +557,7 @@ describe('@umpire/reads', () => {
         ).motherboard,
       ).toEqual({
         enabled: true,
+        satisfied: true,
         fair: false,
         required: false,
         reason: 'Selected motherboard no longer matches the CPU socket',
@@ -585,6 +593,7 @@ describe('@umpire/reads', () => {
 
       expect(ump.check({ motherboard: 'am5' }, { cpu: 'am5' }).motherboard).toEqual({
         enabled: true,
+        satisfied: true,
         fair: true,
         required: false,
         reason: null,
@@ -592,6 +601,7 @@ describe('@umpire/reads', () => {
       })
       expect(ump.check({ motherboard: 'lga1700' }, { cpu: 'am5' }).motherboard).toEqual({
         enabled: true,
+        satisfied: true,
         fair: false,
         required: false,
         reason: 'Selected motherboard no longer matches the CPU socket',
@@ -627,6 +637,7 @@ describe('@umpire/reads', () => {
 
       expect(ump.check({}, { selectedCpu: 'am5' }).motherboard).toEqual({
         enabled: true,
+        satisfied: false,
         fair: true,
         required: false,
         reason: null,
@@ -634,6 +645,7 @@ describe('@umpire/reads', () => {
       })
       expect(ump.check({}, {}).motherboard).toEqual({
         enabled: false,
+        satisfied: false,
         fair: true,
         required: false,
         reason: 'Pick a CPU first',
