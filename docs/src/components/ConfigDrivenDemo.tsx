@@ -346,10 +346,6 @@ type LiveFormInnerProps = {
 function LiveFormInner({ ump, fieldOrder }: LiveFormInnerProps) {
   const [values, setValues] = useState<InputValues>(() => initValuesFrom(fieldOrder))
   const { check, fouls } = useUmpire(ump, values)
-  // Scorecard gives us Umpire's own `satisfied` per field — whatever `isEmpty`
-  // strategy the schema declares. Hand-rolling string-length checks would drift
-  // the moment a reader edits the JSON to use a different strategy.
-  const scorecard = useMemo(() => ump.scorecard({ values }), [ump, values])
 
   function setField(field: string, next: string) {
     setValues((current) => ({ ...current, [field]: next }))
@@ -368,7 +364,7 @@ function LiveFormInner({ ump, fieldOrder }: LiveFormInnerProps) {
   const allRequired = fieldOrder.filter((field) => check[field]?.required)
   const availableRequired = allRequired.filter((field) => check[field]?.enabled)
   const satisfiedCount = availableRequired.filter(
-    (field) => scorecard.fields[field]?.satisfied,
+    (field) => check[field]?.satisfied,
   ).length
 
   return (
