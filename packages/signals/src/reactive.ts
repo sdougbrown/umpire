@@ -127,6 +127,7 @@ export function reactiveUmp<
     string,
     {
       enabled: { get(): boolean }
+      satisfied: { get(): boolean }
       fair: { get(): boolean }
       required: { get(): boolean }
       reason: { get(): string | null }
@@ -137,6 +138,7 @@ export function reactiveUmp<
   for (const name of fieldNames) {
     fieldComputeds.set(name, {
       enabled: adapter.computed(() => availabilityComputed.get()[name].enabled),
+      satisfied: adapter.computed(() => availabilityComputed.get()[name].satisfied),
       fair: adapter.computed(() => availabilityComputed.get()[name].fair),
       required: adapter.computed(() => availabilityComputed.get()[name].required),
       reason: adapter.computed(() => availabilityComputed.get()[name].reason),
@@ -251,6 +253,9 @@ export function reactiveUmp<
       cached = {
         get enabled() {
           return computeds.enabled.get()
+        },
+        get satisfied() {
+          return computeds.satisfied.get()
         },
         get fair() {
           return computeds.fair.get()

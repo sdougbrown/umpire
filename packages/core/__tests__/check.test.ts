@@ -41,6 +41,7 @@ describe('evaluate', () => {
 
     expect(evaluate(fields, rules, topoOrder, { alpha: 'on' }, {} as TestConditions).beta).toEqual({
       enabled: true,
+      satisfied: false,
       fair: true,
       required: false,
       reason: null,
@@ -50,6 +51,7 @@ describe('evaluate', () => {
       evaluate(fields, rules, topoOrder, { alpha: 'off' }, {} as TestConditions).beta,
     ).toEqual({
       enabled: false,
+      satisfied: false,
       fair: true,
       required: false,
       reason: 'alpha must be on',
@@ -78,6 +80,7 @@ describe('evaluate', () => {
 
     expect(result.gamma).toEqual({
       enabled: false,
+      satisfied: false,
       fair: true,
       required: false,
       reason: 'feature gate closed',
@@ -157,6 +160,7 @@ describe('evaluate', () => {
       evaluate(fields, rules, topoOrder, {}, { allow: true }).gamma,
     ).toEqual({
       enabled: true,
+      satisfied: false,
       fair: true,
       required: false,
       reason: null,
@@ -166,6 +170,7 @@ describe('evaluate', () => {
       evaluate(fields, rules, topoOrder, {}, { allow: false }).gamma,
     ).toEqual({
       enabled: false,
+      satisfied: false,
       fair: true,
       required: false,
       reason: 'allow must be true',
@@ -203,6 +208,7 @@ describe('evaluate', () => {
 
     expect(evaluate(fields, rules, topoOrder, { alpha: 'am5', beta: 'am5' }, {} as TestConditions).beta).toEqual({
       enabled: true,
+      satisfied: true,
       fair: true,
       required: false,
       reason: null,
@@ -212,6 +218,7 @@ describe('evaluate', () => {
       evaluate(fields, rules, topoOrder, { alpha: 'am5', beta: 'lga1700' }, {} as TestConditions).beta,
     ).toEqual({
       enabled: true,
+      satisfied: true,
       fair: false,
       required: false,
       reason: 'socket mismatch',
@@ -242,6 +249,7 @@ describe('evaluate', () => {
 
     expect(evaluate(fields, rules, topoOrder, {}, {} as TestConditions).beta).toEqual({
       enabled: false,
+      satisfied: false,
       fair: true,
       required: false,
       reason: null,
@@ -411,10 +419,10 @@ describe('evaluate', () => {
     const result = evaluate(fields, rules, topoOrder, {}, {} as TestConditions)
 
     expect(result).toEqual({
-      alpha: { enabled: true, fair: true, required: true, reason: null, reasons: [] },
-      beta: { enabled: true, fair: true, required: false, reason: null, reasons: [] },
-      gamma: { enabled: true, fair: true, required: false, reason: null, reasons: [] },
-      delta: { enabled: true, fair: true, required: true, reason: null, reasons: [] },
+      alpha: { enabled: true, satisfied: false, fair: true, required: true, reason: null, reasons: [] },
+      beta: { enabled: true, satisfied: false, fair: true, required: false, reason: null, reasons: [] },
+      gamma: { enabled: true, satisfied: false, fair: true, required: false, reason: null, reasons: [] },
+      delta: { enabled: true, satisfied: false, fair: true, required: true, reason: null, reasons: [] },
     })
   })
 })

@@ -3,6 +3,7 @@ import {
   getCompositeFailureReasons,
 } from './composite.js'
 import { getInternalRuleMetadata, isFairRule, isGateRule, resolveReason } from './rules.js'
+import { isSatisfied } from './satisfaction.js'
 import type { AvailabilityMap, FieldDef, FieldValues, Rule, RuleEvaluation } from './types.js'
 
 function partitionRulesByPhase<
@@ -202,6 +203,7 @@ export function evaluate<
 
     availability[field] = {
       enabled,
+      satisfied: isSatisfied(values[field], fields[field]),
       fair,
       required: enabled ? fields[field].required ?? false : false,
       reason,

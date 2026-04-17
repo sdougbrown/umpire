@@ -61,6 +61,7 @@ export type ValidationMap<F extends Record<string, FieldDef>> = Partial<{
 
 export type FieldStatus = {
   enabled: boolean
+  satisfied: boolean
   fair: boolean
   required: boolean
   reason: string | null
