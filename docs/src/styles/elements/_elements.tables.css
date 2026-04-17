@@ -1,0 +1,19 @@
+table {
+  border-color: var(--umpire-demo-green-12);
+}
+
+th {
+  color: var(--sl-color-white);
+  background: rgba(107, 254, 156, 0.06);
+}
+
+td {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+td:first-child,
+th:first-child,
+td:last-child,
+th:last-child {
+  padding-inline: 0.75rem;
+}

@@ -1,0 +1,33 @@
+:root {
+  --sl-color-accent-low: #0d3117;
+  --sl-color-accent: #6bfe9c;
+  --sl-color-accent-high: #b8ffd0;
+  --sl-color-white: #f9f9f9;
+  --sl-color-gray-1: #e0e0e0;
+  --sl-color-gray-2: #a0a0a0;
+  --sl-color-gray-3: #505050;
+  --sl-color-gray-4: #262626;
+  --sl-color-gray-5: #1a1a1a;
+  --sl-color-gray-6: #121212;
+  --sl-color-gray-7: #0f0f0f;
+  --sl-color-black: #0e0e0e;
+  --sl-color-text: #e0e0e0;
+  --sl-color-text-accent: #6bfe9c;
+  --sl-color-bg: #0e0e0e;
+  --sl-color-bg-nav: rgba(18, 18, 18, 0.76);
+  --sl-color-bg-sidebar: rgba(15, 15, 15, 0.94);
+  --sl-color-bg-inline-code: #1a1a1a;
+  --sl-color-hairline-shade: rgba(107, 254, 156, 0.14);
+  --sl-font-system: 'Work Sans', sans-serif;
+  --sl-font-system-mono: 'JetBrains Mono', monospace;
+  --umpire-green: #6bfe9c;
+  --umpire-yellow: #fed023;
+  --umpire-red: #ff716c;
+  --umpire-surface: rgba(26, 26, 26, 0.82);
+  --umpire-surface-strong: rgba(38, 38, 38, 0.9);
+  --umpire-glow: 0 0 60px -15px rgba(107, 254, 156, 0.15);
+  --umpire-font-mono: 'JetBrains Mono', monospace;
+  --umpire-font-heading: 'Space Grotesk', sans-serif;
+  --umpire-font-body: 'Work Sans', sans-serif;
+  color-scheme: dark;
+}

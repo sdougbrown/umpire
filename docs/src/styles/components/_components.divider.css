@@ -1,0 +1,5 @@
+.umpire-divider {
+  height: 1px;
+  margin: 3rem 0;
+  background: linear-gradient(90deg, transparent, rgba(107, 254, 156, 0.2), transparent);
+}

@@ -1,7 +1,7 @@
-.printer-demo__frame {
+.c-printer-demo__frame {
   --umpire-demo-field-disabled-bg:
-    linear-gradient(135deg, rgba(255, 113, 108, 0.08), transparent 50%),
-    rgba(255, 255, 255, 0.02);
+    linear-gradient(135deg, var(--umpire-demo-red-8), transparent 50%),
+    var(--umpire-demo-white-2);
   --umpire-demo-field-disabled-border-color: rgba(255, 113, 108, 0.14);
   --umpire-demo-field-disabled-opacity: 1;
   display: flex;
@@ -9,31 +9,31 @@
   gap: 1rem;
 }
 
-.printer-demo__frame .umpire-demo__panel-body {
+.c-printer-demo__frame .c-umpire-demo__panel-body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.printer-demo__groups {
+.c-printer-demo__groups {
   gap: 0.95rem;
   margin-top: 0;
 }
 
-.printer-demo__selector {
+.c-printer-demo__selector {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.65rem;
 }
 
-.printer-demo__printer-btn {
+.c-printer-demo__printer-btn {
   display: grid;
   justify-items: center;
   gap: 0.7rem;
   min-height: 9.5rem;
   padding: 1rem 0.85rem;
-  border: 1px solid rgba(107, 254, 156, 0.12);
-  border-radius: 1rem;
+  border: 1px solid var(--umpire-demo-green-12);
+  border-radius: var(--umpire-demo-radius-lg);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 45%),
     rgba(255, 255, 255, 0.025);
@@ -41,12 +41,12 @@
   text-align: center;
 }
 
-.printer-demo__printer-btn:hover {
+.c-printer-demo__printer-btn:hover {
   color: var(--umpire-demo-text);
-  border-color: rgba(107, 254, 156, 0.18);
+  border-color: var(--umpire-demo-green-18);
 }
 
-.printer-demo__printer-icon {
+.c-printer-demo__printer-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -55,53 +55,48 @@
   color: currentColor;
 }
 
-.printer-demo__printer-icon svg {
+.c-printer-demo__printer-icon svg {
   width: 3rem;
   height: 3rem;
 }
 
-.printer-demo__printer-label {
-  font-family: 'Space Grotesk', sans-serif;
+.c-printer-demo__printer-label {
+  font-family: var(--umpire-demo-font-heading);
   font-size: 1rem;
   line-height: 1.15;
   color: inherit;
 }
 
-.printer-demo__field-group {
+.c-printer-demo__field-group {
   display: grid;
   gap: 0.65rem;
 }
 
-.printer-demo__group-fields {
+.c-printer-demo__group-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
   margin-top: 0 !important;
 }
 
-.printer-demo__group-label {
+.c-printer-demo__group-label {
   padding: 0 0.15rem;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.64rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--umpire-demo-text-muted);
 }
 
-.printer-demo__field-title {
-  font-family: 'Space Grotesk', sans-serif;
+.c-printer-demo__field-title {
+  font-family: var(--umpire-demo-font-heading);
   font-size: 0.95rem;
   font-weight: 600;
   line-height: 1.1;
   color: var(--umpire-demo-text);
 }
 
-.printer-demo__checkbox-row {
+.c-printer-demo__checkbox-row {
   display: flex;
   align-items: flex-start;
   gap: 0.7rem;
   padding: 0.78rem 0.82rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--umpire-demo-white-8);
   border-radius: var(--umpire-demo-input-radius);
   background: var(--umpire-demo-input-bg);
   color: var(--umpire-demo-text);
@@ -109,7 +104,7 @@
   line-height: 1.4;
 }
 
-.printer-demo__checkbox-row input {
+.c-printer-demo__checkbox-row input {
   width: 1rem;
   height: 1rem;
   margin-top: 0.14rem;
@@ -117,20 +112,20 @@
   accent-color: var(--umpire-demo-green);
 }
 
-.printer-demo__field--hidden {
+.c-printer-demo__field.is-hidden {
   display: none !important;
 }
 
 @media (max-width: 50rem) {
-  .printer-demo__selector {
+  .c-printer-demo__selector {
     grid-template-columns: 1fr;
   }
 
-  .printer-demo__group-fields {
+  .c-printer-demo__group-fields {
     grid-template-columns: 1fr;
   }
 
-  .printer-demo__printer-btn {
+  .c-printer-demo__printer-btn {
     min-height: 7.5rem;
     grid-template-columns: auto 1fr;
     justify-items: start;
@@ -138,11 +133,11 @@
     text-align: left;
   }
 
-  .printer-demo__printer-label {
+  .c-printer-demo__printer-label {
     align-self: center;
   }
 
-  .printer-demo__frame .umpire-demo__field-header {
+  .c-printer-demo__frame .c-umpire-demo__field-header {
     flex-direction: column;
     align-items: flex-start;
   }
