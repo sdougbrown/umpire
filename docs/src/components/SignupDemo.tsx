@@ -424,7 +424,7 @@ export default function SignupDemo() {
                             ? av.reason ?? '—'
                             : field === 'submit'
                               ? (av.enabled ? '✓' : av.reason ?? '—')
-                              : error ?? (av.required && !values[field as SignupField] ? 'empty' : '✓')}
+                              : error ?? (av.required && !av.satisfied ? 'empty' : '✓')}
                         </td>
                       </tr>
                     )

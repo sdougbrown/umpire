@@ -794,7 +794,7 @@ export default function PcBuilderDemo() {
   )
 
   const cpuBrand = selectedCpu?.brand
-  const hasRamSelection = scorecard.fields.ram.satisfied
+  const hasRamSelection = check.ram.satisfied
   const sawTransitiveCascade = hintMarkers.sawTransitiveCascade || hasLiveTransitiveCascade
   const sawAppliedResets = hintMarkers.sawAppliedResets
   const hintInput: HintInput = {
