@@ -76,6 +76,7 @@ const fouls = signupUmp.play(
 | Package | Purpose |
 | --- | --- |
 | [`@umpire/core`](./packages/core/README.md) | Pure logic engine with zero runtime dependencies |
+| [`@umpire/dsl`](./packages/dsl/README.md) | Pure expression DSL (`expr.*`, `compileExpr`, `getExprFieldRefs`) |
 | [`@umpire/react`](./packages/react/README.md) | `useUmpire()` hook for React |
 | [`@umpire/solid`](./packages/solid/README.md) | `useUmpire()` hook for Solid |
 | [`@umpire/signals`](./packages/signals/README.md) | Signal adapter via `SignalProtocol` (Jotai, Preact, Alien Signals, TC39) |

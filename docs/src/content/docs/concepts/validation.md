@@ -59,8 +59,8 @@ check('email', z.string().email())
 check('zipCode', yup.string().matches(/^\d{5}$/))
 
 // Named check — portable through @umpire/json
-import { checks } from '@umpire/json'
-check('email', checks.email())
+import { namedValidators } from '@umpire/json'
+check('email', namedValidators.email())
 ```
 
 The key insight: `check()` preserves the field name internally. The dependency graph knows this predicate reads from `email`, so `challenge()` can explain why `submit` is disabled and trace it back to the email field.
@@ -144,4 +144,4 @@ These are all form-framework concerns. Umpire's job ends at "is this field avail
 - [`@umpire/zod`](/umpire/adapters/validation/zod/) — first-class Zod integration with `deriveSchema` and `deriveErrors`
 - [Satisfaction semantics](/umpire/concepts/satisfaction/) — how Umpire defines "present"
 - [`check()` in the rules API](/umpire/api/rules/check/) — full signature and validator shapes
-- [`@umpire/json`](/umpire/adapters/json/) — portable schemas, named checks, and `excluded`
+- [`@umpire/json`](/umpire/extensions/json/) — portable schemas, named checks, and `excluded`

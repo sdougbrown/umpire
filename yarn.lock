@@ -1095,6 +1095,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@umpire/dsl@workspace:^, @umpire/dsl@workspace:packages/dsl":
+  version: 0.0.0-use.local
+  resolution: "@umpire/dsl@workspace:packages/dsl"
+  dependencies:
+    "@umpire/core": "workspace:^"
+  languageName: unknown
+  linkType: soft
+
 "@umpire/eslint-plugin@workspace:packages/eslint-plugin":
   version: 0.0.0-use.local
   resolution: "@umpire/eslint-plugin@workspace:packages/eslint-plugin"
@@ -1111,6 +1119,7 @@ __metadata:
   resolution: "@umpire/json@workspace:packages/json"
   dependencies:
     "@umpire/core": "workspace:^"
+    "@umpire/dsl": "workspace:^"
   languageName: unknown
   linkType: soft
 

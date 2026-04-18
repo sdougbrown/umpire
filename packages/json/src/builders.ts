@@ -1,4 +1,9 @@
 import {
+  expr as baseExpr,
+  type ExprBuilder,
+} from '@umpire/dsl'
+
+import {
   anyOf,
   disables,
   eitherOf,
@@ -7,7 +12,6 @@ import {
   requires,
   type FieldDef,
   type FieldValues,
-  type JsonPrimitive,
   type NamedCheck,
   type NamedCheckMetadata,
   type Rule,
@@ -37,27 +41,8 @@ type FairPredicate<
 export type JsonExprBuilder<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
-> = {
-  eq: (field: keyof F & string, value: JsonPrimitive) => JsonExpr
-  neq: (field: keyof F & string, value: JsonPrimitive) => JsonExpr
-  gt: (field: keyof F & string, value: number) => JsonExpr
-  gte: (field: keyof F & string, value: number) => JsonExpr
-  lt: (field: keyof F & string, value: number) => JsonExpr
-  lte: (field: keyof F & string, value: number) => JsonExpr
-  present: (field: keyof F & string) => JsonExpr
-  absent: (field: keyof F & string) => JsonExpr
-  truthy: (field: keyof F & string) => JsonExpr
-  falsy: (field: keyof F & string) => JsonExpr
-  in: (field: keyof F & string, values: JsonPrimitive[]) => JsonExpr
-  notIn: (field: keyof F & string, values: JsonPrimitive[]) => JsonExpr
+> = ExprBuilder<F, C> & {
   check: (field: keyof F & string, validator: NamedCheck<unknown>) => JsonExpr
-  cond: (condition: keyof C & string) => JsonExpr
-  condEq: (condition: keyof C & string, value: JsonPrimitive) => JsonExpr
-  condIn: (condition: keyof C & string, values: JsonPrimitive[]) => JsonExpr
-  fieldInCond: (field: keyof F & string, condition: keyof C & string) => JsonExpr
-  and: (...exprs: JsonExpr[]) => JsonExpr
-  or: (...exprs: JsonExpr[]) => JsonExpr
-  not: (expr: JsonExpr) => JsonExpr
 }
 
 function cloneJson<T>(value: T): T {
@@ -130,64 +115,8 @@ function getRequiredJsonDef(
 }
 
 export const expr: JsonExprBuilder<Record<string, FieldDef>, Record<string, unknown>> = {
-  eq(field, value) {
-    return { op: 'eq', field, value }
-  },
-  neq(field, value) {
-    return { op: 'neq', field, value }
-  },
-  gt(field, value) {
-    return { op: 'gt', field, value }
-  },
-  gte(field, value) {
-    return { op: 'gte', field, value }
-  },
-  lt(field, value) {
-    return { op: 'lt', field, value }
-  },
-  lte(field, value) {
-    return { op: 'lte', field, value }
-  },
-  present(field) {
-    return { op: 'present', field }
-  },
-  absent(field) {
-    return { op: 'absent', field }
-  },
-  truthy(field) {
-    return { op: 'truthy', field }
-  },
-  falsy(field) {
-    return { op: 'falsy', field }
-  },
-  in(field, values) {
-    return { op: 'in', field, values: cloneJson(values) }
-  },
-  notIn(field, values) {
-    return { op: 'notIn', field, values: cloneJson(values) }
-  },
+  ...baseExpr,
   check: createPortableCheckExpr,
-  cond(condition) {
-    return { op: 'cond', condition }
-  },
-  condEq(condition, value) {
-    return { op: 'condEq', condition, value }
-  },
-  condIn(condition, values) {
-    return { op: 'condIn', condition, values: cloneJson(values) }
-  },
-  fieldInCond(field, condition) {
-    return { op: 'fieldInCond', field, condition }
-  },
-  and(...exprs) {
-    return { op: 'and', exprs: cloneJson(exprs) }
-  },
-  or(...exprs) {
-    return { op: 'or', exprs: cloneJson(exprs) }
-  },
-  not(expression) {
-    return { op: 'not', expr: cloneJson(expression) }
-  },
 }
 
 export function enabledWhenExpr<

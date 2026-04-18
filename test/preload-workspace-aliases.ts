@@ -18,6 +18,7 @@ if (process.env.BUN_DISABLE_WORKSPACE_MOCKS !== 'true') {
   )
   mock.module('@umpire/testing', () => require('../packages/testing/src/index.js'))
   mock.module('@umpire/zod', () => require('../packages/zod/src/index.js'))
+  mock.module('@umpire/dsl', () => require('../packages/dsl/src/index.js'))
   mock.module('@umpire/json', () => require('../packages/json/src/index.js'))
   mock.module('@umpire/devtools', () => require('../packages/devtools/src/index.js'))
   mock.module('@umpire/devtools/slim', () => require('../packages/devtools/src/slim.js'))

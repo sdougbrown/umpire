@@ -1,7 +1,7 @@
 {
-  "name": "@umpire/json",
+  "name": "@umpire/dsl",
   "version": "0.1.0-alpha.10",
-  "description": "JSON schema parsing and portable named checks for @umpire/core",
+  "description": "Pure expression DSL and compiler for @umpire",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -21,18 +21,16 @@
   },
   "files": [
     "dist",
-    "conformance",
     "AGENTS.md",
     ".claude"
   ],
   "dependencies": {
-    "@umpire/core": "workspace:^",
-    "@umpire/dsl": "workspace:^"
+    "@umpire/core": "workspace:^"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sdougbrown/umpire.git",
-    "directory": "packages/json"
+    "directory": "packages/dsl"
   },
   "publishConfig": {
     "access": "public"

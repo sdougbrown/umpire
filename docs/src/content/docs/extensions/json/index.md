@@ -117,7 +117,7 @@ The modern split is:
 - `expr.check()` for structural predicates that depend on another field passing a portable validator
 - top-level `"check"` only when you need to preserve older JSON schemas
 
-See [DSL & Portable Builders](/umpire/adapters/json/dsl/) for the full expression vocabulary.
+See [@umpire/dsl](/umpire/extensions/dsl/) for the full non-`check` expression vocabulary.
 
 ## Conditions
 
@@ -180,16 +180,17 @@ The portable toolkit is:
 
 - `namedValidators.*()` for field-local value constraints
 - top-level `validators` for portable field-local validation
-- `expr.*` for predicate expressions inside `enabledWhen`, `requires`, `disables`, and `fairWhen`
+- `expr.*` from `@umpire/dsl` for predicate expressions inside `enabledWhen`, `requires`, `disables`, and `fairWhen`
 - Portable builders (`requiresJson`, `enabledWhenExpr`, `disablesExpr`, `fairWhenExpr`) for constructing rules that carry their own JSON definition from birth
 
 Arbitrary functions, regexes, and library validators still work at runtime — they just won't serialize. `toJson()` records them in `excluded` and the next implementation has to recreate them natively.
 
-See [DSL & Portable Builders](/umpire/adapters/json/dsl/) for the full authoring vocabulary.
+See [@umpire/dsl](/umpire/extensions/dsl/) and [Builders & Checks](/umpire/extensions/json/builders/) for the full authoring vocabulary.
 
 ## See also
 
-- [DSL & Portable Builders](/umpire/adapters/json/dsl/) — `expr.*`, portable builders, round-trip guarantees, and conformance
+- [@umpire/dsl](/umpire/extensions/dsl/) — pure `Expr`, `expr.*`, `compileExpr`, and `getExprFieldRefs`
+- [Builders & Checks](/umpire/extensions/json/builders/) — JSON-only `expr.check()`, `namedValidators`, and portable builders
 - [Composing with Validation](/umpire/concepts/validation/) — where `check()` fits conceptually
 - [check() helper](/umpire/api/rules/check/) — validator shapes in core
 - [Config-Driven UI, With Behavior](/umpire/examples/config-driven-ui/) — live-edit a JSON schema and watch a generic renderer respond

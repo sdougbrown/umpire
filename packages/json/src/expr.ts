@@ -1,3 +1,8 @@
+import {
+  compileExpr as compileDslExpr,
+  getExprFieldRefs as getDslExprFieldRefs,
+  type Expr,
+} from '@umpire/dsl'
 import { getNamedCheckMetadata, type FieldDef, type FieldValues, type NamedCheckMetadata } from '@umpire/core'
 
 import { assertValidValidatorSpec, createNamedValidatorFromSpec } from './check-ops.js'
@@ -23,212 +28,123 @@ function assertField(field: string, op: string, fieldNames: Set<string>) {
   }
 }
 
-function getConditionDef(
-  condition: string,
-  op: string,
-  conditions: Record<string, JsonConditionDef> | undefined,
-): JsonConditionDef {
-  const definition = conditions?.[condition]
-
-  if (!definition) {
-    throw new Error(`[@umpire/json] Unknown condition "${condition}" in "${op}" expression`)
+export function getExprFieldRefs(expression: JsonExpr): string[] {
+  if (expression.op === 'check') {
+    return [expression.field]
   }
 
-  return definition
-}
-
-function getConditionValue<C extends Record<string, unknown>>(condition: string, conditions: C): unknown {
-  if (!(condition in conditions) || conditions[condition] === undefined) {
-    throw new Error(`[@umpire/json] Missing runtime condition "${condition}"`)
+  if (expression.op === 'and' || expression.op === 'or') {
+    return [...new Set(expression.exprs.flatMap((entry) => getExprFieldRefs(entry)))]
   }
 
-  return conditions[condition]
-}
-
-function collectFieldRefs(expr: JsonExpr): string[] {
-  switch (expr.op) {
-    case 'eq':
-    case 'neq':
-    case 'gt':
-    case 'gte':
-    case 'lt':
-    case 'lte':
-    case 'present':
-    case 'absent':
-    case 'truthy':
-    case 'falsy':
-    case 'in':
-    case 'notIn':
-    case 'check':
-      return [expr.field]
-    case 'fieldInCond':
-      return [expr.field]
-    case 'and':
-    case 'or':
-      return expr.exprs.flatMap(collectFieldRefs)
-    case 'not':
-      return collectFieldRefs(expr.expr)
-    case 'cond':
-    case 'condEq':
-    case 'condIn':
-      return []
-    default:
-      return []
+  if (expression.op === 'not') {
+    return getExprFieldRefs(expression.expr)
   }
+
+  return getDslExprFieldRefs(expression)
 }
 
-export function getExprFieldRefs(expr: JsonExpr): string[] {
-  return [...new Set(collectFieldRefs(expr))]
+type CompiledNode<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+> = {
+  predicate: ExprPredicate<F, C>
+  fieldRefs: Set<string>
 }
 
-function compileInner<
+function compileCheckExpr<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
 >(
-  expr: JsonExpr,
+  expression: Extract<JsonExpr, { op: 'check' }>,
   options: CompileExprOptions,
-): (values: FieldValues<F>, conditions: C) => boolean {
-  switch (expr.op) {
-    case 'eq':
-      assertField(expr.field, expr.op, options.fieldNames)
-      return (values) => values[expr.field as keyof F & string] === expr.value
-    case 'neq':
-      assertField(expr.field, expr.op, options.fieldNames)
-      return (values) => values[expr.field as keyof F & string] !== expr.value
-    case 'gt':
-      assertField(expr.field, expr.op, options.fieldNames)
-      return (values) =>
-        typeof values[expr.field as keyof F & string] === 'number' &&
-        (values[expr.field as keyof F & string] as number) > expr.value
-    case 'gte':
-      assertField(expr.field, expr.op, options.fieldNames)
-      return (values) =>
-        typeof values[expr.field as keyof F & string] === 'number' &&
-        (values[expr.field as keyof F & string] as number) >= expr.value
-    case 'lt':
-      assertField(expr.field, expr.op, options.fieldNames)
-      return (values) =>
-        typeof values[expr.field as keyof F & string] === 'number' &&
-        (values[expr.field as keyof F & string] as number) < expr.value
-    case 'lte':
-      assertField(expr.field, expr.op, options.fieldNames)
-      return (values) =>
-        typeof values[expr.field as keyof F & string] === 'number' &&
-        (values[expr.field as keyof F & string] as number) <= expr.value
-    case 'present':
-      assertField(expr.field, expr.op, options.fieldNames)
-      return (values) => {
-        const value = values[expr.field as keyof F & string]
-        return value !== null && value !== undefined
-      }
-    case 'absent':
-      assertField(expr.field, expr.op, options.fieldNames)
-      return (values) => {
-        const value = values[expr.field as keyof F & string]
-        return value === null || value === undefined
-      }
-    case 'truthy':
-      assertField(expr.field, expr.op, options.fieldNames)
-      return (values) => Boolean(values[expr.field as keyof F & string])
-    case 'falsy':
-      assertField(expr.field, expr.op, options.fieldNames)
-      return (values) => !values[expr.field as keyof F & string]
-    case 'in':
-      assertField(expr.field, expr.op, options.fieldNames)
-      return (values) => expr.values.includes(values[expr.field as keyof F & string] as never)
-    case 'notIn':
-      assertField(expr.field, expr.op, options.fieldNames)
-      return (values) => !expr.values.includes(values[expr.field as keyof F & string] as never)
-    case 'check': {
-      assertField(expr.field, expr.op, options.fieldNames)
-      assertValidValidatorSpec(expr.check)
-      const validator = createNamedValidatorFromSpec(expr.check)
+): ExprPredicate<F, C> {
+  assertField(expression.field, expression.op, options.fieldNames)
+  assertValidValidatorSpec(expression.check)
 
-      return (values) => {
-        const value = values[expr.field as keyof F & string]
+  const validator = createNamedValidatorFromSpec(expression.check)
 
-        return value != null && validator.validate(value as never)
-      }
-    }
-    case 'cond':
-      if (!options.allowUndeclaredConditions) {
-        getConditionDef(expr.condition, expr.op, options.conditions)
-      }
-      return (_values, conditions) => Boolean(getConditionValue(expr.condition, conditions))
-    case 'condEq':
-      if (!options.allowUndeclaredConditions) {
-        getConditionDef(expr.condition, expr.op, options.conditions)
-      }
-      return (_values, conditions) => getConditionValue(expr.condition, conditions) === expr.value
-    case 'condIn':
-      if (!options.allowUndeclaredConditions) {
-        getConditionDef(expr.condition, expr.op, options.conditions)
-      }
-      return (_values, conditions) =>
-        expr.values.includes(getConditionValue(expr.condition, conditions) as never)
-    case 'fieldInCond': {
-      assertField(expr.field, expr.op, options.fieldNames)
-      if (!options.allowUndeclaredConditions) {
-        const conditionDef = getConditionDef(expr.condition, expr.op, options.conditions)
+  const predicate = ((values) => {
+    const value = values[expression.field as keyof F & string]
 
-        if (conditionDef.type !== 'string[]' && conditionDef.type !== 'number[]') {
-          throw new Error(
-            `[@umpire/json] "fieldInCond" requires an array condition, but "${expr.condition}" is "${conditionDef.type}"`,
-          )
-        }
-      }
+    return value != null && validator.validate(value as never)
+  }) as ExprPredicate<F, C>
 
-      return (values, conditions) => {
-        const conditionValue = getConditionValue(expr.condition, conditions)
-        if (!Array.isArray(conditionValue)) {
-          throw new Error(
-            `[@umpire/json] Runtime condition "${expr.condition}" must be an array for "fieldInCond"`,
-          )
-        }
+  predicate._checkField = expression.field as keyof F & string
+  predicate._namedCheck = getNamedCheckMetadata(validator)
 
-        return conditionValue.includes(values[expr.field as keyof F & string] as never)
-      }
-    }
-    case 'and': {
-      if (!Array.isArray(expr.exprs)) {
-        throw new Error('[@umpire/json] "and" expression requires an exprs array')
-      }
-      const predicates = expr.exprs.map((entry) => compileInner<F, C>(entry, options))
-      return (values, conditions) => predicates.every((predicate) => predicate(values, conditions))
-    }
-    case 'or': {
-      if (!Array.isArray(expr.exprs)) {
-        throw new Error('[@umpire/json] "or" expression requires an exprs array')
-      }
-      const predicates = expr.exprs.map((entry) => compileInner<F, C>(entry, options))
-      return (values, conditions) => predicates.some((predicate) => predicate(values, conditions))
-    }
-    case 'not': {
-      const predicate = compileInner<F, C>(expr.expr, options)
-      return (values, conditions) => !predicate(values, conditions)
-    }
-    default:
-      throw new Error(`[@umpire/json] Unknown expression op "${String((expr as { op?: unknown }).op)}"`)
-  }
+  return predicate
 }
 
 export function compileExpr<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
 >(
-  expr: JsonExpr,
+  expression: JsonExpr,
   options: CompileExprOptions,
 ): ExprPredicate<F, C> {
-  const predicate = compileInner<F, C>(expr, options) as ExprPredicate<F, C>
-  const fieldRefs = getExprFieldRefs(expr)
+  const compiled = compileInner<F, C>(expression, options)
 
-  if (fieldRefs.length === 1) {
-    predicate._checkField = fieldRefs[0] as keyof F & string
+  if (compiled.fieldRefs.size === 1) {
+    compiled.predicate._checkField = [...compiled.fieldRefs][0] as keyof F & string
   }
 
-  if (expr.op === 'check') {
-    predicate._namedCheck = getNamedCheckMetadata(createNamedValidatorFromSpec(expr.check))
+  return compiled.predicate
+}
+
+function compileInner<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(
+  expression: JsonExpr,
+  options: CompileExprOptions,
+): CompiledNode<F, C> {
+  if (expression.op === 'check') {
+    return {
+      predicate: compileCheckExpr<F, C>(expression, options),
+      fieldRefs: new Set([expression.field]),
+    }
   }
 
-  return predicate
+  if (expression.op === 'and') {
+    if (!Array.isArray(expression.exprs)) {
+      throw new Error('[@umpire/json] "and" expression requires an exprs array')
+    }
+
+    const compiledEntries = expression.exprs.map((entry) => compileInner<F, C>(entry, options))
+    const predicates = compiledEntries.map((entry) => entry.predicate)
+    return {
+      predicate: (((values: FieldValues<F>, conditions: C) =>
+        predicates.every((entry) => entry(values, conditions))) as ExprPredicate<F, C>),
+      fieldRefs: new Set(compiledEntries.flatMap((entry) => [...entry.fieldRefs])),
+    }
+  }
+
+  if (expression.op === 'or') {
+    if (!Array.isArray(expression.exprs)) {
+      throw new Error('[@umpire/json] "or" expression requires an exprs array')
+    }
+
+    const compiledEntries = expression.exprs.map((entry) => compileInner<F, C>(entry, options))
+    const predicates = compiledEntries.map((entry) => entry.predicate)
+    return {
+      predicate: (((values: FieldValues<F>, conditions: C) =>
+        predicates.some((entry) => entry(values, conditions))) as ExprPredicate<F, C>),
+      fieldRefs: new Set(compiledEntries.flatMap((entry) => [...entry.fieldRefs])),
+    }
+  }
+
+  if (expression.op === 'not') {
+    const inner = compileInner<F, C>(expression.expr, options)
+    return {
+      predicate: (((values: FieldValues<F>, conditions: C) =>
+        !inner.predicate(values, conditions)) as ExprPredicate<F, C>),
+      fieldRefs: inner.fieldRefs,
+    }
+  }
+
+  return {
+    predicate: compileDslExpr<F, C>(expression as Expr, options),
+    fieldRefs: new Set(getDslExprFieldRefs(expression as Expr)),
+  }
 }

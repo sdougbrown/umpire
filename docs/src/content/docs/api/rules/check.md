@@ -34,7 +34,7 @@ This means `check('email', validator)` is doing two jobs at once: it reads from 
 ## Supported validators
 
 - `(value: unknown) => boolean` — plain function
-- `checks.email()` and other named checks from `@umpire/json`
+- `namedValidators.email()` and other named validators from `@umpire/json`
 - `{ safeParse(value): { success: boolean } }` — Zod schemas
 - `{ test(value): boolean }` — RegExp and similar
 
@@ -49,20 +49,20 @@ For `enabledWhen()`, that field relationship is informational: it appears in the
 If you want a `check()` predicate to survive `toJson()` / `fromJson()`, use a named check from `@umpire/json`:
 
 ```ts
-import { checks } from '@umpire/json'
+import { namedValidators } from '@umpire/json'
 
-enabledWhen('submit', check('email', checks.email()), {
+enabledWhen('submit', check('email', namedValidators.email()), {
   reason: 'Enter a valid email address',
 })
 ```
 
 Plain functions, regexes, and library schemas run fine at runtime — they just can't serialize. `toJson()` places them in `excluded`. Named checks carry stable metadata so the JSON contract can reconstruct them exactly.
 
-In `@umpire/json`, this same pattern maps to either a top-level `"check"` rule or an `expr.check()` expression depending on context. See [`@umpire/json`](/umpire/adapters/json/) for how the two portable forms work.
+In `@umpire/json`, this same pattern maps to either a top-level `"check"` rule or an `expr.check()` expression depending on context. See [`@umpire/json`](/umpire/extensions/json/) for how the two portable forms work.
 
 ## See also
 
 - [ump.check()](/umpire/api/check/) — the evaluation method (different function, same concept)
 - [Quick Start: check](/umpire/learn/#check) — interactive demo
 - [Composing with Validation](/umpire/concepts/validation/) — patterns for using Umpire alongside Zod, Yup, etc.
-- [`@umpire/json`](/umpire/adapters/json/) — portable schemas, named checks, and `excluded`
+- [`@umpire/json`](/umpire/extensions/json/) — portable schemas, named checks, and `excluded`
