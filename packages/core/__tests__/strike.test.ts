@@ -33,4 +33,17 @@ describe('strike', () => {
     })
     expect(next).not.toBe(values)
   })
+
+  test('returns the same object when all suggestions are already applied', () => {
+    const values = {
+      plan: 'personal',
+      companyName: undefined,
+    }
+
+    const next = strike(values, [
+      { field: 'companyName', reason: 'business plan required', suggestedValue: undefined },
+    ])
+
+    expect(next).toBe(values)
+  })
 })
