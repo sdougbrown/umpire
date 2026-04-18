@@ -67,6 +67,8 @@ Conditions are external values provided by the host runtime — account tier, fe
 `fieldInCond` requires an array condition at compile time — the `type` must be `'string[]'` or `'number[]'`. At runtime it throws if the condition value is not an array.
 
 ```ts
+import { expr, compileExpr } from '@umpire/dsl'
+
 // A plan-gated feature: the selected plan must be in the set the server says are eligible
 const when = expr.fieldInCond('plan', 'eligiblePlans')
 
@@ -177,5 +179,5 @@ The typed builder is most useful when authoring rules in a factory function wher
 
 ## See also
 
-- [`@umpire/json` builders & checks](/umpire/adapters/json/builders/) — `expr.check()`, `namedValidators`, and portable rule builders
-- [`@umpire/json` overview](/umpire/adapters/json/) — JSON schema contract, `fromJson`, `toJson`
+- [`@umpire/json` builders & checks](/umpire/extensions/json/builders/) — `expr.check()`, `namedValidators`, and portable rule builders
+- [`@umpire/json` overview](/umpire/extensions/json/) — JSON schema contract, `fromJson`, `toJson`

@@ -185,12 +185,12 @@ The portable toolkit is:
 
 Arbitrary functions, regexes, and library validators still work at runtime — they just won't serialize. `toJson()` records them in `excluded` and the next implementation has to recreate them natively.
 
-See [@umpire/dsl](/umpire/extensions/dsl/) and [Builders & Checks](/umpire/adapters/json/builders/) for the full authoring vocabulary.
+See [@umpire/dsl](/umpire/extensions/dsl/) and [Builders & Checks](/umpire/extensions/json/builders/) for the full authoring vocabulary.
 
 ## See also
 
 - [@umpire/dsl](/umpire/extensions/dsl/) — pure `Expr`, `expr.*`, `compileExpr`, and `getExprFieldRefs`
-- [Builders & Checks](/umpire/adapters/json/builders/) — JSON-only `expr.check()`, `namedValidators`, and portable builders
+- [Builders & Checks](/umpire/extensions/json/builders/) — JSON-only `expr.check()`, `namedValidators`, and portable builders
 - [Composing with Validation](/umpire/concepts/validation/) — where `check()` fits conceptually
 - [check() helper](/umpire/api/rules/check/) — validator shapes in core
 - [Config-Driven UI, With Behavior](/umpire/examples/config-driven-ui/) — live-edit a JSON schema and watch a generic renderer respond

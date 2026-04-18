@@ -144,4 +144,4 @@ These are all form-framework concerns. Umpire's job ends at "is this field avail
 - [`@umpire/zod`](/umpire/adapters/validation/zod/) — first-class Zod integration with `deriveSchema` and `deriveErrors`
 - [Satisfaction semantics](/umpire/concepts/satisfaction/) — how Umpire defines "present"
 - [`check()` in the rules API](/umpire/api/rules/check/) — full signature and validator shapes
-- [`@umpire/json`](/umpire/adapters/json/) — portable schemas, named checks, and `excluded`
+- [`@umpire/json`](/umpire/extensions/json/) — portable schemas, named checks, and `excluded`

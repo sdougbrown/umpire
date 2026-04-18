@@ -12,7 +12,7 @@ Everything here is imported from `@umpire/json` only. You do not need `@umpire/d
 `@umpire/json` exports its own `expr` builder that is a strict superset of the one in `@umpire/dsl`. All the same field comparison, logical combinator, and condition ops are available, plus one addition: `expr.check()`.
 
 ```ts
-import { expr } from '@umpire/json'
+import { expr, namedValidators } from '@umpire/json'
 
 // All dsl ops work exactly the same
 const when = expr.and(
@@ -260,5 +260,5 @@ eitherOfJson('delivery', {
 
 ## See also
 
-- [`@umpire/json` overview](/umpire/adapters/json/) — `fromJson`, `toJson`, conditions, and portability
+- [`@umpire/json` overview](/umpire/extensions/json/) — `fromJson`, `toJson`, conditions, and portability
 - [`@umpire/dsl`](/umpire/extensions/dsl/) — the pure expression layer for programmatic-only rules
