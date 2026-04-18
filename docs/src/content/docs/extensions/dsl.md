@@ -5,7 +5,7 @@ description: Pure expression types, builders, and compiler for programmatic rule
 
 When you write Umpire rules entirely in TypeScript — no JSON schemas, no round-tripping across runtimes — `@umpire/dsl` is the only expression package you need. It owns the `Expr` type, the `expr` builder, and the compiler that turns expressions into runtime predicates.
 
-If your rules need to survive a JSON boundary, stop here and use `@umpire/json` instead. Its `expr`, `compileExpr`, and `getExprFieldRefs` are supersets — everything on this page is available through that package, plus `expr.check()` and the portable builders. No consumer should need both.
+If your rules need to survive a JSON boundary, `@umpire/json` re-exports everything here as a superset — same `expr`, `compileExpr`, and `getExprFieldRefs`, plus `expr.check()` and the portable builders. This page is the reference for all of it; just import from `@umpire/json` instead.
 
 ## Install
 
