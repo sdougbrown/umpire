@@ -107,8 +107,8 @@ export default defineConfig({
             { label: 'Testing', slug: 'extensions/testing' },
             { label: 'ESLint Plugin', slug: 'extensions/eslint-plugin' },
             { label: 'JSON', collapsed: true, items: [
-              { label: 'Overview', slug: 'adapters/json' },
-              { label: 'Builders & Checks', slug: 'adapters/json/builders' },
+              { label: 'Overview', slug: 'extensions/json' },
+              { label: 'Builders & Checks', slug: 'extensions/json/builders' },
             ] },
           ],
         },
