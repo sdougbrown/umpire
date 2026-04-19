@@ -736,6 +736,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@preact/signals-core@npm:^1.12.1":
+  version: 1.14.1
+  resolution: "@preact/signals-core@npm:1.14.1"
+  checksum: 10c0/bf33583f836c5aeb6ac81e7b30a2bcce26be747d02b92be4c0dcd448f0a30034b7b7768c6e8c5487980280a0590fa386acd72798f52d5d9004dd20e0c8cf94ef
+  languageName: node
+  linkType: hard
+
 "@quansync/fs@npm:^1.0.0":
   version: 1.0.0
   resolution: "@quansync/fs@npm:1.0.0"
@@ -1239,6 +1246,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@umpire/signals@workspace:packages/signals"
   dependencies:
+    "@preact/signals-core": "npm:^1.12.1"
     "@umpire/core": "workspace:^"
   peerDependencies:
     "@preact/signals-core": ^1.0.0

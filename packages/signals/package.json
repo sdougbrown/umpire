@@ -80,5 +80,8 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "@preact/signals-core": "^1.12.1"
   }
 }
