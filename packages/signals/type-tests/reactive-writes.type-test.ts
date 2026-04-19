@@ -1,4 +1,4 @@
-import { umpire } from '@umpire/core'
+import { enabledWhen, umpire } from '@umpire/core'
 import type { SignalProtocol } from '../src/protocol.js'
 import { reactiveUmp } from '../src/reactive.js'
 
@@ -31,6 +31,49 @@ const form = reactiveUmp(umpire({
   },
   rules: [],
 }), adapter)
+
+const conditionedUmp = umpire<
+  {
+    count: { default: number }
+    label: { default: string }
+    enabled: { default: boolean }
+  },
+  { plan: 'free' | 'pro'; stage: number }
+>({
+  fields: {
+    count: { default: 0 },
+    label: { default: '' },
+    enabled: { default: true },
+  },
+  rules: [
+    enabledWhen('enabled', (_values, conditions) => conditions.plan === 'pro' && conditions.stage > 0),
+  ],
+})
+
+const optionsForm = reactiveUmp(
+  conditionedUmp,
+  adapter,
+  {
+    signals: {
+      count: {
+        get: () => 1,
+        set: (_next) => {},
+      },
+      label: {
+        get: () => 'label',
+        // @ts-expect-error label signal set must accept string
+        set: (_next: number) => {},
+      },
+    },
+    conditions: {
+      plan: { get: () => 'free' },
+      // @ts-expect-error stage condition must return number
+      stage: { get: () => '1' },
+    },
+  },
+)
+
+void optionsForm
 
 form.set('count', 1)
 form.set('label', 'hello')

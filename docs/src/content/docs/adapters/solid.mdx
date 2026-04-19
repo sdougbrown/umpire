@@ -22,6 +22,7 @@ Use `useUmpire()` when your component already owns the values and just wants der
 
 ```ts
 import type { Accessor } from 'solid-js'
+import type { AvailabilityMap, FieldDef, Foul, InputValues, Umpire } from '@umpire/core'
 import { useUmpire } from '@umpire/solid'
 
 function useUmpire<
@@ -29,7 +30,7 @@ function useUmpire<
   C extends Record<string, unknown>,
 >(
   ump: Umpire<F, C>,
-  values: Accessor<InputValues<F>>,
+  values: Accessor<InputValues>,
   conditions?: Accessor<C>,
 ): {
   check: Accessor<AvailabilityMap<F>>
@@ -125,6 +126,7 @@ Use `fromSolidStore()` when the form lives in shared Solid state and child compo
 
 ```ts
 import type { Accessor } from 'solid-js'
+import type { FieldDef, FieldValues, Umpire } from '@umpire/core'
 import { fromSolidStore } from '@umpire/solid'
 
 function fromSolidStore<
@@ -133,8 +135,8 @@ function fromSolidStore<
 >(
   ump: Umpire<F, C>,
   options: {
-    values: InputValues<F>
-    set(name: keyof F & string, value: unknown): void
+    values: FieldValues<F>
+    set<K extends keyof F & string>(name: K, value: FieldValues<F>[K]): void
     conditions?: Partial<{ [K in keyof C & string]: Accessor<C[K]> }>
   },
 ): SolidStoreUmpire<F>
@@ -164,7 +166,7 @@ type EventFields = typeof eventUmp extends Umpire<infer F, any> ? F : never
 
 const EventFormContext = createContext<{
   values: { allDay: boolean; startTime: string; endTime: string }
-  set(name: keyof EventFields & string, value: unknown): void
+  set: SolidStoreUmpire<EventFields>['set']
   form: SolidStoreUmpire<EventFields>
 }>()
 
@@ -175,13 +177,17 @@ function EventFormProvider(props: { children: JSX.Element }) {
     endTime: '10:00',
   })
 
+  function setEventValue<K extends keyof typeof values>(name: K, value: (typeof values)[K]) {
+    setValues(name, value)
+  }
+
   const form = fromSolidStore(eventUmp, {
     values,
-    set: (name, value) => setValues(name, value as never),
+    set: setEventValue,
   })
 
   return (
-    <EventFormContext.Provider value={{ values, set: (name, value) => setValues(name, value as never), form }}>
+    <EventFormContext.Provider value={{ values, set: setEventValue, form }}>
       {props.children}
     </EventFormContext.Provider>
   )

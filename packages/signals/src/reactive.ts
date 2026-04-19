@@ -22,6 +22,19 @@ type ReactiveValues<F extends Record<string, FieldDef>> = {
   [K in keyof F & string]: FieldValues<F>[K]
 }
 
+type ReactiveSignal<T> = {
+  get(): T
+  set(value: T): void
+}
+
+type ReactiveFieldSignals<F extends Record<string, FieldDef>> = Partial<{
+  [K in keyof F & string]: ReactiveSignal<FieldValues<F>[K]>
+}>
+
+type ReactiveConditionSignals<C extends Record<string, unknown>> = Partial<{
+  [K in keyof C & string]: { get(): C[K] }
+}>
+
 export interface ReactiveUmpire<F extends Record<string, FieldDef>> {
   field(name: keyof F & string): ReactiveField
   foul(name: keyof F & string): Foul<F> | undefined
@@ -32,11 +45,12 @@ export interface ReactiveUmpire<F extends Record<string, FieldDef>> {
   dispose(): void
 }
 
-export type ReactiveUmpOptions<F extends Record<string, FieldDef>> = {
-  signals?: Partial<
-    Record<keyof F & string, { get(): unknown; set(value: unknown): void }>
-  >
-  conditions?: Record<string, { get(): unknown }>
+export type ReactiveUmpOptions<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown> = Record<string, unknown>,
+> = {
+  signals?: ReactiveFieldSignals<F>
+  conditions?: ReactiveConditionSignals<C>
 }
 
 // ---------------------------------------------------------------------------
@@ -49,14 +63,14 @@ export function reactiveUmp<
 >(
   ump: Umpire<F, C>,
   adapter: SignalProtocol,
-  options?: ReactiveUmpOptions<F>,
+  options?: ReactiveUmpOptions<F, C>,
 ): ReactiveUmpire<F> {
   const fieldNames = ump.graph().nodes as Array<keyof F & string>
 
   // --- 1. One writable signal per field ---
   const fieldSignals = new Map<
-    string,
-    { get(): unknown; set(value: unknown): void }
+    keyof F & string,
+    ReactiveSignal<FieldValues<F>[keyof F & string]>
   >()
 
   const initValues = ump.init()
@@ -64,14 +78,17 @@ export function reactiveUmp<
   for (const name of fieldNames) {
     const external = options?.signals?.[name]
     if (external) {
-      fieldSignals.set(name, external)
+      fieldSignals.set(name, external as ReactiveSignal<FieldValues<F>[typeof name]>)
     } else {
-      fieldSignals.set(name, adapter.signal(initValues[name]))
+      fieldSignals.set(
+        name,
+        adapter.signal(initValues[name]) as ReactiveSignal<FieldValues<F>[typeof name]>,
+      )
     }
   }
 
   // --- 2. Conditions signals ---
-  const conditionSignals = options?.conditions ?? {}
+  const conditionSignals: ReactiveConditionSignals<C> = options?.conditions ?? {}
 
   // --- 3. Lazy proxy for fine-grained predicate tracking ---
   function createValuesProxy(): InputValues {
@@ -99,7 +116,7 @@ export function reactiveUmp<
     return new Proxy({} as C, {
       get(_target, prop) {
         if (typeof prop !== 'string') return undefined
-        const sig = conditionSignals[prop]
+        const sig = conditionSignals[prop as keyof C & string]
         return sig ? sig.get() : undefined
       },
       has(_target, prop) {
@@ -189,7 +206,10 @@ export function reactiveUmp<
 
     function readSnapshotConditions() {
       return snapshotValue(Object.fromEntries(
-        Object.keys(conditionSignals).map((name) => [name, conditionSignals[name].get()]),
+        Object.keys(conditionSignals).map((name) => [
+          name,
+          conditionSignals[name as keyof C & string]!.get(),
+        ]),
       ) as C)
     }
 
@@ -288,7 +308,7 @@ export function reactiveUmp<
     update(partial: FieldValues<F>) {
       const fn = () => {
         for (const [name, value] of Object.entries(partial)) {
-          const sig = fieldSignals.get(name)
+          const sig = fieldSignals.get(name as keyof F & string)
           if (sig) sig.set(value)
         }
       }
