@@ -13,9 +13,26 @@ It defines what can be expressed in a language-neutral schema, serializes TypeSc
 yarn add @umpire/core @umpire/json
 ```
 
+## Safe parsing from unknown JSON
+
+Use `fromJsonSafe(raw)` when your schema comes from user input, local storage, or any other untrusted source. It never throws — you get either hydrated config or errors:
+
+```ts
+import { fromJsonSafe } from '@umpire/json'
+
+const result = fromJsonSafe(raw)
+
+if (!result.ok) {
+  console.error(result.errors)
+  return
+}
+
+const { schema, fields, rules, validators } = result
+```
+
 ## `fromJson(schema)`
 
-`fromJson()` parses a portable schema and returns `{ fields, rules, validators }` you can pass straight into `umpire()`:
+`fromJson()` parses a trusted `UmpireJsonSchema` and returns `{ fields, rules, validators }` you can pass straight into `umpire()`:
 
 ```ts
 import { umpire } from '@umpire/core'
