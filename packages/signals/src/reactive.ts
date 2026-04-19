@@ -1,6 +1,7 @@
 import type {
   AvailabilityMap,
   FieldDef,
+  FieldValues,
   InputValues,
   FieldStatus,
   Foul,
@@ -17,12 +18,16 @@ export type ReactiveField = {
   readonly [K in keyof FieldStatus]: FieldStatus[K]
 }
 
+type ReactiveValues<F extends Record<string, FieldDef>> = {
+  [K in keyof F & string]: FieldValues<F>[K]
+}
+
 export interface ReactiveUmpire<F extends Record<string, FieldDef>> {
   field(name: keyof F & string): ReactiveField
   foul(name: keyof F & string): Foul<F> | undefined
-  set(name: keyof F & string, value: unknown): void
-  update(partial: Partial<Record<keyof F & string, unknown>>): void
-  readonly values: Record<keyof F & string, unknown>
+  set<K extends keyof F & string>(name: K, value: FieldValues<F>[K]): void
+  update(partial: FieldValues<F>): void
+  readonly values: ReactiveValues<F>
   readonly fouls: Foul<F>[]
   dispose(): void
 }
@@ -147,11 +152,11 @@ export function reactiveUmp<
   }
 
   // --- 5. Aggregate values computed ---
-  const valuesComputed = adapter.computed<Record<keyof F & string, unknown>>(
+  const valuesComputed = adapter.computed<ReactiveValues<F>>(
     () => {
-      const result = {} as Record<keyof F & string, unknown>
+      const result = {} as ReactiveValues<F>
       for (const name of fieldNames) {
-        result[name] = fieldSignals.get(name)!.get()
+        result[name] = fieldSignals.get(name)!.get() as ReactiveValues<F>[typeof name]
       }
       return result
     },
@@ -274,13 +279,13 @@ export function reactiveUmp<
       return cached
     },
 
-    set(name: keyof F & string, value: unknown) {
+    set<K extends keyof F & string>(name: K, value: FieldValues<F>[K]) {
       const sig = fieldSignals.get(name)
       if (!sig) throw new Error(`[@umpire/signals] Unknown field "${name}"`)
       sig.set(value)
     },
 
-    update(partial: Partial<Record<keyof F & string, unknown>>) {
+    update(partial: FieldValues<F>) {
       const fn = () => {
         for (const [name, value] of Object.entries(partial)) {
           const sig = fieldSignals.get(name)

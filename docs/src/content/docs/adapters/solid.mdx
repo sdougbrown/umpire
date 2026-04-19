@@ -75,9 +75,16 @@ function SignupForm(props: { plan: Accessor<SignupConditions['plan']> }) {
     () => ({ plan: props.plan() }),
   )
 
+  function applyFoul<K extends keyof typeof values>(
+    field: K,
+    value: (typeof values)[K],
+  ) {
+    setValues(field, value)
+  }
+
   function applyResets() {
     for (const foul of fouls()) {
-      setValues(foul.field, foul.suggestedValue as never)
+      applyFoul(foul.field, foul.suggestedValue)
     }
   }
 

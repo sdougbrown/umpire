@@ -719,10 +719,16 @@ function normalizeVisibleSelectValue(
   return options[0]?.value ?? ''
 }
 
+function isPrinterType(value: unknown): value is PrinterType {
+  return printers.some((printer) => printer === value)
+}
+
 function coerceSuggestedValue(field: PrintField, suggestedValue: unknown) {
   switch (field) {
     case 'printer':
-      return (suggestedValue as PrinterType | undefined) ?? initialState.printer
+      return isPrinterType(suggestedValue)
+        ? suggestedValue
+        : initialState.printer
     case 'duplex':
     case 'fitToPage':
     case 'bannerMode':

@@ -993,7 +993,9 @@ export function umpire<
       }
 
       const currentValue = after.values[field]
-      const suggestedValue = fields[field].default
+      const suggestedValue = fields[field].default as
+        | FieldValues<NormalizeFields<FInput>>[typeof field]
+        | undefined
 
       if (!afterStatus.satisfied) {
         continue
