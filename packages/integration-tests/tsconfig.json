@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["bun-types"],
+    "paths": {
+      "@umpire/core": ["../core/src/index.ts"],
+      "@umpire/core/*": ["../core/src/*"],
+      "@umpire/devtools": ["../devtools/src/index.ts"],
+      "@umpire/devtools/react": ["../devtools/entrypoints/react.ts"],
+      "@umpire/devtools/slim": ["../devtools/src/slim.ts"],
+      "@umpire/devtools/*": ["../devtools/src/*"],
+      "@umpire/json": ["../json/src/index.ts"],
+      "@umpire/json/*": ["../json/src/*"],
+      "@umpire/react": ["../react/src/index.ts"],
+      "@umpire/react/*": ["../react/src/*"],
+      "@umpire/reads": ["../reads/src/index.ts"],
+      "@umpire/reads/*": ["../reads/src/*"],
+      "@umpire/zod": ["../zod/src/index.ts"],
+      "@umpire/zod/*": ["../zod/src/*"]
+    }
+  },
+  "include": ["__tests__", "happydom.ts"]
+}
