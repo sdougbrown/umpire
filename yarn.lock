@@ -1251,6 +1251,10 @@ __metadata:
   dependencies:
     "@preact/signals-core": "npm:^1.12.1"
     "@umpire/core": "workspace:^"
+    alien-signals: "npm:^3.0.0"
+    signal-polyfill: "npm:^0.2.0"
+    solid-js: "npm:^1.0.0"
+    vue: "npm:^3.0.0"
   peerDependencies:
     "@preact/signals-core": ^1.0.0
     alien-signals: ^3.0.0
@@ -1515,6 +1519,13 @@ __metadata:
     json-schema-traverse: "npm:^0.4.1"
     uri-js: "npm:^4.2.2"
   checksum: 10c0/a2bc39b0555dc9802c899f86990eb8eed6e366cddbf65be43d5aa7e4f3c4e1a199d5460fd7ca4fb3d864000dbbc049253b72faa83b3b30e641ca52cb29a68c22
+  languageName: node
+  linkType: hard
+
+"alien-signals@npm:^3.0.0":
+  version: 3.1.2
+  resolution: "alien-signals@npm:3.1.2"
+  checksum: 10c0/9d1641c1ba55de957411258c741b0245c69ea540107436d63a38a6cf0da873ff2a74017d7b05fa669b1787be012c2db8c2c79ff7b8c47289a92a6a8850ab303d
   languageName: node
   linkType: hard
 
@@ -3774,6 +3785,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"signal-polyfill@npm:^0.2.0":
+  version: 0.2.2
+  resolution: "signal-polyfill@npm:0.2.2"
+  checksum: 10c0/485b0e66d93961454af32e7fbff88130138dffcbf7bce35e5c873d760ceb9ce33a125dd63cc59454c739c43246980515b1162cbe0ebc975a974ee036fb58d18a
+  languageName: node
+  linkType: hard
+
 "slash@npm:^3.0.0":
   version: 3.0.0
   resolution: "slash@npm:3.0.0"
@@ -4115,7 +4133,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue@npm:^3.5.32":
+"vue@npm:^3.0.0, vue@npm:^3.5.32":
   version: 3.5.32
   resolution: "vue@npm:3.5.32"
   dependencies:
