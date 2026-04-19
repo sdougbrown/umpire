@@ -11,9 +11,7 @@ export function strike<F extends Record<string, FieldDef>>(
   let next: FieldValues<F> | undefined
 
   for (const foul of fouls) {
-    const suggestedValue = foul.suggestedValue as FieldValues<F>[keyof F & string]
-
-    if (Object.is(values[foul.field], suggestedValue)) {
+    if (Object.is(values[foul.field], foul.suggestedValue)) {
       continue
     }
 
@@ -21,7 +19,7 @@ export function strike<F extends Record<string, FieldDef>>(
       next = { ...values }
     }
 
-    next[foul.field] = suggestedValue
+    next[foul.field] = foul.suggestedValue
   }
 
   return next ?? values

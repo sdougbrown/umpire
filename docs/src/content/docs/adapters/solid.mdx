@@ -22,6 +22,7 @@ Use `useUmpire()` when your component already owns the values and just wants der
 
 ```ts
 import type { Accessor } from 'solid-js'
+import type { AvailabilityMap, FieldDef, Foul, InputValues, Umpire } from '@umpire/core'
 import { useUmpire } from '@umpire/solid'
 
 function useUmpire<
@@ -29,7 +30,7 @@ function useUmpire<
   C extends Record<string, unknown>,
 >(
   ump: Umpire<F, C>,
-  values: Accessor<InputValues<F>>,
+  values: Accessor<InputValues>,
   conditions?: Accessor<C>,
 ): {
   check: Accessor<AvailabilityMap<F>>
@@ -75,9 +76,16 @@ function SignupForm(props: { plan: Accessor<SignupConditions['plan']> }) {
     () => ({ plan: props.plan() }),
   )
 
+  function applyFoul<K extends keyof typeof values>(
+    field: K,
+    value: (typeof values)[K],
+  ) {
+    setValues(field, value)
+  }
+
   function applyResets() {
     for (const foul of fouls()) {
-      setValues(foul.field, foul.suggestedValue as never)
+      applyFoul(foul.field, foul.suggestedValue)
     }
   }
 
@@ -118,6 +126,7 @@ Use `fromSolidStore()` when the form lives in shared Solid state and child compo
 
 ```ts
 import type { Accessor } from 'solid-js'
+import type { FieldDef, FieldValues, FieldsOf, Umpire } from '@umpire/core'
 import { fromSolidStore } from '@umpire/solid'
 
 function fromSolidStore<
@@ -126,8 +135,8 @@ function fromSolidStore<
 >(
   ump: Umpire<F, C>,
   options: {
-    values: InputValues<F>
-    set(name: keyof F & string, value: unknown): void
+    values: FieldValues<F>
+    set<K extends keyof F & string>(name: K, value: FieldValues<F>[K]): void
     conditions?: Partial<{ [K in keyof C & string]: Accessor<C[K]> }>
   },
 ): SolidStoreUmpire<F>
@@ -138,7 +147,7 @@ function fromSolidStore<
 ```tsx
 import { createContext, useContext } from 'solid-js'
 import { createStore } from 'solid-js/store'
-import { enabledWhen, umpire } from '@umpire/core'
+import { enabledWhen, type FieldsOf, umpire } from '@umpire/core'
 import { fromSolidStore, type SolidStoreUmpire } from '@umpire/solid'
 
 const eventUmp = umpire({
@@ -153,28 +162,32 @@ const eventUmp = umpire({
   ],
 })
 
-type EventFields = typeof eventUmp extends Umpire<infer F, any> ? F : never
+type EventForm = SolidStoreUmpire<FieldsOf<typeof eventUmp>>
+type EventValues = ReturnType<typeof eventUmp.init>
 
 const EventFormContext = createContext<{
-  values: { allDay: boolean; startTime: string; endTime: string }
-  set(name: keyof EventFields & string, value: unknown): void
-  form: SolidStoreUmpire<EventFields>
+  values: EventValues
+  set: EventForm['set']
+  form: EventForm
 }>()
 
 function EventFormProvider(props: { children: JSX.Element }) {
-  const [values, setValues] = createStore({
-    allDay: false,
+  const [values, setValues] = createStore(eventUmp.init({
     startTime: '09:00',
     endTime: '10:00',
-  })
+  }))
+
+  const setEventValue: EventForm['set'] = (name, value) => {
+    setValues(name, value)
+  }
 
   const form = fromSolidStore(eventUmp, {
     values,
-    set: (name, value) => setValues(name, value as never),
+    set: setEventValue,
   })
 
   return (
-    <EventFormContext.Provider value={{ values, set: (name, value) => setValues(name, value as never), form }}>
+    <EventFormContext.Provider value={{ values, set: setEventValue, form }}>
       {props.children}
     </EventFormContext.Provider>
   )

@@ -89,10 +89,12 @@ export type Snapshot<C extends Record<string, unknown>> = {
 }
 
 export type Foul<F extends Record<string, FieldDef>> = {
-  field: keyof F & string
-  reason: string
-  suggestedValue: unknown
-}
+  [K in keyof F & string]: {
+    field: K
+    reason: string
+    suggestedValue: FieldValue<F[K]> | undefined
+  }
+}[keyof F & string]
 
 export type RuleTraceDependency = {
   kind: string
@@ -262,3 +264,5 @@ export interface Umpire<
   ): ChallengeTrace
   graph(): UmpireGraph
 }
+
+export type FieldsOf<U> = U extends Umpire<infer F, any> ? F : never

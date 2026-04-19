@@ -208,6 +208,74 @@ describe('fromSolidStore', () => {
     }
   })
 
+  it('preserves non-string value types when writing back', () => {
+    const typedFields = {
+      count: { default: 0 },
+      active: { default: true },
+      label: { default: '' },
+    } satisfies Record<string, FieldDef>
+
+    const ump = umpire({
+      fields: typedFields,
+      rules: [],
+    })
+
+    const { value, dispose } = withRoot(() => {
+      const [count, setCount] = createSignal(0)
+      const [active, setActive] = createSignal(true)
+      const [label, setLabel] = createSignal('init')
+
+      const values = {
+        get count() {
+          return count()
+        },
+        get active() {
+          return active()
+        },
+        get label() {
+          return label()
+        },
+      }
+
+      return {
+        count,
+        active,
+        label,
+        form: fromSolidStore(ump, {
+          values,
+          set(field, next) {
+            switch (field) {
+              case 'count':
+                setCount(next)
+                return
+              case 'active':
+                setActive(next)
+                return
+              case 'label':
+                setLabel(next)
+                return
+            }
+          },
+        }),
+      }
+    })
+
+    try {
+      value.form.set('count', 7)
+      value.form.set('active', false)
+      value.form.update({ count: 11, active: true, label: 'done' })
+
+      expect(value.count()).toBe(11)
+      expect(typeof value.count()).toBe('number')
+      expect(value.active()).toBe(true)
+      expect(typeof value.active()).toBe('boolean')
+      expect(value.label()).toBe('done')
+    } finally {
+      value.form.dispose()
+      dispose()
+    }
+  })
+
   it('supports fine-grained condition accessors', () => {
     type Conditions = { premium: boolean }
 
