@@ -15,7 +15,17 @@ export default tseslint.config(
       // {} is used intentionally as a generic type throughout umpire's type system
       '@typescript-eslint/no-empty-object-type': 'off',
       // Real issues but numerous; tracked as warnings to drive gradual cleanup
-      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+    },
+  },
+  // type-tests declare values solely to assert types — unused vars are expected
+  {
+    files: ['packages/*/type-tests/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
     },
   },
   // TypeScript parser for docs source — enables umpire plugin without full TS-ESLint rules
