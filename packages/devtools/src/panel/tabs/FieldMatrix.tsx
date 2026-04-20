@@ -39,12 +39,18 @@ const boolCellStyle = {
 }
 
 function flag(value: boolean) {
-  return value
-    ? <span style={{ color: theme.enabled }}>✓</span>
-    : <span style={{ color: theme.unavailable }}>✗</span>
+  return value ? (
+    <span style={{ color: theme.enabled }}>✓</span>
+  ) : (
+    <span style={{ color: theme.unavailable }}>✗</span>
+  )
 }
 
-export function FieldMatrix({ onSelectField, scorecard, selectedField }: Props) {
+export function FieldMatrix({
+  onSelectField,
+  scorecard,
+  selectedField,
+}: Props) {
   const fields = scorecard.graph.nodes
     .map((field) => scorecard.fields[field])
     .filter(Boolean)
@@ -79,7 +85,9 @@ export function FieldMatrix({ onSelectField, scorecard, selectedField }: Props) 
                 }}
               >
                 <td style={bodyCellStyle}>
-                  <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>
+                  <div
+                    style={{ alignItems: 'center', display: 'flex', gap: 8 }}
+                  >
                     <span
                       style={{
                         background: tone,
@@ -90,9 +98,13 @@ export function FieldMatrix({ onSelectField, scorecard, selectedField }: Props) 
                         width: 8,
                       }}
                     />
-                    <strong style={{ color: theme.fg, fontSize: 12 }}>{field.field}</strong>
+                    <strong style={{ color: theme.fg, fontSize: 12 }}>
+                      {field.field}
+                    </strong>
                   </div>
-                  <div style={{ color: theme.fgMuted, fontSize: 11, marginTop: 6 }}>
+                  <div
+                    style={{ color: theme.fgMuted, fontSize: 11, marginTop: 6 }}
+                  >
                     {field.reason ?? 'Inspect trace'}
                   </div>
                 </td>

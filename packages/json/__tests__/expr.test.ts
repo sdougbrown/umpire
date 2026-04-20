@@ -21,7 +21,9 @@ describe('json expr bridge', () => {
   })
 
   test('getExprFieldRefs includes check field and delegated refs', () => {
-    expect(getExprFieldRefs({ op: 'check', field: 'email', check: { op: 'email' } })).toEqual(['email'])
+    expect(
+      getExprFieldRefs({ op: 'check', field: 'email', check: { op: 'email' } }),
+    ).toEqual(['email'])
 
     expect(
       getExprFieldRefs({
@@ -47,7 +49,9 @@ describe('json expr bridge', () => {
     )
 
     expect(predicate({ accountType: 'business', submit: true }, {})).toBe(true)
-    expect(predicate({ accountType: 'business', submit: false }, {})).toBe(false)
+    expect(predicate({ accountType: 'business', submit: false }, {})).toBe(
+      false,
+    )
   })
 
   test('compileExpr supports nested check expressions inside combinators', () => {
@@ -62,12 +66,20 @@ describe('json expr bridge', () => {
       { fieldNames },
     )
 
-    expect(predicate({ email: 'alex@example.com', accountType: 'business' }, {})).toBe(true)
-    expect(predicate({ email: 'invalid', accountType: 'business' }, {})).toBe(false)
+    expect(
+      predicate({ email: 'alex@example.com', accountType: 'business' }, {}),
+    ).toBe(true)
+    expect(predicate({ email: 'invalid', accountType: 'business' }, {})).toBe(
+      false,
+    )
   })
 
   test('compileExpr handles deeply nested trees with mixed check and non-check nodes', () => {
-    let expression = { op: 'check', field: 'email', check: { op: 'email' } } as const
+    let expression = {
+      op: 'check',
+      field: 'email',
+      check: { op: 'email' },
+    } as const
 
     for (let i = 0; i < 200; i++) {
       expression = {
@@ -81,8 +93,12 @@ describe('json expr bridge', () => {
 
     const predicate = compileExpr(expression, { fieldNames })
 
-    expect(predicate({ email: 'alex@example.com', accountType: 'business' }, {})).toBe(true)
-    expect(predicate({ email: 'invalid', accountType: 'business' }, {})).toBe(false)
+    expect(
+      predicate({ email: 'alex@example.com', accountType: 'business' }, {}),
+    ).toBe(true)
+    expect(predicate({ email: 'invalid', accountType: 'business' }, {})).toBe(
+      false,
+    )
     expect(getExprFieldRefs(expression)).toEqual(['email', 'accountType'])
   })
 

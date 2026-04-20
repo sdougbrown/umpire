@@ -15,62 +15,93 @@ type JsonRuleConstraint = 'enabled' | 'fair'
 
 function validateFieldDef(field: string, definition: JsonFieldDef) {
   if (!isPlainRecord(definition)) {
-    throw new Error(`[@umpire/json] Field "${field}" definition must be an object`)
+    throw new Error(
+      `[@umpire/json] Field "${field}" definition must be an object`,
+    )
   }
 
-  if (definition.default !== undefined && !isJsonPrimitive(definition.default)) {
-    throw new Error(`[@umpire/json] Field "${field}" has a non-serializable default value`)
+  if (
+    definition.default !== undefined &&
+    !isJsonPrimitive(definition.default)
+  ) {
+    throw new Error(
+      `[@umpire/json] Field "${field}" has a non-serializable default value`,
+    )
   }
 
   if (
     definition.isEmpty !== undefined &&
     !isJsonIsEmptyStrategy(definition.isEmpty)
   ) {
-    throw new Error(`[@umpire/json] Unknown isEmpty strategy "${String(definition.isEmpty)}"`)
+    throw new Error(
+      `[@umpire/json] Unknown isEmpty strategy "${String(definition.isEmpty)}"`,
+    )
   }
 }
 
 function validateExcludedRule(rule: ExcludedRule) {
   if (typeof rule.type !== 'string' || rule.type.length === 0) {
-    throw new Error('[@umpire/json] Excluded rules must include a non-empty string type')
+    throw new Error(
+      '[@umpire/json] Excluded rules must include a non-empty string type',
+    )
   }
 
   if (rule.field !== undefined && typeof rule.field !== 'string') {
-    throw new Error('[@umpire/json] Excluded rule field must be a string when provided')
+    throw new Error(
+      '[@umpire/json] Excluded rule field must be a string when provided',
+    )
   }
 
   if (typeof rule.description !== 'string' || rule.description.length === 0) {
-    throw new Error('[@umpire/json] Excluded rules must include a non-empty string description')
+    throw new Error(
+      '[@umpire/json] Excluded rules must include a non-empty string description',
+    )
   }
 
   if (rule.key !== undefined && typeof rule.key !== 'string') {
-    throw new Error('[@umpire/json] Excluded rule key must be a string when provided')
+    throw new Error(
+      '[@umpire/json] Excluded rule key must be a string when provided',
+    )
   }
 
   if (rule.signature !== undefined && typeof rule.signature !== 'string') {
-    throw new Error('[@umpire/json] Excluded rule signature must be a string when provided')
+    throw new Error(
+      '[@umpire/json] Excluded rule signature must be a string when provided',
+    )
   }
 }
 
 function assertField(field: string, fieldNames: Set<string>, context: string) {
   if (!fieldNames.has(field)) {
-    throw new Error(`[@umpire/json] Rule ${context} references unknown field "${field}"`)
+    throw new Error(
+      `[@umpire/json] Rule ${context} references unknown field "${field}"`,
+    )
   }
 }
 
-function validateValidator(field: string, validator: JsonValidatorDef, fieldNames: Set<string>) {
+function validateValidator(
+  field: string,
+  validator: JsonValidatorDef,
+  fieldNames: Set<string>,
+) {
   if (!fieldNames.has(field)) {
-    throw new Error(`[@umpire/json] Validator references unknown field "${field}"`)
+    throw new Error(
+      `[@umpire/json] Validator references unknown field "${field}"`,
+    )
   }
 
   if (!isPlainRecord(validator)) {
-    throw new Error(`[@umpire/json] Validator for field "${field}" must be an object`)
+    throw new Error(
+      `[@umpire/json] Validator for field "${field}" must be an object`,
+    )
   }
 
   assertValidValidatorSpec(validator)
 
   if (validator.error !== undefined && typeof validator.error !== 'string') {
-    throw new Error(`[@umpire/json] Validator for field "${field}" must use a string error when provided`)
+    throw new Error(
+      `[@umpire/json] Validator for field "${field}" must use a string error when provided`,
+    )
   }
 }
 
@@ -102,7 +133,9 @@ function getRuleTargets(rule: JsonRule): string[] {
     case 'disables':
       return [...rule.targets]
     case 'oneOf':
-      return uniqueFields(Object.values(rule.branches).flatMap((branchFields) => branchFields))
+      return uniqueFields(
+        Object.values(rule.branches).flatMap((branchFields) => branchFields),
+      )
     case 'anyOf':
       return resolveCompositeShape('anyOf()', rule.rules).targets
     case 'eitherOf':
@@ -130,7 +163,9 @@ function resolveCompositeShape(
       currentTargets.length !== expectedTargets.length ||
       currentTargets.some((target, index) => target !== expectedTargets[index])
     ) {
-      throw new Error(`[@umpire/json] ${label} rules must target the same fields`)
+      throw new Error(
+        `[@umpire/json] ${label} rules must target the same fields`,
+      )
     }
   }
 
@@ -138,7 +173,9 @@ function resolveCompositeShape(
 
   for (const innerRule of rules.slice(1)) {
     if (getRuleConstraint(innerRule) !== constraint) {
-      throw new Error(`[@umpire/json] ${label} cannot mix fairWhen rules with availability rules`)
+      throw new Error(
+        `[@umpire/json] ${label} cannot mix fairWhen rules with availability rules`,
+      )
     }
   }
 
@@ -148,25 +185,30 @@ function resolveCompositeShape(
   }
 }
 
-function resolveEitherOfShape(
-  rule: Extract<JsonRule, { type: 'eitherOf' }>,
-): {
+function resolveEitherOfShape(rule: Extract<JsonRule, { type: 'eitherOf' }>): {
   targets: string[]
   constraint: JsonRuleConstraint
 } {
   const branchNames = Object.keys(rule.branches)
 
   if (branchNames.length === 0) {
-    throw new Error(`[@umpire/json] eitherOf("${rule.group}") must include at least one branch`)
+    throw new Error(
+      `[@umpire/json] eitherOf("${rule.group}") must include at least one branch`,
+    )
   }
 
   for (const branchName of branchNames) {
     if (rule.branches[branchName].length === 0) {
-      throw new Error(`[@umpire/json] eitherOf("${rule.group}") branch "${branchName}" must not be empty`)
+      throw new Error(
+        `[@umpire/json] eitherOf("${rule.group}") branch "${branchName}" must not be empty`,
+      )
     }
   }
 
-  return resolveCompositeShape(`eitherOf("${rule.group}")`, Object.values(rule.branches).flat())
+  return resolveCompositeShape(
+    `eitherOf("${rule.group}")`,
+    Object.values(rule.branches).flat(),
+  )
 }
 
 function validateRule(
@@ -183,8 +225,13 @@ function validateRule(
       }
 
       if ('dependencies' in rule) {
-        if (!Array.isArray(rule.dependencies) || rule.dependencies.length === 0) {
-          throw new Error('[@umpire/json] "requires" rules with dependencies must include at least one entry')
+        if (
+          !Array.isArray(rule.dependencies) ||
+          rule.dependencies.length === 0
+        ) {
+          throw new Error(
+            '[@umpire/json] "requires" rules with dependencies must include at least one entry',
+          )
         }
 
         for (const dependency of rule.dependencies) {
@@ -247,11 +294,15 @@ function validateRule(
       assertValidCheckRule(rule)
       return
     default:
-      throw new Error(`[@umpire/json] Unknown rule type "${String((rule as { type?: unknown }).type)}"`)
+      throw new Error(
+        `[@umpire/json] Unknown rule type "${String((rule as { type?: unknown }).type)}"`,
+      )
   }
 }
 
-export function validateSchema(schema: unknown): asserts schema is UmpireJsonSchema {
+export function validateSchema(
+  schema: unknown,
+): asserts schema is UmpireJsonSchema {
   if (!isPlainRecord(schema)) {
     throw new Error('[@umpire/json] Schema must be an object')
   }
@@ -261,7 +312,9 @@ export function validateSchema(schema: unknown): asserts schema is UmpireJsonSch
   }
 
   if (schema.version !== 1) {
-    throw new Error(`[@umpire/json] Unsupported schema version "${String(schema.version)}"`)
+    throw new Error(
+      `[@umpire/json] Unsupported schema version "${String(schema.version)}"`,
+    )
   }
 
   if (!isPlainRecord(schema.fields)) {
@@ -273,15 +326,21 @@ export function validateSchema(schema: unknown): asserts schema is UmpireJsonSch
   }
 
   if (schema.validators !== undefined && !isPlainRecord(schema.validators)) {
-    throw new Error('[@umpire/json] Schema "validators" must be an object when provided')
+    throw new Error(
+      '[@umpire/json] Schema "validators" must be an object when provided',
+    )
   }
 
   if (schema.conditions !== undefined && !isPlainRecord(schema.conditions)) {
-    throw new Error('[@umpire/json] Schema "conditions" must be an object when provided')
+    throw new Error(
+      '[@umpire/json] Schema "conditions" must be an object when provided',
+    )
   }
 
   if (schema.excluded !== undefined && !Array.isArray(schema.excluded)) {
-    throw new Error('[@umpire/json] Schema "excluded" must be an array when provided')
+    throw new Error(
+      '[@umpire/json] Schema "excluded" must be an array when provided',
+    )
   }
 
   const typedSchema = schema as unknown as UmpireJsonSchema
@@ -296,7 +355,9 @@ export function validateSchema(schema: unknown): asserts schema is UmpireJsonSch
     validateRule(rule, fieldNames, typedSchema.conditions)
   }
 
-  for (const [field, validator] of Object.entries(typedSchema.validators ?? {})) {
+  for (const [field, validator] of Object.entries(
+    typedSchema.validators ?? {},
+  )) {
     validateValidator(field, validator, fieldNames)
   }
 

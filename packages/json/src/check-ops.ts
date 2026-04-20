@@ -1,4 +1,8 @@
-import type { JsonPrimitive, NamedCheck, NamedCheckMetadata } from '@umpire/core'
+import type {
+  JsonPrimitive,
+  NamedCheck,
+  NamedCheckMetadata,
+} from '@umpire/core'
 
 import type {
   JsonCheckRule,
@@ -9,7 +13,8 @@ import type {
 
 type Params = Readonly<Record<string, JsonPrimitive>>
 
-const EMAIL_REGEX = /^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/
+const EMAIL_REGEX =
+  /^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/
 
 function createNamedValidator<T>(
   name: JsonValidatorOp,
@@ -31,12 +36,17 @@ function createNamedValidator<T>(
 }
 
 function isLengthLike(value: unknown): value is { length: number } {
-  return (typeof value === 'string' || Array.isArray(value)) && typeof value.length === 'number'
+  return (
+    (typeof value === 'string' || Array.isArray(value)) &&
+    typeof value.length === 'number'
+  )
 }
 
 export const namedValidators = Object.freeze({
   email() {
-    return createNamedValidator<string>('email', (value) => EMAIL_REGEX.test(value))
+    return createNamedValidator<string>('email', (value) =>
+      EMAIL_REGEX.test(value),
+    )
   },
   url() {
     return createNamedValidator<string>('url', (value) => {
@@ -50,25 +60,43 @@ export const namedValidators = Object.freeze({
   },
   matches(pattern: string) {
     const regex = new RegExp(pattern)
-    return createNamedValidator<string>('matches', (value) => regex.test(value), { pattern })
+    return createNamedValidator<string>(
+      'matches',
+      (value) => regex.test(value),
+      { pattern },
+    )
   },
   minLength(value: number) {
-    return createNamedValidator<string | unknown[]>('minLength', (input) =>
-      isLengthLike(input) && input.length >= value, { value })
+    return createNamedValidator<string | unknown[]>(
+      'minLength',
+      (input) => isLengthLike(input) && input.length >= value,
+      { value },
+    )
   },
   maxLength(value: number) {
-    return createNamedValidator<string | unknown[]>('maxLength', (input) =>
-      isLengthLike(input) && input.length <= value, { value })
+    return createNamedValidator<string | unknown[]>(
+      'maxLength',
+      (input) => isLengthLike(input) && input.length <= value,
+      { value },
+    )
   },
   min(value: number) {
-    return createNamedValidator<number>('min', (input) => typeof input === 'number' && input >= value, {
-      value,
-    })
+    return createNamedValidator<number>(
+      'min',
+      (input) => typeof input === 'number' && input >= value,
+      {
+        value,
+      },
+    )
   },
   max(value: number) {
-    return createNamedValidator<number>('max', (input) => typeof input === 'number' && input <= value, {
-      value,
-    })
+    return createNamedValidator<number>(
+      'max',
+      (input) => typeof input === 'number' && input <= value,
+      {
+        value,
+      },
+    )
   },
   range(min: number, max: number) {
     return createNamedValidator<number>(
@@ -78,14 +106,22 @@ export const namedValidators = Object.freeze({
     )
   },
   integer() {
-    return createNamedValidator<number>('integer', (input) => Number.isInteger(input))
+    return createNamedValidator<number>('integer', (input) =>
+      Number.isInteger(input),
+    )
   },
 })
 
-export function defaultValidatorMessage(rule: JsonValidatorSpec | NamedCheckMetadata): string {
-  const metadata = 'op' in rule
-    ? ({ __check: rule.op, params: paramsFromValidatorSpec(rule) } satisfies NamedCheckMetadata)
-    : rule
+export function defaultValidatorMessage(
+  rule: JsonValidatorSpec | NamedCheckMetadata,
+): string {
+  const metadata =
+    'op' in rule
+      ? ({
+          __check: rule.op,
+          params: paramsFromValidatorSpec(rule),
+        } satisfies NamedCheckMetadata)
+      : rule
 
   switch (metadata.__check) {
     case 'email':
@@ -127,7 +163,9 @@ function paramsFromValidatorSpec(rule: JsonValidatorSpec): Params | undefined {
   }
 }
 
-function paramsFromNamedCheckMetadata(metadata: NamedCheckMetadata): Params | undefined {
+function paramsFromNamedCheckMetadata(
+  metadata: NamedCheckMetadata,
+): Params | undefined {
   return metadata.params
 }
 
@@ -169,7 +207,8 @@ export function createCheckRuleFromMetadata(
   metadata: NamedCheckMetadata,
   reason?: string,
 ): JsonCheckRule | undefined {
-  const resolvedReason = reason && reason !== defaultValidatorMessage(metadata) ? reason : undefined
+  const resolvedReason =
+    reason && reason !== defaultValidatorMessage(metadata) ? reason : undefined
   const spec = createValidatorSpecFromMetadata(metadata)
 
   if (!spec) {
@@ -191,12 +230,12 @@ export function createValidatorDefFromMetadata(
     return undefined
   }
 
-  return error === undefined
-    ? spec
-    : { ...spec, error }
+  return error === undefined ? spec : { ...spec, error }
 }
 
-export function createNamedValidatorFromSpec(spec: JsonValidatorSpec): NamedCheck<unknown> {
+export function createNamedValidatorFromSpec(
+  spec: JsonValidatorSpec,
+): NamedCheck<unknown> {
   switch (spec.op) {
     case 'email':
       return namedValidators.email() as NamedCheck<unknown>
@@ -219,7 +258,9 @@ export function createNamedValidatorFromSpec(spec: JsonValidatorSpec): NamedChec
   }
 }
 
-export const createNamedValidatorFromRule: (rule: JsonCheckRule) => NamedCheck<unknown> = createNamedValidatorFromSpec
+export const createNamedValidatorFromRule: (
+  rule: JsonCheckRule,
+) => NamedCheck<unknown> = createNamedValidatorFromSpec
 
 export function assertValidValidatorSpec(rule: JsonValidatorSpec): void {
   switch (rule.op) {
@@ -232,7 +273,9 @@ export function assertValidValidatorSpec(rule: JsonValidatorSpec): void {
         new RegExp(rule.pattern)
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
-        throw new Error(`[@umpire/json] Invalid regex pattern "${rule.pattern}": ${message}`)
+        throw new Error(
+          `[@umpire/json] Invalid regex pattern "${rule.pattern}": ${message}`,
+        )
       }
       return
     case 'minLength':
@@ -240,7 +283,9 @@ export function assertValidValidatorSpec(rule: JsonValidatorSpec): void {
     case 'min':
     case 'max':
       if (typeof rule.value !== 'number' || Number.isNaN(rule.value)) {
-        throw new Error(`[@umpire/json] Validator "${rule.op}" requires a numeric value`)
+        throw new Error(
+          `[@umpire/json] Validator "${rule.op}" requires a numeric value`,
+        )
       }
       return
     case 'range':
@@ -250,11 +295,15 @@ export function assertValidValidatorSpec(rule: JsonValidatorSpec): void {
         typeof rule.max !== 'number' ||
         Number.isNaN(rule.max)
       ) {
-        throw new Error('[@umpire/json] Validator "range" requires numeric min and max values')
+        throw new Error(
+          '[@umpire/json] Validator "range" requires numeric min and max values',
+        )
       }
       return
     default:
-      throw new Error(`[@umpire/json] Unknown validator op "${String((rule as { op?: unknown }).op)}"`)
+      throw new Error(
+        `[@umpire/json] Unknown validator op "${String((rule as { op?: unknown }).op)}"`,
+      )
   }
 }
 

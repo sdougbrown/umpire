@@ -78,17 +78,23 @@ export function reactiveUmp<
   for (const name of fieldNames) {
     const external = options?.signals?.[name]
     if (external) {
-      fieldSignals.set(name, external as ReactiveSignal<FieldValues<F>[typeof name]>)
+      fieldSignals.set(
+        name,
+        external as ReactiveSignal<FieldValues<F>[typeof name]>,
+      )
     } else {
       fieldSignals.set(
         name,
-        adapter.signal(initValues[name]) as ReactiveSignal<FieldValues<F>[typeof name]>,
+        adapter.signal(initValues[name]) as ReactiveSignal<
+          FieldValues<F>[typeof name]
+        >,
       )
     }
   }
 
   // --- 2. Conditions signals ---
-  const conditionSignals: ReactiveConditionSignals<C> = options?.conditions ?? {}
+  const conditionSignals: ReactiveConditionSignals<C> =
+    options?.conditions ?? {}
 
   // --- 3. Lazy proxy for fine-grained predicate tracking ---
   function createSignalMapProxy<T extends object>(
@@ -158,24 +164,28 @@ export function reactiveUmp<
   for (const name of fieldNames) {
     fieldComputeds.set(name, {
       enabled: adapter.computed(() => availabilityComputed.get()[name].enabled),
-      satisfied: adapter.computed(() => availabilityComputed.get()[name].satisfied),
+      satisfied: adapter.computed(
+        () => availabilityComputed.get()[name].satisfied,
+      ),
       fair: adapter.computed(() => availabilityComputed.get()[name].fair),
-      required: adapter.computed(() => availabilityComputed.get()[name].required),
+      required: adapter.computed(
+        () => availabilityComputed.get()[name].required,
+      ),
       reason: adapter.computed(() => availabilityComputed.get()[name].reason),
       reasons: adapter.computed(() => availabilityComputed.get()[name].reasons),
     })
   }
 
   // --- 5. Aggregate values computed ---
-  const valuesComputed = adapter.computed<ReactiveValues<F>>(
-    () => {
-      const result = {} as ReactiveValues<F>
-      for (const name of fieldNames) {
-        result[name] = fieldSignals.get(name)!.get() as ReactiveValues<F>[typeof name]
-      }
-      return result
-    },
-  )
+  const valuesComputed = adapter.computed<ReactiveValues<F>>(() => {
+    const result = {} as ReactiveValues<F>
+    for (const name of fieldNames) {
+      result[name] = fieldSignals
+        .get(name)!
+        .get() as ReactiveValues<F>[typeof name]
+    }
+    return result
+  })
 
   // --- 6. Fouls tracking (requires effect) ---
   const disposeFns: Array<() => void> = []
@@ -197,18 +207,22 @@ export function reactiveUmp<
     // change — no version counter needed.
 
     function readSnapshotValues() {
-      return snapshotValue(Object.fromEntries(
-        fieldNames.map((name) => [name, fieldSignals.get(name)!.get()]),
-      ) as InputValues)
+      return snapshotValue(
+        Object.fromEntries(
+          fieldNames.map((name) => [name, fieldSignals.get(name)!.get()]),
+        ) as InputValues,
+      )
     }
 
     function readSnapshotConditions() {
-      return snapshotValue(Object.fromEntries(
-        Object.keys(conditionSignals).map((name) => [
-          name,
-          conditionSignals[name as keyof C & string]!.get(),
-        ]),
-      ) as C)
+      return snapshotValue(
+        Object.fromEntries(
+          Object.keys(conditionSignals).map((name) => [
+            name,
+            conditionSignals[name as keyof C & string]!.get(),
+          ]),
+        ) as C,
+      )
     }
 
     let beforeValues: InputValues = readSnapshotValues()

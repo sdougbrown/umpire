@@ -3,7 +3,10 @@ import type { RuleEvaluation } from './types.js'
 export type CompositeConstraint = 'enabled' | 'fair'
 export type CompositeMode = 'and' | 'or'
 
-export function appendCompositeFailureReasons(result: RuleEvaluation, reasons: string[]): void {
+export function appendCompositeFailureReasons(
+  result: RuleEvaluation,
+  reasons: string[],
+): void {
   if (result.reasons && result.reasons.length > 0) {
     for (const reason of result.reasons) {
       reasons.push(reason)
@@ -31,7 +34,8 @@ export function combineCompositeResults(
   let passed = mode === 'and'
 
   for (const result of results) {
-    const currentPassed = constraint === 'fair' ? result.fair !== false : result.enabled
+    const currentPassed =
+      constraint === 'fair' ? result.fair !== false : result.enabled
 
     if (mode === 'and') {
       if (!currentPassed) {

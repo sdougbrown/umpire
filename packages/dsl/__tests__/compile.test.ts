@@ -26,8 +26,12 @@ describe('compileExpr', () => {
       { fieldNames, conditions },
     )
 
-    expect(predicate({ accountType: 'business', quantity: 5, enabled: true }, {})).toBe(true)
-    expect(predicate({ accountType: 'business', quantity: 5, enabled: false }, {})).toBe(false)
+    expect(
+      predicate({ accountType: 'business', quantity: 5, enabled: true }, {}),
+    ).toBe(true)
+    expect(
+      predicate({ accountType: 'business', quantity: 5, enabled: false }, {}),
+    ).toBe(false)
     expect(predicate._checkField).toBeUndefined()
   })
 
@@ -73,7 +77,9 @@ describe('compileExpr', () => {
       { fieldNames, conditions },
     )
 
-    expect(() => predicate({}, {})).toThrow('Missing runtime condition "isAdmin"')
+    expect(() => predicate({}, {})).toThrow(
+      'Missing runtime condition "isAdmin"',
+    )
   })
 
   test('throws on unknown fields and invalid fieldInCond condition types', () => {
@@ -120,7 +126,11 @@ describe('compileExpr', () => {
   test('throws on unknown expression ops', () => {
     expect(() =>
       compileExpr(
-        { op: 'eqIgnoreCase', field: 'accountType', value: 'business' } as unknown as Parameters<typeof compileExpr>[0],
+        {
+          op: 'eqIgnoreCase',
+          field: 'accountType',
+          value: 'business',
+        } as unknown as Parameters<typeof compileExpr>[0],
         { fieldNames, conditions },
       ),
     ).toThrow('Unknown expression op "eqIgnoreCase"')

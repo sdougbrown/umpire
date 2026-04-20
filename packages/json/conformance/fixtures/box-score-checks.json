@@ -77,14 +77,8 @@
         "scorerEmail": "pressbox@ballpark.example",
         "highlightUrl": "https://mlb.example/highlights/9th-inning",
         "jerseyNumber": "27",
-        "benchBats": [
-          "Soto"
-        ],
-        "walkupClips": [
-          "intro",
-          "chorus",
-          "outro"
-        ],
+        "benchBats": ["Soto"],
+        "walkupClips": ["intro", "chorus", "outro"],
         "pitchCount": 1,
         "bullpenArms": 8,
         "lineupSlot": 4,
@@ -172,12 +166,7 @@
         "highlightUrl": "/highlights/9th",
         "jerseyNumber": "100",
         "benchBats": [],
-        "walkupClips": [
-          "a",
-          "b",
-          "c",
-          "d"
-        ],
+        "walkupClips": ["a", "b", "c", "d"],
         "pitchCount": 0,
         "bullpenArms": 9,
         "lineupSlot": 10,
@@ -189,9 +178,7 @@
           "fair": false,
           "required": false,
           "reason": "Must be a valid email address",
-          "reasons": [
-            "Must be a valid email address"
-          ],
+          "reasons": ["Must be a valid email address"],
           "satisfied": true
         },
         "highlightUrl": {
@@ -199,9 +186,7 @@
           "fair": false,
           "required": false,
           "reason": "Must be a valid URL",
-          "reasons": [
-            "Must be a valid URL"
-          ],
+          "reasons": ["Must be a valid URL"],
           "satisfied": true
         },
         "jerseyNumber": {
@@ -209,9 +194,7 @@
           "fair": false,
           "required": false,
           "reason": "Must match the required format",
-          "reasons": [
-            "Must match the required format"
-          ],
+          "reasons": ["Must match the required format"],
           "satisfied": true
         },
         "benchBats": {
@@ -219,9 +202,7 @@
           "fair": false,
           "required": false,
           "reason": "Must be at least 1 characters",
-          "reasons": [
-            "Must be at least 1 characters"
-          ],
+          "reasons": ["Must be at least 1 characters"],
           "satisfied": true
         },
         "walkupClips": {
@@ -229,9 +210,7 @@
           "fair": false,
           "required": false,
           "reason": "Must be 3 characters or fewer",
-          "reasons": [
-            "Must be 3 characters or fewer"
-          ],
+          "reasons": ["Must be 3 characters or fewer"],
           "satisfied": true
         },
         "pitchCount": {
@@ -239,9 +218,7 @@
           "fair": false,
           "required": false,
           "reason": "Must be at least 1",
-          "reasons": [
-            "Must be at least 1"
-          ],
+          "reasons": ["Must be at least 1"],
           "satisfied": true
         },
         "bullpenArms": {
@@ -249,9 +226,7 @@
           "fair": false,
           "required": false,
           "reason": "Must be 8 or less",
-          "reasons": [
-            "Must be 8 or less"
-          ],
+          "reasons": ["Must be 8 or less"],
           "satisfied": true
         },
         "lineupSlot": {
@@ -259,9 +234,7 @@
           "fair": false,
           "required": false,
           "reason": "Must be between 1 and 9",
-          "reasons": [
-            "Must be between 1 and 9"
-          ],
+          "reasons": ["Must be between 1 and 9"],
           "satisfied": true
         },
         "inning": {
@@ -269,9 +242,7 @@
           "fair": false,
           "required": false,
           "reason": "Must be a whole number",
-          "reasons": [
-            "Must be a whole number"
-          ],
+          "reasons": ["Must be a whole number"],
           "satisfied": true
         }
       }

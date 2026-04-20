@@ -3,7 +3,9 @@ import { enabledWhen, requires, umpire } from '@umpire/core'
 import { fromStore } from '../src/fromStore.js'
 
 const fields = {
-  username: { isEmpty: (v: unknown) => v === '' || v === undefined || v === null },
+  username: {
+    isEmpty: (v: unknown) => v === '' || v === undefined || v === null,
+  },
   password: {},
   confirmPassword: { default: '' },
   inviteCode: { default: '' },
@@ -98,15 +100,20 @@ describe('fromStore', () => {
       }),
     ]
 
-    const store = createStore<{ username: string; inviteCode: string; requireInvite: boolean }>(
-      () => ({
-        username: '',
-        inviteCode: '',
-        requireInvite: false,
-      }),
-    )
+    const store = createStore<{
+      username: string
+      inviteCode: string
+      requireInvite: boolean
+    }>(() => ({
+      username: '',
+      inviteCode: '',
+      requireInvite: false,
+    }))
 
-    const ump = umpire<CFields, Ctx>({ fields: conditionsFields, rules: conditionsRules })
+    const ump = umpire<CFields, Ctx>({
+      fields: conditionsFields,
+      rules: conditionsRules,
+    })
     const us = fromStore(ump, store, {
       select: (state) => ({
         username: state.username,
@@ -145,7 +152,10 @@ describe('fromStore', () => {
       inviteCode: '',
     }))
 
-    const ump = umpire<CFields, Ctx>({ fields: conditionsFields, rules: conditionsRules })
+    const ump = umpire<CFields, Ctx>({
+      fields: conditionsFields,
+      rules: conditionsRules,
+    })
     const us = fromStore(ump, store, {
       select: (state) => ({
         username: state.username,
@@ -173,7 +183,10 @@ describe('fromStore', () => {
     store.setState({ password: 'secret' })
 
     expect(calls).toHaveLength(1)
-    expect((calls[0] as Record<string, { enabled: boolean }>).confirmPassword.enabled).toBe(true)
+    expect(
+      (calls[0] as Record<string, { enabled: boolean }>).confirmPassword
+        .enabled,
+    ).toBe(true)
 
     us.destroy()
   })
@@ -210,7 +223,12 @@ describe('fromStore', () => {
     expect(availability).toHaveProperty('confirmPassword')
     expect(availability).toHaveProperty('inviteCode')
 
-    for (const field of ['username', 'password', 'confirmPassword', 'inviteCode'] as const) {
+    for (const field of [
+      'username',
+      'password',
+      'confirmPassword',
+      'inviteCode',
+    ] as const) {
       expect(availability[field]).toHaveProperty('enabled')
       expect(availability[field]).toHaveProperty('required')
       expect(availability[field]).toHaveProperty('reason')

@@ -42,7 +42,9 @@ describe('@umpire/zustand', () => {
     store.setState({ password: '', confirmPassword: 'secret' })
 
     expect(availability.field('confirmPassword').enabled).toBe(false)
-    expect(availability.fouls.some((foul) => foul.field === 'confirmPassword')).toBe(true)
+    expect(
+      availability.fouls.some((foul) => foul.field === 'confirmPassword'),
+    ).toBe(true)
 
     availability.destroy()
   })

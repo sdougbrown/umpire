@@ -7,9 +7,15 @@ describe('scorecard', () => {
     const sharedRam = ['ddr5-kit']
     const ump = umpire({
       fields: {
-        cpu: field<string>().required().isEmpty((value) => !value),
-        motherboard: field<string>().required().isEmpty((value) => !value),
-        ram: field<string[]>().required().isEmpty((value) => !value || value.length === 0),
+        cpu: field<string>()
+          .required()
+          .isEmpty((value) => !value),
+        motherboard: field<string>()
+          .required()
+          .isEmpty((value) => !value),
+        ram: field<string[]>()
+          .required()
+          .isEmpty((value) => !value || value.length === 0),
       },
       rules: [
         fairWhen('motherboard', (value, values) => value === values.cpu, {
@@ -80,7 +86,9 @@ describe('scorecard', () => {
   test('uses compiled field definitions to compute satisfied without extra options', () => {
     const ump = umpire({
       fields: {
-        tags: field<string[]>().isEmpty((value) => !value || value.length === 0),
+        tags: field<string[]>().isEmpty(
+          (value) => !value || value.length === 0,
+        ),
       },
       rules: [],
     })
@@ -116,7 +124,10 @@ describe('scorecard', () => {
     }
 
     expect(ump.scorecard(snapshot).fields.motherboard.trace).toBeUndefined()
-    expect(ump.scorecard(snapshot, { includeChallenge: true }).fields.motherboard.trace).toEqual(
+    expect(
+      ump.scorecard(snapshot, { includeChallenge: true }).fields.motherboard
+        .trace,
+    ).toEqual(
       expect.objectContaining({
         field: 'motherboard',
         fair: false,

@@ -25,8 +25,10 @@ function extractBranches(
 ): ExtractedBranches {
   const discriminator: string =
     'discriminator' in schema
-      ? (schema as any).discriminator
-      : (schema as any)._zod.def.discriminator
+      ? schema.discriminator
+      : // i've explored the alternative and it's a big mess, this is just a compat thing
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (schema as any)._zod.def.discriminator
   const excludeSet = new Set([discriminator, ...(options.exclude ?? [])])
 
   const branches: Record<string, string[]> = {}
@@ -37,6 +39,8 @@ function extractBranches(
 
   for (const variant of schema.options) {
     const shape = variant.shape
+    // zod uses `any` internally here so we're just cheating like them
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const literalField = shape[discriminator] as any
     const rawValue: string = literalField._def?.value ?? literalField.value
     if (rawValue == null) {
@@ -109,7 +113,10 @@ export function deriveDiscriminatedFields<
     fields: fieldDefs,
     rule: oneOf(options.groupName, branches, {
       activeBranch: (values) => {
-        const raw = values[discriminator as keyof typeof values] as string | null | undefined
+        const raw = values[discriminator as keyof typeof values] as
+          | string
+          | null
+          | undefined
         if (raw == null) return null
         return branchNames?.[raw] ?? raw
       },

@@ -100,10 +100,7 @@
         "planId": "pro"
       },
       "conditions": {
-        "activePlans": [
-          "pro",
-          "starter"
-        ],
+        "activePlans": ["pro", "starter"],
         "billingReady": true,
         "allowLegacyPlan": false,
         "betaPlans": [],
@@ -126,10 +123,7 @@
         "planId": "legacy-gold"
       },
       "conditions": {
-        "activePlans": [
-          "pro",
-          "starter"
-        ],
+        "activePlans": ["pro", "starter"],
         "billingReady": false,
         "allowLegacyPlan": true,
         "betaPlans": [],
@@ -152,14 +146,10 @@
         "planId": "beta-x"
       },
       "conditions": {
-        "activePlans": [
-          "pro"
-        ],
+        "activePlans": ["pro"],
         "billingReady": false,
         "allowLegacyPlan": false,
-        "betaPlans": [
-          "beta-x"
-        ],
+        "betaPlans": ["beta-x"],
         "betaEnabled": true
       },
       "expectedAvailability": {
@@ -179,14 +169,10 @@
         "planId": "starter"
       },
       "conditions": {
-        "activePlans": [
-          "starter"
-        ],
+        "activePlans": ["starter"],
         "billingReady": true,
         "allowLegacyPlan": false,
-        "betaPlans": [
-          "starter"
-        ],
+        "betaPlans": ["starter"],
         "betaEnabled": true
       },
       "expectedAvailability": {
@@ -206,9 +192,7 @@
         "planId": "pro"
       },
       "conditions": {
-        "activePlans": [
-          "pro"
-        ],
+        "activePlans": ["pro"],
         "billingReady": false,
         "allowLegacyPlan": false,
         "betaPlans": [],

@@ -13,7 +13,13 @@ export function GraphTab({ onSelectField, scorecard, selectedField }: Props) {
   const edgeTypes = [...new Set(layout.edges.map((edge) => edge.type))]
 
   return (
-    <div style={{ ...scrollPaneStyle(), display: 'grid', gridTemplateRows: 'auto minmax(0, 1fr)' }}>
+    <div
+      style={{
+        ...scrollPaneStyle(),
+        display: 'grid',
+        gridTemplateRows: 'auto minmax(0, 1fr)',
+      }}
+    >
       <div
         style={{
           alignItems: 'center',
@@ -25,7 +31,14 @@ export function GraphTab({ onSelectField, scorecard, selectedField }: Props) {
         }}
       >
         {edgeTypes.map((type) => (
-          <span key={type} style={pillStyle(layout.edges.find((edge) => edge.type === type)?.color ?? theme.accent, true)}>
+          <span
+            key={type}
+            style={pillStyle(
+              layout.edges.find((edge) => edge.type === type)?.color ??
+                theme.accent,
+              true,
+            )}
+          >
             {type}
           </span>
         ))}
@@ -112,7 +125,7 @@ export function GraphTab({ onSelectField, scorecard, selectedField }: Props) {
                   fontSize={NODE_FONT_SIZE}
                   textAnchor="start"
                   x={node.x + 6}
-                  y={node.y + (node.height / 2) + (NODE_FONT_SIZE / 2)}
+                  y={node.y + node.height / 2 + NODE_FONT_SIZE / 2}
                 >
                   {node.field}
                 </text>

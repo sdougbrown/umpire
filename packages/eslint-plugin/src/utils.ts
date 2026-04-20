@@ -48,7 +48,9 @@ export function getFieldsConfig(
 /**
  * Returns the set of statically known field names from a `fields` object.
  */
-export function getFieldNames(fieldsNode: estree.ObjectExpression): Set<string> {
+export function getFieldNames(
+  fieldsNode: estree.ObjectExpression,
+): Set<string> {
   const names = new Set<string>()
   for (const prop of fieldsNode.properties) {
     if (prop.type !== 'Property' || prop.computed) continue

@@ -29,9 +29,7 @@ describe('useUmpire', () => {
   it('returns check with correct availability', () => {
     const ump = umpire({
       fields,
-      rules: [
-        enabledWhen('phone', (values) => !!values.name),
-      ],
+      rules: [enabledWhen('phone', (values) => !!values.name)],
     })
 
     const { value, dispose } = withRoot(() => {
@@ -51,13 +49,15 @@ describe('useUmpire', () => {
   it('recomputes check when values change', () => {
     const ump = umpire({
       fields,
-      rules: [
-        enabledWhen('phone', (values) => !!values.name),
-      ],
+      rules: [enabledWhen('phone', (values) => !!values.name)],
     })
 
     const { value, dispose } = withRoot(() => {
-      const [values, setValues] = createSignal({ name: '', email: '', phone: '' })
+      const [values, setValues] = createSignal({
+        name: '',
+        email: '',
+        phone: '',
+      })
       return {
         setValues,
         ...useUmpire(ump, values),
@@ -78,13 +78,15 @@ describe('useUmpire', () => {
   it('returns empty fouls on first read', () => {
     const ump = umpire({
       fields,
-      rules: [
-        enabledWhen('phone', (values) => !!values.name),
-      ],
+      rules: [enabledWhen('phone', (values) => !!values.name)],
     })
 
     const { value, dispose } = withRoot(() => {
-      const [values] = createSignal({ name: 'Alice', email: '', phone: '555-1234' })
+      const [values] = createSignal({
+        name: 'Alice',
+        email: '',
+        phone: '555-1234',
+      })
       return useUmpire(ump, values)
     })
 
@@ -98,9 +100,7 @@ describe('useUmpire', () => {
   it('computes check once on mount', () => {
     const ump = umpire({
       fields,
-      rules: [
-        enabledWhen('phone', (values) => !!values.name),
-      ],
+      rules: [enabledWhen('phone', (values) => !!values.name)],
     })
     const checkSpy = spyOn(ump, 'check')
 
@@ -121,13 +121,15 @@ describe('useUmpire', () => {
   it('returns fouls when a field transitions from enabled to disabled', () => {
     const ump = umpire({
       fields,
-      rules: [
-        enabledWhen('phone', (values) => !!values.name),
-      ],
+      rules: [enabledWhen('phone', (values) => !!values.name)],
     })
 
     const { value, dispose } = withRoot(() => {
-      const [values, setValues] = createSignal({ name: 'Alice', email: '', phone: '555-1234' })
+      const [values, setValues] = createSignal({
+        name: 'Alice',
+        email: '',
+        phone: '555-1234',
+      })
       return {
         setValues,
         ...useUmpire(ump, values),
@@ -163,7 +165,9 @@ describe('useUmpire', () => {
 
     const { value, dispose } = withRoot(() => {
       const [values] = createSignal({ advanced: '', basic: '' })
-      const [conditions, setConditions] = createSignal<Conditions>({ premium: false })
+      const [conditions, setConditions] = createSignal<Conditions>({
+        premium: false,
+      })
       return {
         setConditions,
         ...useUmpire(ump, values, conditions),
@@ -182,7 +186,8 @@ describe('useUmpire', () => {
   })
 
   it('passes previous values to check for oneOf resolution', () => {
-    const isEmpty = (value: unknown) => value === '' || value === undefined || value === null
+    const isEmpty = (value: unknown) =>
+      value === '' || value === undefined || value === null
     const oneOfFields = {
       date: { default: '', isEmpty },
       time: { default: '', isEmpty },
@@ -200,7 +205,11 @@ describe('useUmpire', () => {
     })
 
     const { value, dispose } = withRoot(() => {
-      const [values, setValues] = createSignal({ date: '', time: '', weekday: '' })
+      const [values, setValues] = createSignal({
+        date: '',
+        time: '',
+        weekday: '',
+      })
       return {
         setValues,
         ...useUmpire(ump, values),

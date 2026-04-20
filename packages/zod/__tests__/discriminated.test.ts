@@ -251,13 +251,21 @@ describe('zod v4 compatibility', () => {
       options: [
         {
           shape: {
-            method: { _def: { values: ['card'] }, value: 'card', isOptional: () => false },
+            method: {
+              _def: { values: ['card'] },
+              value: 'card',
+              isOptional: () => false,
+            },
             cardNumber: { isOptional: () => false },
           },
         },
         {
           shape: {
-            method: { _def: { values: ['bank'] }, value: 'bank', isOptional: () => false },
+            method: {
+              _def: { values: ['bank'] },
+              value: 'bank',
+              isOptional: () => false,
+            },
             routingNumber: { isOptional: () => false },
           },
         },
@@ -265,6 +273,8 @@ describe('zod v4 compatibility', () => {
     }
 
     // deriveDiscriminatedFields exercises extractBranches internally
+    // it's not worth the effort to fully type this mock, so using `any` escape hatch
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { fields, rule } = deriveDiscriminatedFields(v4LikeSchema as any, {
       groupName: 'v4test',
     })
@@ -272,7 +282,11 @@ describe('zod v4 compatibility', () => {
     expect(fields.method).toEqual({ required: true })
     expect(fields.cardNumber).toEqual({ required: true })
     expect(fields.routingNumber).toEqual({ required: true })
-    expect(Object.keys(fields).sort()).toEqual(['cardNumber', 'method', 'routingNumber'])
+    expect(Object.keys(fields).sort()).toEqual([
+      'cardNumber',
+      'method',
+      'routingNumber',
+    ])
 
     // Verify the rule works end-to-end with umpire
     const u = umpire({
@@ -313,6 +327,8 @@ describe('zod v4 compatibility', () => {
       ],
     }
 
+    // it's not worth the effort to fully type this mock, so using `any` escape hatch
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { fields } = deriveDiscriminatedFields(v3LikeSchema as any, {
       groupName: 'v3test',
     })

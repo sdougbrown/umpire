@@ -59,7 +59,8 @@ export function deriveSchema<F extends Record<string, FieldDef>>(
     }
 
     if (rejectFoul && !status.fair) {
-      const message = status.reason ?? 'Value is not valid for the current context'
+      const message =
+        status.reason ?? 'Value is not valid for the current context'
       const refined = base.refine(() => false, { message })
       shape[field] = status.required ? refined : refined.optional()
       continue

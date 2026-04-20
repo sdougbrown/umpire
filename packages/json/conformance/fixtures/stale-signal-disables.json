@@ -19,16 +19,12 @@
       {
         "type": "disables",
         "source": "rainDelay",
-        "targets": [
-          "catcherSignal"
-        ]
+        "targets": ["catcherSignal"]
       },
       {
         "type": "disables",
         "source": "catcherSignal",
-        "targets": [
-          "bullpenPhone"
-        ]
+        "targets": ["bullpenPhone"]
       }
     ]
   },
@@ -53,9 +49,7 @@
           "fair": true,
           "required": false,
           "reason": "overridden by rainDelay",
-          "reasons": [
-            "overridden by rainDelay"
-          ],
+          "reasons": ["overridden by rainDelay"],
           "satisfied": true
         },
         "bullpenPhone": {
@@ -63,9 +57,7 @@
           "fair": true,
           "required": false,
           "reason": "overridden by catcherSignal",
-          "reasons": [
-            "overridden by catcherSignal"
-          ],
+          "reasons": ["overridden by catcherSignal"],
           "satisfied": false
         }
       }
@@ -89,9 +81,7 @@
           "fair": true,
           "required": false,
           "reason": "overridden by rainDelay",
-          "reasons": [
-            "overridden by rainDelay"
-          ],
+          "reasons": ["overridden by rainDelay"],
           "satisfied": false
         },
         "bullpenPhone": {
@@ -131,9 +121,7 @@
           "fair": true,
           "required": false,
           "reason": "overridden by catcherSignal",
-          "reasons": [
-            "overridden by catcherSignal"
-          ],
+          "reasons": ["overridden by catcherSignal"],
           "satisfied": false
         }
       }

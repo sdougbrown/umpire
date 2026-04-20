@@ -1,7 +1,12 @@
 import { isPlainRecord } from '@umpire/core/guards'
 import type { AnySnapshot } from '../../types.js'
 import { formatValue } from '../format.js'
-import { fontFamily, scrollPaneStyle, sectionHeadingStyle, theme } from '../theme.js'
+import {
+  fontFamily,
+  scrollPaneStyle,
+  sectionHeadingStyle,
+  theme,
+} from '../theme.js'
 
 type Props = {
   current: AnySnapshot
@@ -11,9 +16,7 @@ type Props = {
 function ConditionsValue({ value }: { value: unknown }) {
   if (value === undefined) {
     return (
-      <div style={{ color: theme.fgMuted, fontSize: 11 }}>
-        No conditions
-      </div>
+      <div style={{ color: theme.fgMuted, fontSize: 11 }}>No conditions</div>
     )
   }
 
@@ -29,9 +32,7 @@ function ConditionsValue({ value }: { value: unknown }) {
 
   if (entries.length === 0) {
     return (
-      <div style={{ color: theme.fgMuted, fontSize: 11 }}>
-        Empty object
-      </div>
+      <div style={{ color: theme.fgMuted, fontSize: 11 }}>Empty object</div>
     )
   }
 
@@ -47,10 +48,16 @@ function ConditionsValue({ value }: { value: unknown }) {
     >
       {entries.map(([key, entryValue]) => (
         <>
-          <dt key={`${key}:label`} style={{ color: theme.fgMuted, fontSize: 11 }}>
+          <dt
+            key={`${key}:label`}
+            style={{ color: theme.fgMuted, fontSize: 11 }}
+          >
             {key}
           </dt>
-          <dd key={`${key}:value`} style={{ color: theme.fg, fontSize: 11, margin: 0 }}>
+          <dd
+            key={`${key}:value`}
+            style={{ color: theme.fg, fontSize: 11, margin: 0 }}
+          >
             {formatValue(entryValue, 80)}
           </dd>
         </>
@@ -59,13 +66,7 @@ function ConditionsValue({ value }: { value: unknown }) {
   )
 }
 
-function ConditionsCard({
-  title,
-  value,
-}: {
-  title: string
-  value: unknown
-}) {
+function ConditionsCard({ title, value }: { title: string; value: unknown }) {
   return (
     <section
       style={{
@@ -75,9 +76,7 @@ function ConditionsCard({
         padding: 12,
       }}
     >
-      <h3 style={sectionHeadingStyle()}>
-        {title}
-      </h3>
+      <h3 style={sectionHeadingStyle()}>{title}</h3>
       <ConditionsValue value={value} />
     </section>
   )
@@ -88,7 +87,10 @@ export function ConditionsTab({ current, previous }: Props) {
     <div style={scrollPaneStyle()}>
       <ConditionsCard title="Current Conditions" value={current.conditions} />
       {previous && (
-        <ConditionsCard title="Previous Conditions" value={previous.conditions} />
+        <ConditionsCard
+          title="Previous Conditions"
+          value={previous.conditions}
+        />
       )}
     </div>
   )

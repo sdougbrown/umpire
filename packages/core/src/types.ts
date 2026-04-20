@@ -15,7 +15,8 @@ export interface NamedCheck<T = unknown> extends NamedCheckMetadata {
   readonly validate: (value: NonNullable<T>) => boolean
 }
 
-export type FieldValue<T extends FieldDef> = T extends FieldDef<infer V> ? V : unknown
+export type FieldValue<T extends FieldDef> =
+  T extends FieldDef<infer V> ? V : unknown
 
 export type FunctionValidator<T = unknown> = (value: NonNullable<T>) => boolean
 
@@ -40,7 +41,9 @@ export type ValidationResult = {
 
 export type ValidationOutcome = boolean | ValidationResult
 
-export type ValidationFunction<T = unknown> = (value: NonNullable<T>) => ValidationOutcome
+export type ValidationFunction<T = unknown> = (
+  value: NonNullable<T>,
+) => ValidationOutcome
 
 export type ValidationValidator<T = unknown> =
   | ValidationFunction<T>
@@ -79,7 +82,6 @@ export type FieldValues<F extends Record<string, FieldDef>> = {
 }
 
 export type InputValues = Record<string, unknown>
-
 
 export type Snapshot<C extends Record<string, unknown>> = {
   values: InputValues
@@ -247,7 +249,11 @@ export interface Umpire<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown> = Record<string, unknown>,
 > {
-  check(values: InputValues, conditions?: C, prev?: InputValues): AvailabilityMap<F>
+  check(
+    values: InputValues,
+    conditions?: C,
+    prev?: InputValues,
+  ): AvailabilityMap<F>
   play(before: Snapshot<C>, after: Snapshot<C>): Foul<F>[]
   init(overrides?: InputValues): FieldValues<F>
   scorecard(
@@ -263,4 +269,4 @@ export interface Umpire<
   graph(): UmpireGraph
 }
 
-export type FieldsOf<U> = U extends Umpire<infer F, any> ? F : never
+export type FieldsOf<U> = U extends Umpire<infer F> ? F : never

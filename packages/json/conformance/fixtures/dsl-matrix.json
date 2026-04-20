@@ -165,10 +165,7 @@
         "when": {
           "op": "in",
           "field": "benchBat",
-          "values": [
-            "Soto",
-            "Judge"
-          ]
+          "values": ["Soto", "Judge"]
         },
         "reason": "Need one of the middle-order bats"
       },
@@ -178,10 +175,7 @@
         "when": {
           "op": "notIn",
           "field": "benchBat",
-          "values": [
-            "Cabrera",
-            "Volpe"
-          ]
+          "values": ["Cabrera", "Volpe"]
         },
         "reason": "Bench bat is already committed elsewhere"
       },
@@ -210,10 +204,7 @@
         "when": {
           "op": "condIn",
           "condition": "weatherBand",
-          "values": [
-            "cold",
-            "windy"
-          ]
+          "values": ["cold", "windy"]
         },
         "reason": "Only for cold or windy prep"
       },
@@ -310,9 +301,7 @@
             }
           ]
         },
-        "targets": [
-          "dugoutTablet"
-        ],
+        "targets": ["dugoutTablet"],
         "reason": "Review board locked during windy or intentional-walk moments"
       }
     ]
@@ -333,10 +322,7 @@
       "conditions": {
         "isPlayoffs": true,
         "weatherBand": "cold",
-        "availableStarters": [
-          "Cole",
-          "Holmes"
-        ]
+        "availableStarters": ["Cole", "Holmes"]
       },
       "expectedAvailability": {
         "inning": {
@@ -448,9 +434,7 @@
           "fair": true,
           "required": false,
           "reason": "Need one out or fewer",
-          "reasons": [
-            "Need one out or fewer"
-          ],
+          "reasons": ["Need one out or fewer"],
           "satisfied": false
         },
         "presentGate": {
@@ -466,9 +450,7 @@
           "fair": true,
           "required": false,
           "reason": "Spray card must be absent",
-          "reasons": [
-            "Spray card must be absent"
-          ],
+          "reasons": ["Spray card must be absent"],
           "satisfied": false
         },
         "truthyGate": {
@@ -540,9 +522,7 @@
           "fair": true,
           "required": false,
           "reason": "Only active outside October",
-          "reasons": [
-            "Only active outside October"
-          ],
+          "reasons": ["Only active outside October"],
           "satisfied": false
         },
         "comboGate": {
@@ -585,9 +565,7 @@
       "conditions": {
         "isPlayoffs": false,
         "weatherBand": "windy",
-        "availableStarters": [
-          "Holmes"
-        ]
+        "availableStarters": ["Holmes"]
       },
       "expectedAvailability": {
         "inning": {
@@ -659,9 +637,7 @@
           "fair": true,
           "required": false,
           "reason": "Needs a slider call",
-          "reasons": [
-            "Needs a slider call"
-          ],
+          "reasons": ["Needs a slider call"],
           "satisfied": false
         },
         "neqGate": {
@@ -669,9 +645,7 @@
           "fair": true,
           "required": false,
           "reason": "Cannot be straight heat",
-          "reasons": [
-            "Cannot be straight heat"
-          ],
+          "reasons": ["Cannot be straight heat"],
           "satisfied": false
         },
         "gtGate": {
@@ -687,9 +661,7 @@
           "fair": true,
           "required": false,
           "reason": "Need two outs",
-          "reasons": [
-            "Need two outs"
-          ],
+          "reasons": ["Need two outs"],
           "satisfied": false
         },
         "ltGate": {
@@ -697,9 +669,7 @@
           "fair": true,
           "required": false,
           "reason": "Must be before the ninth",
-          "reasons": [
-            "Must be before the ninth"
-          ],
+          "reasons": ["Must be before the ninth"],
           "satisfied": false
         },
         "lteGate": {
@@ -715,9 +685,7 @@
           "fair": true,
           "required": false,
           "reason": "Spray card must be present",
-          "reasons": [
-            "Spray card must be present"
-          ],
+          "reasons": ["Spray card must be present"],
           "satisfied": false
         },
         "absentGate": {
@@ -733,9 +701,7 @@
           "fair": true,
           "required": false,
           "reason": "Bullpen must be ready",
-          "reasons": [
-            "Bullpen must be ready"
-          ],
+          "reasons": ["Bullpen must be ready"],
           "satisfied": false
         },
         "falsyGate": {
@@ -743,9 +709,7 @@
           "fair": true,
           "required": false,
           "reason": "Walk signal must be off",
-          "reasons": [
-            "Walk signal must be off"
-          ],
+          "reasons": ["Walk signal must be off"],
           "satisfied": false
         },
         "inGate": {
@@ -753,9 +717,7 @@
           "fair": true,
           "required": false,
           "reason": "Need one of the middle-order bats",
-          "reasons": [
-            "Need one of the middle-order bats"
-          ],
+          "reasons": ["Need one of the middle-order bats"],
           "satisfied": false
         },
         "notInGate": {
@@ -763,9 +725,7 @@
           "fair": true,
           "required": false,
           "reason": "Bench bat is already committed elsewhere",
-          "reasons": [
-            "Bench bat is already committed elsewhere"
-          ],
+          "reasons": ["Bench bat is already committed elsewhere"],
           "satisfied": false
         },
         "condGate": {
@@ -773,9 +733,7 @@
           "fair": true,
           "required": false,
           "reason": "Only active in October",
-          "reasons": [
-            "Only active in October"
-          ],
+          "reasons": ["Only active in October"],
           "satisfied": false
         },
         "condEqGate": {
@@ -783,9 +741,7 @@
           "fair": true,
           "required": false,
           "reason": "Only for cold-weather prep",
-          "reasons": [
-            "Only for cold-weather prep"
-          ],
+          "reasons": ["Only for cold-weather prep"],
           "satisfied": false
         },
         "condInGate": {
@@ -801,9 +757,7 @@
           "fair": true,
           "required": false,
           "reason": "Starter must be on tonight's card",
-          "reasons": [
-            "Starter must be on tonight's card"
-          ],
+          "reasons": ["Starter must be on tonight's card"],
           "satisfied": false
         },
         "notGate": {
@@ -819,9 +773,7 @@
           "fair": true,
           "required": false,
           "reason": "Complex scouting combo failed",
-          "reasons": [
-            "Complex scouting combo failed"
-          ],
+          "reasons": ["Complex scouting combo failed"],
           "satisfied": false
         },
         "bullpenCart": {

@@ -6,16 +6,20 @@ import {
   type UmpireStore,
 } from '@umpire/store'
 
-export type TanStackStoreSubscription = {
-  unsubscribe(): void
-} | (() => void)
+export type TanStackStoreSubscription =
+  | {
+      unsubscribe(): void
+    }
+  | (() => void)
 
 export type TanStackStoreApi<S> = {
   state: S
   subscribe(listener: () => void): TanStackStoreSubscription
 }
 
-function normalizeSubscription(subscription: TanStackStoreSubscription): () => void {
+function normalizeSubscription(
+  subscription: TanStackStoreSubscription,
+): () => void {
   if (typeof subscription === 'function') {
     return subscription
   }
@@ -36,19 +40,22 @@ export function fromTanStackStore<
 ): UmpireStore<F> {
   const previousState = trackPreviousState(store.state)
 
-  return fromStore(ump, {
-    getState: () => store.state,
-    subscribe(listener) {
-      return normalizeSubscription(store.subscribe(() => {
-        const nextState = store.state
+  return fromStore(
+    ump,
+    {
+      getState: () => store.state,
+      subscribe(listener) {
+        return normalizeSubscription(
+          store.subscribe(() => {
+            const nextState = store.state
 
-        listener(nextState, previousState.next(nextState))
-      }))
+            listener(nextState, previousState.next(nextState))
+          }),
+        )
+      },
     },
-  }, options)
+    options,
+  )
 }
 
-export type {
-  FromStoreOptions,
-  UmpireStore,
-} from '@umpire/store'
+export type { FromStoreOptions, UmpireStore } from '@umpire/store'

@@ -16,7 +16,8 @@ export type FromSolidStoreOptions<
   conditions?: Partial<{ [K in keyof C & string]: Accessor<C[K]> }>
 }
 
-export type SolidStoreUmpire<F extends Record<string, FieldDef>> = ReactiveUmpire<F>
+export type SolidStoreUmpire<F extends Record<string, FieldDef>> =
+  ReactiveUmpire<F>
 
 export function fromSolidStore<
   F extends Record<string, FieldDef>,
@@ -36,7 +37,9 @@ export function fromSolidStore<
     }
   }
 
-  let conditions: NonNullable<ReactiveUmpOptions<F, C>['conditions']> | undefined
+  let conditions:
+    | NonNullable<ReactiveUmpOptions<F, C>['conditions']>
+    | undefined
   if (options.conditions) {
     conditions = {}
     for (const [name, accessor] of Object.entries(options.conditions)) {

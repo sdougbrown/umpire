@@ -19,20 +19,28 @@ import { useUmpire } from '@umpire/solid'
 
 const signupUmp = umpire({
   fields: {
-    email:           { required: true, isEmpty: (v) => !v },
-    password:        { required: true, isEmpty: (v) => !v },
+    email: { required: true, isEmpty: (v) => !v },
+    password: { required: true, isEmpty: (v) => !v },
     confirmPassword: { required: true, isEmpty: (v) => !v },
-    companyName:     {},
-    companySize:     {},
+    companyName: {},
+    companySize: {},
   },
   rules: [
     requires('confirmPassword', 'password'),
-    enabledWhen('companyName', (_values, conditions) => conditions.plan === 'business', {
-      reason: 'business plan required',
-    }),
-    enabledWhen('companySize', (_values, conditions) => conditions.plan === 'business', {
-      reason: 'business plan required',
-    }),
+    enabledWhen(
+      'companyName',
+      (_values, conditions) => conditions.plan === 'business',
+      {
+        reason: 'business plan required',
+      },
+    ),
+    enabledWhen(
+      'companySize',
+      (_values, conditions) => conditions.plan === 'business',
+      {
+        reason: 'business plan required',
+      },
+    ),
     requires('companySize', 'companyName'),
   ],
 })
@@ -46,7 +54,11 @@ function SignupForm() {
     companySize: '',
   })
 
-  const { check, fouls } = useUmpire(signupUmp, () => values, () => ({ plan: 'business' as const }))
+  const { check, fouls } = useUmpire(
+    signupUmp,
+    () => values,
+    () => ({ plan: 'business' as const }),
+  )
 
   check().companyName.enabled
   check().companyName.reason

@@ -1,7 +1,4 @@
-import {
-  expr as baseExpr,
-  type ExprBuilder,
-} from '@umpire/dsl'
+import { expr as baseExpr, type ExprBuilder } from '@umpire/dsl'
 
 import {
   anyOf,
@@ -38,11 +35,16 @@ function isPortableRuleOptions(value: unknown): value is PortableRuleOptions {
   return typeof value === 'object' && value !== null && !('op' in value)
 }
 
-function createPortableCheckExpr(field: string, validator: NamedCheck<unknown>): JsonExpr {
+function createPortableCheckExpr(
+  field: string,
+  validator: NamedCheck<unknown>,
+): JsonExpr {
   const spec = createValidatorSpecFromMetadata(validator)
 
   if (!spec) {
-    throw new Error('[@umpire/json] expr.check() requires a portable validator from @umpire/json')
+    throw new Error(
+      '[@umpire/json] expr.check() requires a portable validator from @umpire/json',
+    )
   }
 
   return {
@@ -65,10 +67,16 @@ function compilePortableExpr<
 function compilePortableFairExpr<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
->(expression: JsonExpr): JsonFairPredicate<FieldValues<F>, C, keyof F & string> {
+>(
+  expression: JsonExpr,
+): JsonFairPredicate<FieldValues<F>, C, keyof F & string> {
   const predicate = compilePortableExpr<F, C>(expression)
   const fairPredicate = ((_: unknown, values: FieldValues<F>, conditions: C) =>
-    predicate(values, conditions)) as JsonFairPredicate<FieldValues<F>, C, keyof F & string>
+    predicate(values, conditions)) as JsonFairPredicate<
+    FieldValues<F>,
+    C,
+    keyof F & string
+  >
 
   fairPredicate._checkField = predicate._checkField
   fairPredicate._namedCheck = predicate._namedCheck
@@ -83,13 +91,18 @@ function getRequiredJsonDef(
   const jsonDef = getJsonDef<JsonRule>(rule)
 
   if (!jsonDef) {
-    throw new Error(`[@umpire/json] ${caller} requires every inner rule to carry JSON metadata`)
+    throw new Error(
+      `[@umpire/json] ${caller} requires every inner rule to carry JSON metadata`,
+    )
   }
 
   return deepClone(jsonDef)
 }
 
-export const expr: JsonExprBuilder<Record<string, FieldDef>, Record<string, unknown>> = {
+export const expr: JsonExprBuilder<
+  Record<string, FieldDef>,
+  Record<string, unknown>
+> = {
   ...baseExpr,
   check: createPortableCheckExpr,
 }
@@ -147,38 +160,43 @@ export function requiresJson<
 ): Rule<F, C> {
   const maybeOptions = dependencies[dependencies.length - 1]
   const options = isPortableRuleOptions(maybeOptions) ? maybeOptions : undefined
-  const sources = (options ? dependencies.slice(0, -1) : dependencies) as JsonRequiresDependency[]
+  const sources = (
+    options ? dependencies.slice(0, -1) : dependencies
+  ) as JsonRequiresDependency[]
 
   if (sources.length === 0) {
-    throw new Error(`[@umpire/json] requiresJson("${field}") requires at least one dependency`)
+    throw new Error(
+      `[@umpire/json] requiresJson("${field}") requires at least one dependency`,
+    )
   }
 
-  const jsonRule: Extract<JsonRule, { type: 'requires' }> = sources.length === 1
-    ? typeof sources[0] === 'string'
-      ? {
-          type: 'requires',
-          field,
-          dependency: sources[0],
-          ...(options?.reason ? { reason: options.reason } : {}),
-        }
+  const jsonRule: Extract<JsonRule, { type: 'requires' }> =
+    sources.length === 1
+      ? typeof sources[0] === 'string'
+        ? {
+            type: 'requires',
+            field,
+            dependency: sources[0],
+            ...(options?.reason ? { reason: options.reason } : {}),
+          }
+        : {
+            type: 'requires',
+            field,
+            when: deepClone(sources[0]),
+            ...(options?.reason ? { reason: options.reason } : {}),
+          }
       : {
           type: 'requires',
           field,
-          when: deepClone(sources[0]),
+          dependencies: sources.map((source) =>
+            typeof source === 'string' ? source : deepClone(source),
+          ),
           ...(options?.reason ? { reason: options.reason } : {}),
         }
-    : {
-        type: 'requires',
-        field,
-        dependencies: sources.map((source) => (
-          typeof source === 'string' ? source : deepClone(source)
-        )),
-        ...(options?.reason ? { reason: options.reason } : {}),
-      }
 
-  const compiledDependencies = sources.map((source) => (
-    typeof source === 'string' ? source : compilePortableExpr<F, C>(source)
-  ))
+  const compiledDependencies = sources.map((source) =>
+    typeof source === 'string' ? source : compilePortableExpr<F, C>(source),
+  )
 
   return attachJsonDef(
     options
@@ -204,7 +222,11 @@ export function disablesExpr<
   }
 
   return attachJsonDef(
-    disables<F, C>(compilePortableExpr<F, C>(jsonRule.when), jsonRule.targets, options),
+    disables<F, C>(
+      compilePortableExpr<F, C>(jsonRule.when),
+      jsonRule.targets,
+      options,
+    ),
     jsonRule,
   )
 }
@@ -225,7 +247,11 @@ export function fairWhenExpr<
   }
 
   return attachJsonDef(
-    fairWhen<F, C>(field, compilePortableFairExpr<F, C>(jsonRule.when), options),
+    fairWhen<F, C>(
+      field,
+      compilePortableFairExpr<F, C>(jsonRule.when),
+      options,
+    ),
     jsonRule,
   )
 }
@@ -233,13 +259,14 @@ export function fairWhenExpr<
 export function anyOfJson<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown> = Record<string, unknown>,
->(
-  ...rules: Array<Rule<F, C>>
-): Rule<F, C> {
+>(...rules: Array<Rule<F, C>>): Rule<F, C> {
   const jsonRule: Extract<JsonRule, { type: 'anyOf' }> = {
     type: 'anyOf',
     rules: rules.map((rule) =>
-      getRequiredJsonDef(rule as Rule<Record<string, FieldDef>, Record<string, unknown>>, 'anyOfJson()'),
+      getRequiredJsonDef(
+        rule as Rule<Record<string, FieldDef>, Record<string, unknown>>,
+        'anyOfJson()',
+      ),
     ),
   }
 
@@ -249,10 +276,7 @@ export function anyOfJson<
 export function eitherOfJson<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown> = Record<string, unknown>,
->(
-  groupName: string,
-  branches: Record<string, Array<Rule<F, C>>>,
-): Rule<F, C> {
+>(groupName: string, branches: Record<string, Array<Rule<F, C>>>): Rule<F, C> {
   const jsonBranches: Record<string, JsonRule[]> = {}
 
   for (const [branchName, branchRules] of Object.entries(branches)) {
@@ -283,14 +307,26 @@ export function createJsonRules<
       field: keyof F & string,
       ...dependencies: Array<JsonRequiresDependency | PortableRuleOptions>
     ) => requiresJson<F, C>(field, ...dependencies),
-    enabledWhenExpr: (field: keyof F & string, when: JsonExpr, options?: PortableRuleOptions) =>
-      enabledWhenExpr<F, C>(field, when, options),
-    requiresExpr: (field: keyof F & string, when: JsonExpr, options?: PortableRuleOptions) =>
-      requiresExpr<F, C>(field, when, options),
-    disablesExpr: (when: JsonExpr, targets: Array<keyof F & string>, options?: PortableRuleOptions) =>
-      disablesExpr<F, C>(when, targets, options),
-    fairWhenExpr: (field: keyof F & string, when: JsonExpr, options?: PortableRuleOptions) =>
-      fairWhenExpr<F, C>(field, when, options),
+    enabledWhenExpr: (
+      field: keyof F & string,
+      when: JsonExpr,
+      options?: PortableRuleOptions,
+    ) => enabledWhenExpr<F, C>(field, when, options),
+    requiresExpr: (
+      field: keyof F & string,
+      when: JsonExpr,
+      options?: PortableRuleOptions,
+    ) => requiresExpr<F, C>(field, when, options),
+    disablesExpr: (
+      when: JsonExpr,
+      targets: Array<keyof F & string>,
+      options?: PortableRuleOptions,
+    ) => disablesExpr<F, C>(when, targets, options),
+    fairWhenExpr: (
+      field: keyof F & string,
+      when: JsonExpr,
+      options?: PortableRuleOptions,
+    ) => fairWhenExpr<F, C>(field, when, options),
     anyOfJson: (...rules: Array<Rule<F, C>>) => anyOfJson<F, C>(...rules),
     eitherOfJson: (
       groupName: string,

@@ -17,12 +17,12 @@ import { enabledWhen, requires, umpire } from '@umpire/core'
 
 const signupUmp = umpire({
   fields: {
-    email:           { required: true, isEmpty: (v) => !v },
-    password:        { required: true, isEmpty: (v) => !v },
+    email: { required: true, isEmpty: (v) => !v },
+    password: { required: true, isEmpty: (v) => !v },
     confirmPassword: { required: true, isEmpty: (v) => !v },
-    referralCode:    {},
-    companyName:     {},
-    companySize:     {},
+    referralCode: {},
+    companyName: {},
+    companySize: {},
   },
   rules: [
     requires('confirmPassword', 'password'),
@@ -73,23 +73,23 @@ const fouls = signupUmp.play(
 
 ## Packages
 
-| Package | Purpose |
-| --- | --- |
-| [`@umpire/core`](./packages/core/README.md) | Pure logic engine with zero runtime dependencies |
-| [`@umpire/dsl`](./packages/dsl/README.md) | Pure expression DSL (`expr.*`, `compileExpr`, `getExprFieldRefs`) |
-| [`@umpire/react`](./packages/react/README.md) | `useUmpire()` hook for React |
-| [`@umpire/solid`](./packages/solid/README.md) | `useUmpire()` hook for Solid |
-| [`@umpire/signals`](./packages/signals/README.md) | Signal adapter via `SignalProtocol` (Jotai, Preact, Alien Signals, TC39) |
-| [`@umpire/store`](./packages/store/README.md) | Generic store adapter — bring your own `getState()` + `subscribe(next, prev)` |
-| [`@umpire/zustand`](./packages/zustand/README.md) | Zustand adapter (satisfies the store contract natively) |
-| [`@umpire/redux`](./packages/redux/README.md) | Redux / Redux Toolkit adapter |
-| [`@umpire/tanstack-store`](./packages/tanstack-store/README.md) | TanStack Store adapter |
-| [`@umpire/pinia`](./packages/pinia/README.md) | Pinia adapter (Vue 3) |
-| [`@umpire/vuex`](./packages/vuex/README.md) | Vuex 4 adapter (Vue 3) |
-| [`@umpire/zod`](./packages/zod/README.md) | Availability-aware Zod schemas — disabled fields produce no errors |
-| [`@umpire/reads`](./packages/reads/README.md) | Derived read tables and read-backed rule bridges |
-| [`@umpire/testing`](./packages/testing/README.md) | Invariant probes for rule configurations |
-| [`@umpire/devtools`](./packages/devtools/README.md) | In-app inspector panel — scorecard, traces, foul log, graph view |
+| Package                                                         | Purpose                                                                       |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [`@umpire/core`](./packages/core/README.md)                     | Pure logic engine with zero runtime dependencies                              |
+| [`@umpire/dsl`](./packages/dsl/README.md)                       | Pure expression DSL (`expr.*`, `compileExpr`, `getExprFieldRefs`)             |
+| [`@umpire/react`](./packages/react/README.md)                   | `useUmpire()` hook for React                                                  |
+| [`@umpire/solid`](./packages/solid/README.md)                   | `useUmpire()` hook for Solid                                                  |
+| [`@umpire/signals`](./packages/signals/README.md)               | Signal adapter via `SignalProtocol` (Jotai, Preact, Alien Signals, TC39)      |
+| [`@umpire/store`](./packages/store/README.md)                   | Generic store adapter — bring your own `getState()` + `subscribe(next, prev)` |
+| [`@umpire/zustand`](./packages/zustand/README.md)               | Zustand adapter (satisfies the store contract natively)                       |
+| [`@umpire/redux`](./packages/redux/README.md)                   | Redux / Redux Toolkit adapter                                                 |
+| [`@umpire/tanstack-store`](./packages/tanstack-store/README.md) | TanStack Store adapter                                                        |
+| [`@umpire/pinia`](./packages/pinia/README.md)                   | Pinia adapter (Vue 3)                                                         |
+| [`@umpire/vuex`](./packages/vuex/README.md)                     | Vuex 4 adapter (Vue 3)                                                        |
+| [`@umpire/zod`](./packages/zod/README.md)                       | Availability-aware Zod schemas — disabled fields produce no errors            |
+| [`@umpire/reads`](./packages/reads/README.md)                   | Derived read tables and read-backed rule bridges                              |
+| [`@umpire/testing`](./packages/testing/README.md)               | Invariant probes for rule configurations                                      |
+| [`@umpire/devtools`](./packages/devtools/README.md)             | In-app inspector panel — scorecard, traces, foul log, graph view              |
 
 ## Why Umpire?
 

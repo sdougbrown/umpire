@@ -4,7 +4,12 @@ import type {
   ResolvedDevtoolsExtension,
 } from '../../types.js'
 import { formatValue } from '../format.js'
-import { pillStyle, scrollPaneStyle, sectionHeadingStyle, theme } from '../theme.js'
+import {
+  pillStyle,
+  scrollPaneStyle,
+  sectionHeadingStyle,
+  theme,
+} from '../theme.js'
 
 type Props = {
   extension: ResolvedDevtoolsExtension
@@ -59,10 +64,16 @@ function MetaRows({
     >
       {rows.map((row) => (
         <>
-          <dt key={`${row.label}:label`} style={{ color: theme.fgMuted, fontSize: 11 }}>
+          <dt
+            key={`${row.label}:label`}
+            style={{ color: theme.fgMuted, fontSize: 11 }}
+          >
             {row.label}
           </dt>
-          <dd key={`${row.label}:value`} style={{ color: theme.fg, fontSize: 11, margin: 0 }}>
+          <dd
+            key={`${row.label}:value`}
+            style={{ color: theme.fg, fontSize: 11, margin: 0 }}
+          >
             {formatValue(row.value, 80)}
           </dd>
         </>
@@ -71,11 +82,7 @@ function MetaRows({
   )
 }
 
-function Section({
-  section,
-}: {
-  section: DevtoolsExtensionSection
-}) {
+function Section({ section }: { section: DevtoolsExtensionSection }) {
   return (
     <section
       style={{
@@ -85,25 +92,29 @@ function Section({
         padding: 12,
       }}
     >
-      {section.title && (
-        <h3 style={sectionHeadingStyle()}>
-          {section.title}
-        </h3>
-      )}
+      {section.title && <h3 style={sectionHeadingStyle()}>{section.title}</h3>}
 
       {section.kind === 'badges' && (
-        <div style={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        <div
+          style={{
+            alignItems: 'center',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 8,
+          }}
+        >
           {section.badges.map((badge, index) => (
-            <span key={`${index}:${String(badge.value)}`} style={pillStyle(toneColor(badge.tone), true)}>
+            <span
+              key={`${index}:${String(badge.value)}`}
+              style={pillStyle(toneColor(badge.tone), true)}
+            >
               {formatValue(badge.value, 80)}
             </span>
           ))}
         </div>
       )}
 
-      {section.kind === 'rows' && (
-        <MetaRows rows={section.rows} />
-      )}
+      {section.kind === 'rows' && <MetaRows rows={section.rows} />}
 
       {section.kind === 'items' && (
         <div style={{ display: 'grid', gap: 0 }}>
@@ -117,7 +128,13 @@ function Section({
                 paddingTop: index === 0 ? 0 : 10,
               }}
             >
-              <div style={{ alignItems: 'center', display: 'flex', justifyContent: 'space-between' }}>
+              <div
+                style={{
+                  alignItems: 'center',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}
+              >
                 <strong style={{ color: theme.fg, fontSize: 12 }}>
                   {item.title}
                 </strong>
@@ -129,9 +146,7 @@ function Section({
               </div>
 
               {item.body && (
-                <div style={{ color: theme.fg, fontSize: 12 }}>
-                  {item.body}
-                </div>
+                <div style={{ color: theme.fg, fontSize: 12 }}>{item.body}</div>
               )}
 
               {item.rows && item.rows.length > 0 && (
@@ -169,7 +184,10 @@ export function ExtensionTab({ extension }: Props) {
   return (
     <div style={scrollPaneStyle()}>
       {sections.map((section, index) => (
-        <Section key={`${extension.id}:${section.kind}:${section.title ?? index}`} section={section} />
+        <Section
+          key={`${extension.id}:${section.kind}:${section.title ?? index}`}
+          section={section}
+        />
       ))}
     </div>
   )

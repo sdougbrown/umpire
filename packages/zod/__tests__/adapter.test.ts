@@ -53,9 +53,13 @@ describe('createZodAdapter', () => {
     const ump = umpire<typeof fields, { plan: 'personal' | 'business' }>({
       fields,
       rules: [
-        enabledWhen('companyName', (_values, conditions) => conditions.plan === 'business', {
-          reason: 'business plan required',
-        }),
+        enabledWhen(
+          'companyName',
+          (_values, conditions) => conditions.plan === 'business',
+          {
+            reason: 'business plan required',
+          },
+        ),
       ],
     })
 
@@ -68,7 +72,11 @@ describe('createZodAdapter', () => {
     const availability = ump.check(values, { plan: 'personal' })
     const result = validation.run(availability, values)
 
-    expect(result.schemaFields).toEqual(['email', 'password', 'confirmPassword'])
+    expect(result.schemaFields).toEqual([
+      'email',
+      'password',
+      'confirmPassword',
+    ])
     expect(result.errors).toEqual({
       confirmPassword: 'Passwords do not match',
     })
@@ -79,20 +87,24 @@ describe('createZodAdapter', () => {
   })
 
   test('throws if given a z.object instead of per-field schemas', () => {
-    expect(() => createZodAdapter({
-      schemas: z.object({
-        email: z.string().email(),
-      }) as never,
-    })).toThrow(
+    expect(() =>
+      createZodAdapter({
+        schemas: z.object({
+          email: z.string().email(),
+        }) as never,
+      }),
+    ).toThrow(
       'createZodAdapter() expects per-field schemas, not a z.object(). ' +
-      'Pass formSchema.shape instead of formSchema.',
+        'Pass formSchema.shape instead of formSchema.',
     )
   })
 
   test('throws if given a non-object instead of per-field schemas', () => {
-    expect(() => createZodAdapter({
-      schemas: undefined as never,
-    })).toThrow('createZodAdapter() expects a per-field schema map object.')
+    expect(() =>
+      createZodAdapter({
+        schemas: undefined as never,
+      }),
+    ).toThrow('createZodAdapter() expects a per-field schema map object.')
   })
 
   test('rejects foul field values when rejectFoul is true', () => {
@@ -114,20 +126,33 @@ describe('createZodAdapter', () => {
       rules: [
         fairWhen(
           'vehicleType',
-          (value, values) => value === values.spotType || values.spotType === 'standard',
+          (value, values) =>
+            value === values.spotType || values.spotType === 'standard',
           { reason: 'Vehicle type does not match the reserved spot' },
         ),
       ],
     })
 
     // Electric vehicle in an electric spot — fair, passes
-    const fairAvailability = ump.check({ spotType: 'electric', vehicleType: 'electric' })
-    const fairResult = validation.run(fairAvailability, { spotType: 'electric', vehicleType: 'electric' })
+    const fairAvailability = ump.check({
+      spotType: 'electric',
+      vehicleType: 'electric',
+    })
+    const fairResult = validation.run(fairAvailability, {
+      spotType: 'electric',
+      vehicleType: 'electric',
+    })
     expect(fairResult.result.success).toBe(true)
 
     // Gas vehicle in an electric spot — foul, rejected with reason as error
-    const foulAvailability = ump.check({ spotType: 'electric', vehicleType: 'gas' })
-    const foulResult = validation.run(foulAvailability, { spotType: 'electric', vehicleType: 'gas' })
+    const foulAvailability = ump.check({
+      spotType: 'electric',
+      vehicleType: 'gas',
+    })
+    const foulResult = validation.run(foulAvailability, {
+      spotType: 'electric',
+      vehicleType: 'gas',
+    })
     expect(foulResult.result.success).toBe(false)
     expect(foulResult.errors).toEqual({
       vehicleType: 'Vehicle type does not match the reserved spot',

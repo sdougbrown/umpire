@@ -4,10 +4,7 @@ import { umpire } from '../src/umpire.js'
 
 describe('surface validation metadata', () => {
   test.each([
-    [
-      'function',
-      (value: string) => value === 'ok',
-    ],
+    ['function', (value: string) => value === 'ok'],
     [
       'named check',
       {
@@ -27,32 +24,35 @@ describe('surface validation metadata', () => {
         test: (value: string) => value === 'ok',
       },
     ],
-  ])('supports %s validator shapes in validators config', (_label, validator) => {
-    const ump = umpire({
-      fields: {
-        alpha: { required: true, isEmpty: (value: unknown) => !value },
-      },
-      rules: [],
-      validators: {
-        alpha: validator,
-      },
-    })
+  ])(
+    'supports %s validator shapes in validators config',
+    (_label, validator) => {
+      const ump = umpire({
+        fields: {
+          alpha: { required: true, isEmpty: (value: unknown) => !value },
+        },
+        rules: [],
+        validators: {
+          alpha: validator,
+        },
+      })
 
-    expect(ump.check({ alpha: 'ok' }).alpha).toMatchObject({
-      enabled: true,
-      fair: true,
-      required: true,
-      valid: true,
-    })
+      expect(ump.check({ alpha: 'ok' }).alpha).toMatchObject({
+        enabled: true,
+        fair: true,
+        required: true,
+        valid: true,
+      })
 
-    expect(ump.check({ alpha: 'nope' }).alpha).toMatchObject({
-      enabled: true,
-      fair: true,
-      required: true,
-      valid: false,
-    })
-    expect(ump.check({ alpha: 'nope' }).alpha.error).toBeUndefined()
-  })
+      expect(ump.check({ alpha: 'nope' }).alpha).toMatchObject({
+        enabled: true,
+        fair: true,
+        required: true,
+        valid: false,
+      })
+      expect(ump.check({ alpha: 'nope' }).alpha.error).toBeUndefined()
+    },
+  )
 
   test('surfaces configured validation errors for failing validators', () => {
     const ump = umpire({
@@ -63,7 +63,9 @@ describe('surface validation metadata', () => {
       validators: {
         email: {
           validator: {
-            safeParse: (value: unknown) => ({ success: value === 'ok@example.com' }),
+            safeParse: (value: unknown) => ({
+              success: value === 'ok@example.com',
+            }),
           },
           error: 'Must be a valid email address',
         },
@@ -90,9 +92,10 @@ describe('surface validation metadata', () => {
       },
       rules: [],
       validators: {
-        username: (value: string) => value === 'doug'
-          ? { valid: true }
-          : { valid: false, error: 'Username is taken' },
+        username: (value: string) =>
+          value === 'doug'
+            ? { valid: true }
+            : { valid: false, error: 'Username is taken' },
       },
     })
 
@@ -154,9 +157,14 @@ describe('surface validation metadata', () => {
         companyName: { required: true, isEmpty: (value: unknown) => !value },
       },
       rules: [
-        enabledWhen('companyName', (_values, conditions: { plan?: string }) => conditions.plan === 'business', {
-          reason: 'business plan required',
-        }),
+        enabledWhen(
+          'companyName',
+          (_values, conditions: { plan?: string }) =>
+            conditions.plan === 'business',
+          {
+            reason: 'business plan required',
+          },
+        ),
       ],
       validators: {
         companyName: {
@@ -234,7 +242,9 @@ describe('surface validation metadata', () => {
       validators: {
         email: {
           validator: {
-            safeParse: (value: unknown) => ({ success: value === 'ok@example.com' }),
+            safeParse: (value: unknown) => ({
+              success: value === 'ok@example.com',
+            }),
           },
           error: 'Must be a valid email address',
         },
@@ -258,28 +268,32 @@ describe('surface validation metadata', () => {
   })
 
   test('throws for validator config that references an unknown field', () => {
-    expect(() => umpire({
-      fields: {
-        alpha: {},
-      },
-      rules: [],
-      validators: {
-        beta: (value: unknown) => value === 'ok',
-      } as never,
-    })).toThrow('Unknown field "beta" referenced by validators')
+    expect(() =>
+      umpire({
+        fields: {
+          alpha: {},
+        },
+        rules: [],
+        validators: {
+          beta: (value: unknown) => value === 'ok',
+        } as never,
+      }),
+    ).toThrow('Unknown field "beta" referenced by validators')
   })
 
   test('throws for invalid validator config shapes', () => {
-    expect(() => umpire({
-      fields: {
-        alpha: {},
-      },
-      rules: [],
-      validators: {
-        alpha: {
-          validator: { nope: true },
+    expect(() =>
+      umpire({
+        fields: {
+          alpha: {},
         },
-      } as never,
-    })).toThrow('Invalid validator configured for field "alpha"')
+        rules: [],
+        validators: {
+          alpha: {
+            validator: { nope: true },
+          },
+        } as never,
+      }),
+    ).toThrow('Invalid validator configured for field "alpha"')
   })
 })

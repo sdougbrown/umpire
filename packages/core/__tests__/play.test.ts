@@ -19,7 +19,12 @@ describe('play', () => {
         dependent: {},
         other: {},
       },
-      rules: [enabledWhen<TestFields, TestConditions>('dependent', (values) => values.toggle === true)],
+      rules: [
+        enabledWhen<TestFields, TestConditions>(
+          'dependent',
+          (values) => values.toggle === true,
+        ),
+      ],
     })
 
     const recommendations = ump.play(
@@ -43,7 +48,12 @@ describe('play', () => {
         dependent: {},
         other: {},
       },
-      rules: [enabledWhen<TestFields, TestConditions>('dependent', (values) => values.toggle === true)],
+      rules: [
+        enabledWhen<TestFields, TestConditions>(
+          'dependent',
+          (values) => values.toggle === true,
+        ),
+      ],
     })
 
     const recommendations = ump.play(
@@ -61,7 +71,12 @@ describe('play', () => {
         dependent: { isEmpty: (value) => value === '' || value == null },
         other: {},
       },
-      rules: [enabledWhen<TestFields, TestConditions>('dependent', (values) => values.toggle === true)],
+      rules: [
+        enabledWhen<TestFields, TestConditions>(
+          'dependent',
+          (values) => values.toggle === true,
+        ),
+      ],
     })
 
     const recommendations = ump.play(
@@ -79,7 +94,12 @@ describe('play', () => {
         dependent: { default: '09:00' },
         other: {},
       },
-      rules: [enabledWhen<TestFields, TestConditions>('dependent', (values) => values.toggle === true)],
+      rules: [
+        enabledWhen<TestFields, TestConditions>(
+          'dependent',
+          (values) => values.toggle === true,
+        ),
+      ],
     })
 
     const recommendations = ump.play(
@@ -98,8 +118,14 @@ describe('play', () => {
         other: {},
       },
       rules: [
-        enabledWhen<TestFields, TestConditions>('dependent', (values) => values.toggle === true),
-        enabledWhen<TestFields, TestConditions>('other', (values) => values.toggle === true),
+        enabledWhen<TestFields, TestConditions>(
+          'dependent',
+          (values) => values.toggle === true,
+        ),
+        enabledWhen<TestFields, TestConditions>(
+          'other',
+          (values) => values.toggle === true,
+        ),
       ],
     })
 
@@ -109,8 +135,16 @@ describe('play', () => {
     )
 
     expect(recommendations).toEqual([
-      { field: 'dependent', reason: 'condition not met', suggestedValue: '09:00' },
-      { field: 'other', reason: 'condition not met', suggestedValue: undefined },
+      {
+        field: 'dependent',
+        reason: 'condition not met',
+        suggestedValue: '09:00',
+      },
+      {
+        field: 'other',
+        reason: 'condition not met',
+        suggestedValue: undefined,
+      },
     ])
   })
 
@@ -152,13 +186,23 @@ describe('play', () => {
         other: { default: '09:00' },
       },
       rules: [
-        enabledWhen<TestFields, TestConditions>('dependent', (values) => values.toggle === true),
-        enabledWhen<TestFields, TestConditions>('other', (values) => values.toggle === true),
+        enabledWhen<TestFields, TestConditions>(
+          'dependent',
+          (values) => values.toggle === true,
+        ),
+        enabledWhen<TestFields, TestConditions>(
+          'other',
+          (values) => values.toggle === true,
+        ),
       ],
     })
 
-    const before = { values: { toggle: true, dependent: 'stale', other: '12:00' } }
-    const after = { values: { toggle: false, dependent: 'stale', other: '12:00' } }
+    const before = {
+      values: { toggle: true, dependent: 'stale', other: '12:00' },
+    }
+    const after = {
+      values: { toggle: false, dependent: 'stale', other: '12:00' },
+    }
     const recommendations = ump.play(before, after)
 
     const resetValues = { ...after.values }

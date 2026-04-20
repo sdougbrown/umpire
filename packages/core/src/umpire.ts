@@ -13,7 +13,12 @@ import {
 } from './field.js'
 import type { FieldInput, NormalizeFields } from './field.js'
 import { foulMap } from './foul-map.js'
-import { buildGraph, detectCycles, exportGraph, topologicalSort } from './graph.js'
+import {
+  buildGraph,
+  detectCycles,
+  exportGraph,
+  topologicalSort,
+} from './graph.js'
 import {
   enabledWhen,
   fairWhen,
@@ -53,7 +58,9 @@ import type {
 
 const EMPTY_CONDITIONS = Object.freeze({}) as Record<string, unknown>
 
-function createEmptyConditions<C extends Record<string, unknown>>(conditions: C | undefined): C {
+function createEmptyConditions<C extends Record<string, unknown>>(
+  conditions: C | undefined,
+): C {
   return (conditions ?? EMPTY_CONDITIONS) as C
 }
 
@@ -73,7 +80,9 @@ function getChangedFields<
     return []
   }
 
-  return fieldNames.filter((field) => !Object.is(before.values[field], after.values[field]))
+  return fieldNames.filter(
+    (field) => !Object.is(before.values[field], after.values[field]),
+  )
 }
 
 function normalizeValidators<F extends Record<string, FieldDef>>(
@@ -88,19 +97,25 @@ function normalizeValidators<F extends Record<string, FieldDef>>(
 
   const fieldNames = new Set(Object.keys(fields))
 
-  for (const [field, entry] of Object.entries(validators) as Array<[keyof F & string, unknown]>) {
+  for (const [field, entry] of Object.entries(validators) as Array<
+    [keyof F & string, unknown]
+  >) {
     if (entry === undefined) {
       continue
     }
 
     if (!fieldNames.has(field)) {
-      throw new Error(`[@umpire/core] Unknown field "${field}" referenced by validators`)
+      throw new Error(
+        `[@umpire/core] Unknown field "${field}" referenced by validators`,
+      )
     }
 
     const normalizedEntry = normalizeValidationEntry(entry)
 
     if (!normalizedEntry) {
-      throw new Error(`[@umpire/core] Invalid validator configured for field "${field}"`)
+      throw new Error(
+        `[@umpire/core] Invalid validator configured for field "${field}"`,
+      )
     }
 
     normalized[field] = normalizedEntry
@@ -113,8 +128,14 @@ function buildFieldEdgeLookup<F extends Record<string, FieldDef>>(
   graph: UmpireGraph,
   fieldNames: Array<keyof F & string>,
 ) {
-  const incomingByField = {} as Record<keyof F & string, Array<{ field: string; type: string }>>
-  const outgoingByField = {} as Record<keyof F & string, Array<{ field: string; type: string }>>
+  const incomingByField = {} as Record<
+    keyof F & string,
+    Array<{ field: string; type: string }>
+  >
+  const outgoingByField = {} as Record<
+    keyof F & string,
+    Array<{ field: string; type: string }>
+  >
 
   for (const field of fieldNames) {
     incomingByField[field] = []
@@ -122,8 +143,14 @@ function buildFieldEdgeLookup<F extends Record<string, FieldDef>>(
   }
 
   for (const edge of graph.edges) {
-    incomingByField[edge.to as keyof F & string].push({ field: edge.from, type: edge.type })
-    outgoingByField[edge.from as keyof F & string].push({ field: edge.to, type: edge.type })
+    incomingByField[edge.to as keyof F & string].push({
+      field: edge.from,
+      type: edge.type,
+    })
+    outgoingByField[edge.from as keyof F & string].push({
+      field: edge.to,
+      type: edge.type,
+    })
   }
 
   return {
@@ -163,11 +190,13 @@ function inspectRuleTraceAttachments<
       return []
     }
 
-    return [{
-      kind: attachment.kind,
-      id: attachment.id,
-      ...result,
-    }]
+    return [
+      {
+        kind: attachment.kind,
+        id: attachment.id,
+        ...result,
+      },
+    ]
   })
 
   return trace.length > 0 ? trace : undefined
@@ -196,10 +225,7 @@ function withRuleTrace<
 function didRulePass<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
->(
-  rule: Rule<F, C>,
-  evaluation: RuleEvaluation,
-): boolean {
+>(rule: Rule<F, C>, evaluation: RuleEvaluation): boolean {
   return isFairRule(rule) ? evaluation.fair !== false : evaluation.enabled
 }
 
@@ -216,9 +242,12 @@ function normalizeConfig<
   const normalizedFields = {} as NormalizeFields<F>
   const attachedRules: Rule<NormalizeFields<F>, C>[] = []
 
-  for (const [fieldKey, rawField] of Object.entries(rawFields) as Array<[keyof F & string, F[keyof F & string]]>) {
+  for (const [fieldKey, rawField] of Object.entries(rawFields) as Array<
+    [keyof F & string, F[keyof F & string]]
+  >) {
     if (!isFieldBuilder(rawField)) {
-      normalizedFields[fieldKey] = rawField as unknown as NormalizeFields<F>[keyof F & string]
+      normalizedFields[fieldKey] =
+        rawField as unknown as NormalizeFields<F>[keyof F & string]
       continue
     }
 
@@ -229,15 +258,21 @@ function normalizeConfig<
       )
     }
 
-    normalizedFields[fieldKey] = getFieldBuilderDef(rawField) as NormalizeFields<F>[keyof F & string]
+    normalizedFields[fieldKey] = getFieldBuilderDef(
+      rawField,
+    ) as NormalizeFields<F>[keyof F & string]
 
     for (const attachedRule of getFieldBuilderRules(rawField)) {
       if (attachedRule.kind === 'enabledWhen') {
         attachedRules.push(
           enabledWhen<NormalizeFields<F>, C>(
             fieldKey,
-            attachedRule.predicate as Parameters<typeof enabledWhen<NormalizeFields<F>, C>>[1],
-            attachedRule.options as Parameters<typeof enabledWhen<NormalizeFields<F>, C>>[2],
+            attachedRule.predicate as Parameters<
+              typeof enabledWhen<NormalizeFields<F>, C>
+            >[1],
+            attachedRule.options as Parameters<
+              typeof enabledWhen<NormalizeFields<F>, C>
+            >[2],
           ),
         )
         continue
@@ -247,8 +282,12 @@ function normalizeConfig<
         attachedRules.push(
           fairWhen<NormalizeFields<F>, C>(
             fieldKey,
-            attachedRule.predicate as Parameters<typeof fairWhen<NormalizeFields<F>, C>>[1],
-            attachedRule.options as Parameters<typeof fairWhen<NormalizeFields<F>, C>>[2],
+            attachedRule.predicate as Parameters<
+              typeof fairWhen<NormalizeFields<F>, C>
+            >[1],
+            attachedRule.options as Parameters<
+              typeof fairWhen<NormalizeFields<F>, C>
+            >[2],
           ),
         )
         continue
@@ -258,7 +297,9 @@ function normalizeConfig<
         requires<NormalizeFields<F>, C>(
           fieldKey,
           attachedRule.dependency as keyof NormalizeFields<F> & string,
-          attachedRule.options as Parameters<typeof requires<NormalizeFields<F>, C>>[2],
+          attachedRule.options as Parameters<
+            typeof requires<NormalizeFields<F>, C>
+          >[2],
         ),
       )
     }
@@ -298,14 +339,20 @@ function describeRuleForField<
   if (metadata?.kind === 'enabledWhen') {
     const source = getSourceField(metadata.predicate)
 
-    return withRuleTrace({
-      rule: 'enabledWhen',
-      passed: evaluation.enabled,
-      reason: evaluation.reason,
-      predicate: metadata.predicate.toString(),
-      source,
-      sourceValue: source ? values[source] : undefined,
-    }, metadata, values, conditions, prev)
+    return withRuleTrace(
+      {
+        rule: 'enabledWhen',
+        passed: evaluation.enabled,
+        reason: evaluation.reason,
+        predicate: metadata.predicate.toString(),
+        source,
+        sourceValue: source ? values[source] : undefined,
+      },
+      metadata,
+      values,
+      conditions,
+      prev,
+    )
   }
 
   if (metadata?.kind === 'disables') {
@@ -316,24 +363,36 @@ function describeRuleForField<
         : metadata.source(values, conditions)
     const source = sourceField ?? metadata.source.toString()
 
-    return withRuleTrace({
-      rule: 'disables',
-      passed: evaluation.enabled,
-      reason: evaluation.reason,
-      source,
-      sourceValue: sourceField ? values[sourceField] : sourceSatisfied,
-      sourceSatisfied,
-    }, metadata, values, conditions, prev)
+    return withRuleTrace(
+      {
+        rule: 'disables',
+        passed: evaluation.enabled,
+        reason: evaluation.reason,
+        source,
+        sourceValue: sourceField ? values[sourceField] : sourceSatisfied,
+        sourceSatisfied,
+      },
+      metadata,
+      values,
+      conditions,
+      prev,
+    )
   }
 
   if (metadata?.kind === 'fairWhen') {
-    return withRuleTrace({
-      rule: 'fair',
-      passed: evaluation.fair !== false,
-      reason: evaluation.reason,
-      predicate: metadata.predicate.toString(),
-      value: values[field],
-    }, metadata, values, conditions, prev)
+    return withRuleTrace(
+      {
+        rule: 'fair',
+        passed: evaluation.fair !== false,
+        reason: evaluation.reason,
+        predicate: metadata.predicate.toString(),
+        value: values[field],
+      },
+      metadata,
+      values,
+      conditions,
+      prev,
+    )
   }
 
   if (metadata?.kind === 'requires') {
@@ -343,7 +402,9 @@ function describeRuleForField<
       if (typeof dependency !== 'string') {
         return {
           dependency: dependencyField ?? dependency.toString(),
-          dependencyValue: dependencyField ? values[dependencyField] : undefined,
+          dependencyValue: dependencyField
+            ? values[dependencyField]
+            : undefined,
           satisfied: dependency(values, conditions),
         }
       }
@@ -356,17 +417,23 @@ function describeRuleForField<
       }
     })
 
-    return withRuleTrace({
-      rule: 'requires',
-      passed: evaluation.enabled,
-      reason: evaluation.reason,
-      dependency: dependencies[0]?.dependency,
-      dependencyValue: dependencies[0]?.dependencyValue,
-      satisfied: dependencies[0]?.satisfied,
-      dependencyEnabled: dependencies[0]?.dependencyEnabled,
-      dependencyFair: dependencies[0]?.dependencyFair,
-      dependencies,
-    }, metadata, values, conditions, prev)
+    return withRuleTrace(
+      {
+        rule: 'requires',
+        passed: evaluation.enabled,
+        reason: evaluation.reason,
+        dependency: dependencies[0]?.dependency,
+        dependencyValue: dependencies[0]?.dependencyValue,
+        satisfied: dependencies[0]?.satisfied,
+        dependencyEnabled: dependencies[0]?.dependencyEnabled,
+        dependencyFair: dependencies[0]?.dependencyFair,
+        dependencies,
+      },
+      metadata,
+      values,
+      conditions,
+      prev,
+    )
   }
 
   if (metadata?.kind === 'oneOf') {
@@ -380,30 +447,39 @@ function describeRuleForField<
       conditions,
     )
     const thisBranch =
-      Object.entries(metadata.branches).find(([, branchFields]) => branchFields.includes(field))?.[0] ?? null
+      Object.entries(metadata.branches).find(([, branchFields]) =>
+        branchFields.includes(field),
+      )?.[0] ?? null
 
-    return withRuleTrace({
-      rule: 'oneOf',
-      passed: evaluation.enabled,
-      reason: evaluation.reason,
-      group: metadata.groupName,
-      activeBranch: resolution.activeBranch,
-      thisBranch,
-    }, metadata, values, conditions, prev)
+    return withRuleTrace(
+      {
+        rule: 'oneOf',
+        passed: evaluation.enabled,
+        reason: evaluation.reason,
+        group: metadata.groupName,
+        activeBranch: resolution.activeBranch,
+        thisBranch,
+      },
+      metadata,
+      values,
+      conditions,
+      prev,
+    )
   }
 
   if (metadata?.kind === 'anyOf') {
-    const inner: ChallengeTrace['directReasons'] = metadata.rules.map((innerRule) =>
-      describeRuleForField(
-        innerRule,
-        field,
-        fields,
-        values,
-        conditions,
-        prev,
-        availability,
-        baseRuleCache,
-      ),
+    const inner: ChallengeTrace['directReasons'] = metadata.rules.map(
+      (innerRule) =>
+        describeRuleForField(
+          innerRule,
+          field,
+          fields,
+          values,
+          conditions,
+          prev,
+          availability,
+          baseRuleCache,
+        ),
     )
 
     return {
@@ -427,14 +503,21 @@ function describeRuleForField<
             prev,
             availability,
             baseRuleCache,
-          ))
+          ),
+        )
 
-        return [branchName, {
-          passed: inner.every((entry) => entry.passed),
-          inner,
-        }]
+        return [
+          branchName,
+          {
+            passed: inner.every((entry) => entry.passed),
+            inner,
+          },
+        ]
       }),
-    ) as Record<string, { passed: boolean; inner: ChallengeTrace['directReasons'] }>
+    ) as Record<
+      string,
+      { passed: boolean; inner: ChallengeTrace['directReasons'] }
+    >
 
     const matchedBranches = Object.entries(branches)
       .filter(([, branch]) => branch.passed)
@@ -451,11 +534,17 @@ function describeRuleForField<
     }
   }
 
-  return withRuleTrace({
-    rule: rule.type,
-    passed: didRulePass(rule, evaluation),
-    reason: evaluation.reason,
-  }, metadata, values, conditions, prev)
+  return withRuleTrace(
+    {
+      rule: rule.type,
+      passed: didRulePass(rule, evaluation),
+      reason: evaluation.reason,
+    },
+    metadata,
+    values,
+    conditions,
+    prev,
+  )
 }
 
 function collectFailedDependenciesForRule<
@@ -485,7 +574,11 @@ function collectFailedDependenciesForRule<
       baseRuleCache,
     )
 
-    if (metadata.constraint === 'fair' ? evaluation.fair !== false : evaluation.enabled) {
+    if (
+      metadata.constraint === 'fair'
+        ? evaluation.fair !== false
+        : evaluation.enabled
+    ) {
       return []
     }
 
@@ -521,7 +614,11 @@ function collectFailedDependenciesForRule<
       baseRuleCache,
     )
 
-    if (metadata.constraint === 'fair' ? evaluation.fair !== false : evaluation.enabled) {
+    if (
+      metadata.constraint === 'fair'
+        ? evaluation.fair !== false
+        : evaluation.enabled
+    ) {
       return []
     }
 
@@ -566,16 +663,25 @@ function collectFailedDependenciesForRule<
     return []
   }
 
-  return metadata.dependencies.filter((dependency): dependency is keyof F & string => {
-    if (typeof dependency !== 'string') {
-      return false
-    }
+  return metadata.dependencies.filter(
+    (dependency): dependency is keyof F & string => {
+      if (typeof dependency !== 'string') {
+        return false
+      }
 
-    const dependencySatisfied = isSatisfied(values[dependency], fields[dependency])
-    const dependencyAvailability = availability[dependency]
+      const dependencySatisfied = isSatisfied(
+        values[dependency],
+        fields[dependency],
+      )
+      const dependencyAvailability = availability[dependency]
 
-    return !(dependencySatisfied && dependencyAvailability.enabled && dependencyAvailability.fair)
-  })
+      return !(
+        dependencySatisfied &&
+        dependencyAvailability.enabled &&
+        dependencyAvailability.fair
+      )
+    },
+  )
 }
 
 function describeCausedBy<
@@ -705,25 +811,27 @@ function getStructuralRequirementsFromRule<
 
   return metadata.dependencies.flatMap((dependency) => {
     const dependencyField =
-      typeof dependency === 'string'
-        ? dependency
-        : getSourceField(dependency)
+      typeof dependency === 'string' ? dependency : getSourceField(dependency)
 
     if (!dependencyField) {
       return []
     }
 
-    return [{
-      target: rule.targets[0],
-      dependency: dependencyField,
-    }]
+    return [
+      {
+        target: rule.targets[0],
+        dependency: dependencyField,
+      },
+    ]
   })
 }
 
 function getFieldSourceDisableTargetsFromRule<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
->(rule: Rule<F, C>): { source: keyof F & string; targets: Array<keyof F & string> } | null {
+>(
+  rule: Rule<F, C>,
+): { source: keyof F & string; targets: Array<keyof F & string> } | null {
   const metadata = getInternalRuleMetadata(rule)
 
   // Only a plain field-name source proves the hard contradiction we care
@@ -809,7 +917,9 @@ function validateStructuralContradictions<
 
     const disableTargets = getFieldSourceDisableTargetsFromRule(rule)
     if (disableTargets) {
-      const targets = disablesBySource.get(disableTargets.source) ?? new Set<keyof F & string>()
+      const targets =
+        disablesBySource.get(disableTargets.source) ??
+        new Set<keyof F & string>()
 
       for (const target of disableTargets.targets) {
         targets.add(target)
@@ -835,7 +945,11 @@ function validateStructuralContradictions<
       const targetBranch = group.branchByField.get(target)
       const dependencyBranch = group.branchByField.get(dependency)
 
-      if (!targetBranch || !dependencyBranch || targetBranch === dependencyBranch) {
+      if (
+        !targetBranch ||
+        !dependencyBranch ||
+        targetBranch === dependencyBranch
+      ) {
         continue
       }
 
@@ -857,7 +971,9 @@ function validateRules<
     const { ordering, informational } = getGraphSourceInfo(rule)
 
     if (metadata?.kind === 'oneOf') {
-      for (const [branchName, branchFields] of Object.entries(metadata.branches)) {
+      for (const [branchName, branchFields] of Object.entries(
+        metadata.branches,
+      )) {
         for (const field of branchFields) {
           if (!fieldNames.has(field)) {
             throw new Error(
@@ -870,7 +986,9 @@ function validateRules<
 
     for (const field of [...ordering, ...informational, ...rule.targets]) {
       if (!fieldNames.has(field)) {
-        throw new Error(`[@umpire/core] Unknown field "${field}" referenced by ${rule.type} rule`)
+        throw new Error(
+          `[@umpire/core] Unknown field "${field}" referenced by ${rule.type} rule`,
+        )
       }
     }
   }
@@ -887,7 +1005,9 @@ export function umpire<
   validators?: ValidationMap<NormalizeFields<FInput>>
 }): Umpire<NormalizeFields<FInput>, C> {
   const { fields, rules } = normalizeConfig(config.fields, config.rules)
-  const fieldNames = Object.keys(fields) as Array<keyof NormalizeFields<FInput> & string>
+  const fieldNames = Object.keys(fields) as Array<
+    keyof NormalizeFields<FInput> & string
+  >
   const validators = normalizeValidators(fields, config.validators)
   const hasValidators = Object.keys(validators).length > 0
 
@@ -899,7 +1019,10 @@ export function umpire<
   const rulesByTarget = indexRulesByTarget(rules)
   const rulesByTargetPhase = indexRulesByTargetPhase(rulesByTarget)
   const exportedGraph = exportGraph(graph)
-  const { incomingByField, outgoingByField } = buildFieldEdgeLookup(exportedGraph, fieldNames)
+  const { incomingByField, outgoingByField } = buildFieldEdgeLookup(
+    exportedGraph,
+    fieldNames,
+  )
 
   function exportCompiledGraph(): UmpireGraph {
     return {
@@ -948,7 +1071,9 @@ export function umpire<
 
       const result = runValidationEntry(
         validator,
-        values[field] as NonNullable<FieldValues<NormalizeFields<FInput>>[typeof field]>,
+        values[field] as NonNullable<
+          FieldValues<NormalizeFields<FInput>>[typeof field]
+        >,
       )
 
       const nextStatus = { ...status, valid: result.valid }
@@ -982,10 +1107,8 @@ export function umpire<
     for (const field of fieldNames) {
       const beforeStatus = beforeAvailability[field]
       const afterStatus = afterAvailability[field]
-      const disabledTransition =
-        beforeStatus.enabled && !afterStatus.enabled
-      const foulTransition =
-        beforeStatus.fair && afterStatus.fair === false
+      const disabledTransition = beforeStatus.enabled && !afterStatus.enabled
+      const foulTransition = beforeStatus.fair && afterStatus.fair === false
 
       if (!disabledTransition && !foulTransition) {
         continue
@@ -1006,7 +1129,9 @@ export function umpire<
 
       recommendations.push({
         field,
-        reason: afterStatus.reason ?? (disabledTransition ? 'field disabled' : 'field fouled'),
+        reason:
+          afterStatus.reason ??
+          (disabledTransition ? 'field disabled' : 'field fouled'),
         suggestedValue,
       })
     }
@@ -1019,11 +1144,15 @@ export function umpire<
 
     for (const field of fieldNames) {
       if (overrides && field in overrides) {
-        values[field] = overrides[field] as FieldValues<NormalizeFields<FInput>>[typeof field]
+        values[field] = overrides[field] as FieldValues<
+          NormalizeFields<FInput>
+        >[typeof field]
         continue
       }
 
-      values[field] = fields[field].default as FieldValues<NormalizeFields<FInput>>[typeof field]
+      values[field] = fields[field].default as FieldValues<
+        NormalizeFields<FInput>
+      >[typeof field]
     }
 
     return values
@@ -1042,28 +1171,36 @@ export function umpire<
     const resolvedConditions = createEmptyConditions(conditions)
     const typedValues = values as FieldValues<NormalizeFields<FInput>>
     const typedPrev = prev as FieldValues<NormalizeFields<FInput>> | undefined
-    const availability = checkAvailability(typedValues, resolvedConditions, typedPrev)
-    const baseRuleCache = new Map<Rule<NormalizeFields<FInput>, C>, Map<string, RuleEvaluation>>()
+    const availability = checkAvailability(
+      typedValues,
+      resolvedConditions,
+      typedPrev,
+    )
+    const baseRuleCache = new Map<
+      Rule<NormalizeFields<FInput>, C>,
+      Map<string, RuleEvaluation>
+    >()
     const targetRules = rulesByTarget.get(field) ?? []
-    const directReasons = targetRules
-      .map((rule) =>
-        describeRuleForField(
-          rule,
-          field,
-          fields,
-          typedValues,
-          resolvedConditions,
-          typedPrev,
-          availability,
-          baseRuleCache,
-        ),
-      )
+    const directReasons = targetRules.map((rule) =>
+      describeRuleForField(
+        rule,
+        field,
+        fields,
+        typedValues,
+        resolvedConditions,
+        typedPrev,
+        availability,
+        baseRuleCache,
+      ),
+    )
 
     const oneOfRule = targetRules.find((rule) => {
       const metadata = getInternalRuleMetadata(rule)
       return metadata?.kind === 'oneOf'
     })
-    const oneOfMetadata = oneOfRule ? getInternalRuleMetadata(oneOfRule) : undefined
+    const oneOfMetadata = oneOfRule
+      ? getInternalRuleMetadata(oneOfRule)
+      : undefined
     const oneOfResolution =
       oneOfMetadata?.kind === 'oneOf'
         ? {
@@ -1108,8 +1245,14 @@ export function umpire<
   ): ScorecardResult<NormalizeFields<FInput>, C> {
     const { before, includeChallenge = false } = options
     const typedValues = snapshot.values as FieldValues<NormalizeFields<FInput>>
-    const typedPrev = before?.values as FieldValues<NormalizeFields<FInput>> | undefined
-    const structuralCheck = checkAvailability(typedValues, snapshot.conditions, typedPrev)
+    const typedPrev = before?.values as
+      | FieldValues<NormalizeFields<FInput>>
+      | undefined
+    const structuralCheck = checkAvailability(
+      typedValues,
+      snapshot.conditions,
+      typedPrev,
+    )
     const check = attachValidationMetadata(typedValues, structuralCheck)
     const changedFields = getChangedFields(
       fieldNames,
@@ -1131,8 +1274,12 @@ export function umpire<
     const foulsByField = foulMap(fouls)
     const changedFieldSet = new Set(changedFields)
     const fouledFields = fouls.map((foul) => foul.field)
-    const directlyFouledFields = fouledFields.filter((field) => changedFieldSet.has(field))
-    const cascadingFields = fouledFields.filter((field) => !changedFieldSet.has(field))
+    const directlyFouledFields = fouledFields.filter((field) =>
+      changedFieldSet.has(field),
+    )
+    const cascadingFields = fouledFields.filter(
+      (field) => !changedFieldSet.has(field),
+    )
     const cascadingFieldSet = new Set(cascadingFields)
 
     const scorecardFields = Object.fromEntries(
@@ -1140,7 +1287,10 @@ export function umpire<
         const availability = check[field]
         const value = typedValues[field]
         const present = !isEmptyPresent(value)
-        const scorecardField: ScorecardResult<NormalizeFields<FInput>, C>['fields'][typeof field] = {
+        const scorecardField: ScorecardResult<
+          NormalizeFields<FInput>,
+          C
+        >['fields'][typeof field] = {
           field,
           value,
           present,
@@ -1156,7 +1306,12 @@ export function umpire<
           incoming: incomingByField[field],
           outgoing: outgoingByField[field],
           trace: includeChallenge
-            ? buildChallenge(field, snapshot.values, snapshot.conditions, before?.values)
+            ? buildChallenge(
+                field,
+                snapshot.values,
+                snapshot.conditions,
+                before?.values,
+              )
             : undefined,
         }
 
@@ -1168,10 +1323,7 @@ export function umpire<
           scorecardField.error = availability.error
         }
 
-        return [
-          field,
-          scorecardField,
-        ]
+        return [field, scorecardField]
       }),
     ) as ScorecardResult<NormalizeFields<FInput>, C>['fields']
 
@@ -1192,11 +1344,7 @@ export function umpire<
   }
 
   return {
-    check(
-      values: InputValues,
-      conditions?: C,
-      prev?: InputValues,
-    ) {
+    check(values: InputValues, conditions?: C, prev?: InputValues) {
       const typedValues = values as FieldValues<NormalizeFields<FInput>>
 
       return attachValidationMetadata(

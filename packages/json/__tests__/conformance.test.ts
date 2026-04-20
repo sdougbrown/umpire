@@ -73,8 +73,11 @@ function loadFixtures(): ConformanceFixture[] {
   return readdirSync(fixturesDir)
     .filter((fileName) => fileName.endsWith('.json'))
     .sort()
-    .map((fileName) =>
-      JSON.parse(readFileSync(path.join(fixturesDir, fileName), 'utf8')) as ConformanceFixture,
+    .map(
+      (fileName) =>
+        JSON.parse(
+          readFileSync(path.join(fixturesDir, fileName), 'utf8'),
+        ) as ConformanceFixture,
     )
 }
 
@@ -82,8 +85,11 @@ function loadFailureFixtures(): FailureFixture[] {
   return readdirSync(failureFixturesDir)
     .filter((fileName) => fileName.endsWith('.json'))
     .sort()
-    .map((fileName) =>
-      JSON.parse(readFileSync(path.join(failureFixturesDir, fileName), 'utf8')) as FailureFixture,
+    .map(
+      (fileName) =>
+        JSON.parse(
+          readFileSync(path.join(failureFixturesDir, fileName), 'utf8'),
+        ) as FailureFixture,
     )
 }
 
@@ -102,64 +108,75 @@ function assertFailureFixtureShape(fixture: FailureFixture): void {
 describe('JSON conformance fixtures', () => {
   const fixtures = loadFixtures()
 
-  test.each(fixtures)('$id round-trips the schema exactly', ({ schema, ...fixture }) => {
-    assertFixtureShape({ schema, ...fixture })
-    validateSchema(schema)
+  test.each(fixtures)(
+    '$id round-trips the schema exactly',
+    ({ schema, ...fixture }) => {
+      assertFixtureShape({ schema, ...fixture })
+      validateSchema(schema)
 
-    const parsed = fromJson(schema)
-    expect(toJson(parsed)).toEqual(schema)
-  })
+      const parsed = fromJson(schema)
+      expect(toJson(parsed)).toEqual(schema)
+    },
+  )
 
-  test.each(fixtures)('$id matches reference availability output', ({ schema, cases, ...fixture }) => {
-    assertFixtureShape({ schema, cases, ...fixture })
-    validateSchema(schema)
+  test.each(fixtures)(
+    '$id matches reference availability output',
+    ({ schema, cases, ...fixture }) => {
+      assertFixtureShape({ schema, cases, ...fixture })
+      validateSchema(schema)
 
-    const parsed = fromJson(schema)
-    const runtime = umpire({
-      fields: parsed.fields,
-      rules: parsed.rules,
-      validators: parsed.validators,
-    })
-
-    for (const testCase of cases) {
-      const actual = runtime.check(
-        testCase.values as Record<string, unknown>,
-        testCase.conditions as Record<string, unknown> | undefined,
-        testCase.prev as Record<string, unknown> | undefined,
-      ) as AvailabilityMap<Record<string, FieldDef>>
-
-      expect(actual).toEqual(testCase.expectedAvailability)
-    }
-  })
-})
-
-describe('JSON conformance failure fixtures', () => {
-  const fixtures = loadFailureFixtures()
-
-  test.each(fixtures)('$id produces the expected failures', ({ failures, ...fixture }) => {
-    assertFailureFixtureShape({ failures, ...fixture })
-
-    for (const failure of failures) {
-      if (failure.phase === 'validate') {
-        expect(() => validateSchema(failure.schema)).toThrow(failure.errorIncludes)
-        continue
-      }
-
-      validateSchema(failure.schema)
-      const parsed = fromJson(failure.schema)
+      const parsed = fromJson(schema)
       const runtime = umpire({
         fields: parsed.fields,
         rules: parsed.rules,
         validators: parsed.validators,
       })
 
-      expect(() =>
-        runtime.check(
-          (failure.values ?? {}) as Record<string, unknown>,
-          failure.conditions as Record<string, unknown> | undefined,
-          failure.prev as Record<string, unknown> | undefined,
-        ),
-      ).toThrow(failure.errorIncludes)
-    }
-  })
+      for (const testCase of cases) {
+        const actual = runtime.check(
+          testCase.values as Record<string, unknown>,
+          testCase.conditions as Record<string, unknown> | undefined,
+          testCase.prev as Record<string, unknown> | undefined,
+        ) as AvailabilityMap<Record<string, FieldDef>>
+
+        expect(actual).toEqual(testCase.expectedAvailability)
+      }
+    },
+  )
+})
+
+describe('JSON conformance failure fixtures', () => {
+  const fixtures = loadFailureFixtures()
+
+  test.each(fixtures)(
+    '$id produces the expected failures',
+    ({ failures, ...fixture }) => {
+      assertFailureFixtureShape({ failures, ...fixture })
+
+      for (const failure of failures) {
+        if (failure.phase === 'validate') {
+          expect(() => validateSchema(failure.schema)).toThrow(
+            failure.errorIncludes,
+          )
+          continue
+        }
+
+        validateSchema(failure.schema)
+        const parsed = fromJson(failure.schema)
+        const runtime = umpire({
+          fields: parsed.fields,
+          rules: parsed.rules,
+          validators: parsed.validators,
+        })
+
+        expect(() =>
+          runtime.check(
+            (failure.values ?? {}) as Record<string, unknown>,
+            failure.conditions as Record<string, unknown> | undefined,
+            failure.prev as Record<string, unknown> | undefined,
+          ),
+        ).toThrow(failure.errorIncludes)
+      }
+    },
+  )
 })

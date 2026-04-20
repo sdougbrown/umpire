@@ -49,7 +49,10 @@ for (const entry of packageEntries) {
     if (rawLine.startsWith('SF:')) {
       const sourcePath = rawLine.slice(3)
       const resolvedPath = path.resolve(packageDir, sourcePath)
-      currentFile = path.relative(rootDir, resolvedPath).split(path.sep).join('/')
+      currentFile = path
+        .relative(rootDir, resolvedPath)
+        .split(path.sep)
+        .join('/')
 
       if (!shouldIncludeFile(currentFile)) {
         currentFile = null

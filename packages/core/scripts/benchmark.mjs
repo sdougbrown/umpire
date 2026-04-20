@@ -47,10 +47,12 @@ function variance(values, mean) {
     return 0
   }
 
-  return values.reduce((sum, value) => {
-    const delta = value - mean
-    return sum + delta * delta
-  }, 0) / values.length
+  return (
+    values.reduce((sum, value) => {
+      const delta = value - mean
+      return sum + delta * delta
+    }, 0) / values.length
+  )
 }
 
 function summarizeScenarioRuns(scenario, runCount) {
@@ -146,7 +148,6 @@ function sumAvailability(availability) {
   return enabled + required + reasons
 }
 
-
 function makeSchedulerScenario(sectionCount) {
   const fields = {}
   const rules = []
@@ -169,14 +170,16 @@ function makeSchedulerScenario(sectionCount) {
     fields[contact] = { default: undefined }
     fields[dates] = {
       default: undefined,
-      isEmpty: (value) => value == null || (Array.isArray(value) && value.length === 0),
+      isEmpty: (value) =>
+        value == null || (Array.isArray(value) && value.length === 0),
     }
     fields[startTime] = { default: undefined }
     fields[endTime] = { default: undefined }
     fields[repeatEvery] = { default: 30 }
     fields[everyHour] = {
       default: undefined,
-      isEmpty: (value) => value == null || (Array.isArray(value) && value.length === 0),
+      isEmpty: (value) =>
+        value == null || (Array.isArray(value) && value.length === 0),
     }
     fields[notes] = {
       default: '',
@@ -197,11 +200,17 @@ function makeSchedulerScenario(sectionCount) {
           activeBranch: (values) => values[mode] ?? null,
         },
       ),
-      disables(lock, [dates, startTime, endTime, repeatEvery, everyHour, notes], {
-        reason: 'section locked',
-      }),
+      disables(
+        lock,
+        [dates, startTime, endTime, repeatEvery, everyHour, notes],
+        {
+          reason: 'section locked',
+        },
+      ),
       requires(endTime, startTime, { reason: 'start time required' }),
-      requires(repeatEvery, startTime, endTime, { reason: 'complete interval required' }),
+      requires(repeatEvery, startTime, endTime, {
+        reason: 'complete interval required',
+      }),
       anyOf(
         requires(submit, dates, { reason: 'schedule incomplete' }),
         requires(submit, startTime, endTime, { reason: 'schedule incomplete' }),
@@ -210,9 +219,13 @@ function makeSchedulerScenario(sectionCount) {
       enabledWhen(submit, check(contact, /@/), {
         reason: 'valid contact required',
       }),
-      enabledWhen(submit, (_values, conditions) => conditions.readonly !== true, {
-        reason: 'read only',
-      }),
+      enabledWhen(
+        submit,
+        (_values, conditions) => conditions.readonly !== true,
+        {
+          reason: 'read only',
+        },
+      ),
       enabledWhen(notes, (_values, conditions) => conditions.plan === 'pro', {
         reason: 'pro plan required',
       }),
@@ -307,9 +320,14 @@ function buildBoard(width, height, minePositions) {
   const mines = new Set(minePositions.map(([x, y]) => cellKey(x, y)))
   const board = {}
   const offsets = [
-    [-1, -1], [0, -1], [1, -1],
-    [-1, 0], [1, 0],
-    [-1, 1], [0, 1], [1, 1],
+    [-1, -1],
+    [0, -1],
+    [1, -1],
+    [-1, 0],
+    [1, 0],
+    [-1, 1],
+    [0, 1],
+    [1, 1],
   ]
 
   for (let y = 0; y < height; y += 1) {
@@ -354,21 +372,29 @@ function createExpertMinesweeperScenario() {
   for (const key of Object.keys(board)) {
     fields[key] = { default: undefined }
     rules.push(
-      enabledWhen(key, (_values, conditions) => conditions.gameStatus === 'playing', {
-        reason: 'GAME_OVER',
-      }),
+      enabledWhen(
+        key,
+        (_values, conditions) => conditions.gameStatus === 'playing',
+        {
+          reason: 'GAME_OVER',
+        },
+      ),
       enabledWhen(key, (values) => values[key] !== 'revealed', {
         reason: 'ALREADY_REVEALED',
       }),
-      enabledWhen(key, (values, conditions) => {
-        if (conditions.flagMode) {
-          return true
-        }
+      enabledWhen(
+        key,
+        (values, conditions) => {
+          if (conditions.flagMode) {
+            return true
+          }
 
-        return values[key] !== 'flagged'
-      }, {
-        reason: 'FLAGGED',
-      }),
+          return values[key] !== 'flagged'
+        },
+        {
+          reason: 'FLAGGED',
+        },
+      ),
     )
   }
 
@@ -446,15 +472,17 @@ const scenarios = [
       const trace = schedulerRuntime.engine.challenge(
         challengeField,
         schedulerRuntime.afterValues,
-      schedulerRuntime.afterConditions,
-      schedulerRuntime.beforeValues,
-    )
+        schedulerRuntime.afterConditions,
+        schedulerRuntime.beforeValues,
+      )
 
       return (
         (trace.enabled ? 1 : 0) +
         trace.directReasons.length +
         trace.transitiveDeps.length +
-        (trace.oneOfResolution ? Object.keys(trace.oneOfResolution.branches).length : 0)
+        (trace.oneOfResolution
+          ? Object.keys(trace.oneOfResolution.branches).length
+          : 0)
       )
     },
   },
@@ -466,15 +494,17 @@ const scenarios = [
       const fouls = schedulerRuntime.engine.play(
         {
           values: schedulerRuntime.beforeValues,
-        conditions: schedulerRuntime.beforeConditions,
-      },
-      {
-        values: schedulerRuntime.afterValues,
-        conditions: schedulerRuntime.afterConditions,
-      },
+          conditions: schedulerRuntime.beforeConditions,
+        },
+        {
+          values: schedulerRuntime.afterValues,
+          conditions: schedulerRuntime.afterConditions,
+        },
       )
 
-      return fouls.length + fouls.reduce((sum, foul) => sum + foul.field.length, 0)
+      return (
+        fouls.length + fouls.reduce((sum, foul) => sum + foul.field.length, 0)
+      )
     },
   },
   {
@@ -491,13 +521,18 @@ const scenarios = [
     category: 'runtime-heavy',
     iterations: 100,
     run: () => {
-      const availability = minesweeper.engine.check(minesweeper.values, minesweeper.conditions)
+      const availability = minesweeper.engine.check(
+        minesweeper.values,
+        minesweeper.conditions,
+      )
       return sumAvailability(availability)
     },
   },
 ]
 
-const results = scenarios.map((scenario) => summarizeScenarioRuns(scenario, runCount))
+const results = scenarios.map((scenario) =>
+  summarizeScenarioRuns(scenario, runCount),
+)
 
 printScenarioResults(results, runCount)
 printCategoryTotals(results, runCount)

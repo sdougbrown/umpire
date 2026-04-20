@@ -16,12 +16,15 @@ npm install @umpire/core @umpire/reads
 import { umpire } from '@umpire/core'
 import { createReads, fairWhenRead } from '@umpire/reads'
 
-const reads = createReads<{
-  cpu?: string
-  motherboard?: string
-}, {
-  motherboardFair: boolean
-}>({
+const reads = createReads<
+  {
+    cpu?: string
+    motherboard?: string
+  },
+  {
+    motherboardFair: boolean
+  }
+>({
   motherboardFair: ({ input }) => {
     if (!input.motherboard) {
       return true

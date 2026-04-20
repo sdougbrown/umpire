@@ -13,7 +13,12 @@ import {
   type Rule,
 } from '@umpire/core'
 
-import { fromJson, hydrateIsEmptyStrategy, namedValidators, toJson } from '../src/index.js'
+import {
+  fromJson,
+  hydrateIsEmptyStrategy,
+  namedValidators,
+  toJson,
+} from '../src/index.js'
 import type { UmpireJsonSchema } from '../src/index.js'
 
 describe('toJson', () => {
@@ -76,18 +81,20 @@ describe('toJson', () => {
       slug: {},
     }
 
-    expect(toJson({
-      fields,
-      rules: [],
-      validators: {
-        email: namedValidators.email(),
-        username: {
-          validator: namedValidators.minLength(3),
-          error: 'Username must be at least 3 characters',
+    expect(
+      toJson({
+        fields,
+        rules: [],
+        validators: {
+          email: namedValidators.email(),
+          username: {
+            validator: namedValidators.minLength(3),
+            error: 'Username must be at least 3 characters',
+          },
+          slug: /^[a-z-]+$/,
         },
-        slug: /^[a-z-]+$/,
-      },
-    })).toEqual({
+      }),
+    ).toEqual({
       version: 1,
       fields: {
         email: {},
@@ -109,7 +116,8 @@ describe('toJson', () => {
         {
           type: 'field:validator',
           field: 'slug',
-          description: 'Field validator cannot be serialized unless it uses portable validator metadata from @umpire/json',
+          description:
+            'Field validator cannot be serialized unless it uses portable validator metadata from @umpire/json',
           key: 'field:slug:validator',
         },
       ],
@@ -131,9 +139,14 @@ describe('toJson', () => {
       requires<typeof fields>('submit', 'email', 'username', {
         reason: 'Need an identity field',
       }),
-      requires<typeof fields>('submit', check('email', namedValidators.email()), 'password', {
-        reason: 'Need a valid email and password',
-      }),
+      requires<typeof fields>(
+        'submit',
+        check('email', namedValidators.email()),
+        'password',
+        {
+          reason: 'Need a valid email and password',
+        },
+      ),
       disables<typeof fields>('mode', ['submit']),
       oneOf<typeof fields>('accessMode', {
         credential: ['email', 'password'],
@@ -209,20 +222,23 @@ describe('toJson', () => {
         {
           type: 'field:isEmpty',
           field: 'extra',
-          description: 'Field isEmpty uses a custom function and cannot be serialized',
+          description:
+            'Field isEmpty uses a custom function and cannot be serialized',
           key: 'field:extra:isEmpty',
           signature: '(value) => boolean',
         },
         {
           type: 'field:default',
           field: 'profile',
-          description: 'Field default is not a JSON primitive and cannot be serialized',
+          description:
+            'Field default is not a JSON primitive and cannot be serialized',
           key: 'field:profile:default',
         },
         {
           type: 'enabledWhen',
           field: 'submit',
-          description: 'enabledWhen() predicates are only serializable when hydrated from JSON or when they map to a portable validator',
+          description:
+            'enabledWhen() predicates are only serializable when hydrated from JSON or when they map to a portable validator',
           key: 'rule:enabledWhen:submit',
         },
       ],
@@ -246,24 +262,27 @@ describe('toJson', () => {
         },
         {
           type: 'oneOf',
-          description: 'Prior runtime could not serialize access mode branching',
+          description:
+            'Prior runtime could not serialize access mode branching',
           key: 'rule:oneOf:accessMode',
         },
       ],
     })
 
-    expect(toJson({
-      fields: {
-        ...parsed.fields,
-        email: { isEmpty: isEmptyString },
-      },
-      rules: [
-        oneOf('accessMode', {
-          account: ['email'],
-          handle: ['username'],
-        }),
-      ],
-    })).toEqual({
+    expect(
+      toJson({
+        fields: {
+          ...parsed.fields,
+          email: { isEmpty: isEmptyString },
+        },
+        rules: [
+          oneOf('accessMode', {
+            account: ['email'],
+            handle: ['username'],
+          }),
+        ],
+      }),
+    ).toEqual({
       version: 1,
       fields: {
         email: { isEmpty: 'string' },
@@ -300,15 +319,17 @@ describe('toJson', () => {
       ],
     })
 
-    expect(toJson({
-      fields: parsed.fields,
-      rules: [
-        eitherOf('auth', {
-          password: [requires('submit', 'email')],
-          sso: [requires('submit', 'ssoToken')],
-        }),
-      ],
-    })).toEqual({
+    expect(
+      toJson({
+        fields: parsed.fields,
+        rules: [
+          eitherOf('auth', {
+            password: [requires('submit', 'email')],
+            sso: [requires('submit', 'ssoToken')],
+          }),
+        ],
+      }),
+    ).toEqual({
       version: 1,
       fields: {
         submit: {},
@@ -357,13 +378,15 @@ describe('toJson', () => {
       ],
     })
 
-    expect(toJson({
-      fields: {
-        ...parsed.fields,
-        extra: { isEmpty: (value: unknown) => value == null || value === '' },
-      },
-      rules: parsed.rules,
-    })).toEqual({
+    expect(
+      toJson({
+        fields: {
+          ...parsed.fields,
+          extra: { isEmpty: (value: unknown) => value == null || value === '' },
+        },
+        rules: parsed.rules,
+      }),
+    ).toEqual({
       version: 1,
       fields: {
         extra: {},
@@ -373,7 +396,8 @@ describe('toJson', () => {
         {
           type: 'field:isEmpty',
           field: 'extra',
-          description: 'Field isEmpty uses a custom function and cannot be serialized',
+          description:
+            'Field isEmpty uses a custom function and cannot be serialized',
           key: 'field:extra:isEmpty',
           signature: '(value) => boolean',
         },
@@ -444,7 +468,8 @@ describe('toJson', () => {
       expect.arrayContaining([
         expect.objectContaining({
           type: 'eitherOf',
-          description: 'eitherOf() contains inner rules that cannot be serialized one-to-one into JSON',
+          description:
+            'eitherOf() contains inner rules that cannot be serialized one-to-one into JSON',
           key: 'rule:eitherOf:auth',
         }),
       ]),
@@ -509,7 +534,9 @@ describe('toJson', () => {
     const result = toJson({
       fields,
       rules: [
-        enabledWhen('submit', check('email', namedValidators.email()), { reason: () => 'dynamic' }),
+        enabledWhen('submit', check('email', namedValidators.email()), {
+          reason: () => 'dynamic',
+        }),
         requires('submit', 'email', { reason: () => 'dynamic' }),
         fairWhen('email', namedValidators.email(), { reason: () => 'dynamic' }),
         disables('mode', ['submit'], { reason: () => 'dynamic' }),
@@ -537,7 +564,11 @@ describe('toJson', () => {
     const result = toJson({
       fields,
       rules: [
-        oneOf('modeSelect', { email: ['email'], submit: ['submit'] }, { activeBranch: 'email' }),
+        oneOf(
+          'modeSelect',
+          { email: ['email'], submit: ['submit'] },
+          { activeBranch: 'email' },
+        ),
         anyOf(enabledWhen('submit', (values) => values.mode === 'open')),
       ],
     })
@@ -570,7 +601,8 @@ describe('toJson', () => {
       expect.arrayContaining([
         expect.objectContaining({
           type: 'opaqueRule',
-          description: 'Rule "opaqueRule" could not be inspected for JSON serialization',
+          description:
+            'Rule "opaqueRule" could not be inspected for JSON serialization',
         }),
       ]),
     )

@@ -127,7 +127,10 @@ describe('oneOf resolution', () => {
             first: ['alpha'],
             second: ['beta'],
           },
-          { activeBranch: (values) => (values.mode === 'second' ? 'second' : 'first') },
+          {
+            activeBranch: (values) =>
+              values.mode === 'second' ? 'second' : 'first',
+          },
         ),
       ],
     })
@@ -171,7 +174,10 @@ describe('oneOf resolution', () => {
             vsLefty: ['alpha'],
             vsRighty: ['beta'],
           },
-          { activeBranch: (_values, conditions) => conditions.pitcher === 'L' ? 'vsLefty' : 'vsRighty' },
+          {
+            activeBranch: (_values, conditions) =>
+              conditions.pitcher === 'L' ? 'vsLefty' : 'vsRighty',
+          },
         ),
       ],
     })

@@ -1,5 +1,11 @@
 import { renderHook } from '@testing-library/react'
-import { enabledWhen, fairWhen, requires, type FieldDef, umpire } from '@umpire/core'
+import {
+  enabledWhen,
+  fairWhen,
+  requires,
+  type FieldDef,
+  umpire,
+} from '@umpire/core'
 import { createZodAdapter } from '@umpire/zod'
 import { z } from 'zod'
 import { useUmpire } from '@umpire/react'
@@ -21,11 +27,19 @@ describe('react + zod signup flow', () => {
     build(baseSchema) {
       return baseSchema.superRefine((data, ctx) => {
         if (data.email === 'filter@example.com') {
-          ctx.addIssue({ code: 'custom', path: ['password'], message: 'Password is not needed for SSO' })
+          ctx.addIssue({
+            code: 'custom',
+            path: ['password'],
+            message: 'Password is not needed for SSO',
+          })
         }
 
         if (data.confirmPassword !== data.password) {
-          ctx.addIssue({ code: 'custom', path: ['confirmPassword'], message: 'Passwords do not match' })
+          ctx.addIssue({
+            code: 'custom',
+            path: ['confirmPassword'],
+            message: 'Passwords do not match',
+          })
         }
       })
     },
@@ -36,9 +50,13 @@ describe('react + zod signup flow', () => {
     fields,
     rules: [
       requires('confirmPassword', 'password'),
-      fairWhen('confirmPassword', (confirmPassword, values) => confirmPassword === values.password, {
-        reason: 'Passwords do not match',
-      }),
+      fairWhen(
+        'confirmPassword',
+        (confirmPassword, values) => confirmPassword === values.password,
+        {
+          reason: 'Passwords do not match',
+        },
+      ),
       enabledWhen('password', (_values, conditions) => !conditions.sso),
       enabledWhen('confirmPassword', (_values, conditions) => !conditions.sso),
     ],
@@ -49,20 +67,31 @@ describe('react + zod signup flow', () => {
       ({ values, conditions }) => useUmpire(signupUmp, values, conditions),
       {
         initialProps: {
-          values: { email: 'user@example.com', password: 'hunter22', confirmPassword: 'hunter22' },
+          values: {
+            email: 'user@example.com',
+            password: 'hunter22',
+            confirmPassword: 'hunter22',
+          },
           conditions: { sso: false },
         },
       },
     )
 
     rerender({
-      values: { email: 'filter@example.com', password: 'hunter22', confirmPassword: 'hunter22' },
+      values: {
+        email: 'filter@example.com',
+        password: 'hunter22',
+        confirmPassword: 'hunter22',
+      },
       conditions: { sso: true },
     })
 
     expect(result.current.check.password.enabled).toBe(false)
     expect(result.current.check.confirmPassword.enabled).toBe(false)
-    expect(result.current.fouls.map((foul) => foul.field).sort()).toEqual(['confirmPassword', 'password'])
+    expect(result.current.fouls.map((foul) => foul.field).sort()).toEqual([
+      'confirmPassword',
+      'password',
+    ])
 
     const parsed = validation.run(result.current.check, {
       email: 'filter@example.com',
@@ -79,14 +108,22 @@ describe('react + zod signup flow', () => {
       ({ values, conditions }) => useUmpire(signupUmp, values, conditions),
       {
         initialProps: {
-          values: { email: 'user@example.com', password: 'hunter22', confirmPassword: 'hunter22' },
+          values: {
+            email: 'user@example.com',
+            password: 'hunter22',
+            confirmPassword: 'hunter22',
+          },
           conditions: { sso: false },
         },
       },
     )
 
     rerender({
-      values: { email: 'user@example.com', password: 'hunter22', confirmPassword: 'mismatch' },
+      values: {
+        email: 'user@example.com',
+        password: 'hunter22',
+        confirmPassword: 'mismatch',
+      },
       conditions: { sso: false },
     })
 

@@ -6,7 +6,10 @@ const DEFAULT_SAMPLE_COUNT = 1000
 const DEFAULT_SEED = 42
 const DEFAULT_MAX_FOUL_ITERATIONS = 10
 
-export type AnyUmpire = Umpire<Record<string, FieldDef>, Record<string, unknown>>
+export type AnyUmpire = Umpire<
+  Record<string, FieldDef>,
+  Record<string, unknown>
+>
 
 export type MonkeyTestViolation = {
   invariant:
@@ -77,7 +80,10 @@ function describeValue(value: unknown) {
   return JSON.stringify(value)
 }
 
-function buildUpstreamByField(fieldNames: string[], edges: Array<{ from: string; to: string }>) {
+function buildUpstreamByField(
+  fieldNames: string[],
+  edges: Array<{ from: string; to: string }>,
+) {
   const upstreamByField = new Map<string, Set<string>>(
     fieldNames.map((field) => [field, new Set<string>()]),
   )
@@ -117,7 +123,11 @@ function forEachSampleValueSet(
   if (fieldNames.length <= 6) {
     const totalCombinations = VALUE_PROBES.length ** fieldNames.length
 
-    for (let sampleIndex = 0; sampleIndex < totalCombinations; sampleIndex += 1) {
+    for (
+      let sampleIndex = 0;
+      sampleIndex < totalCombinations;
+      sampleIndex += 1
+    ) {
       let cursor = sampleIndex
       const values: Record<string, unknown> = {}
 
@@ -134,7 +144,10 @@ function forEachSampleValueSet(
     return
   }
 
-  const sampleCount = Math.max(0, Math.floor(options?.samples ?? DEFAULT_SAMPLE_COUNT))
+  const sampleCount = Math.max(
+    0,
+    Math.floor(options?.samples ?? DEFAULT_SAMPLE_COUNT),
+  )
   const random = mulberry32(options?.seed ?? DEFAULT_SEED)
 
   for (let sampleIndex = 0; sampleIndex < sampleCount; sampleIndex += 1) {
@@ -160,15 +173,18 @@ function getConditionSets(options: MonkeyTestOptions | undefined) {
 export function monkeyTest<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
->(
-  ump: Umpire<F, C>,
-  options?: MonkeyTestOptions,
-): MonkeyTestResult
-export function monkeyTest(ump: AnyUmpire, options: MonkeyTestOptions = {}): MonkeyTestResult {
+>(ump: Umpire<F, C>, options?: MonkeyTestOptions): MonkeyTestResult
+export function monkeyTest(
+  ump: AnyUmpire,
+  options: MonkeyTestOptions = {},
+): MonkeyTestResult {
   const graph = ump.graph()
   const fieldNames = [...graph.nodes]
   const upstreamByField = buildUpstreamByField(fieldNames, graph.edges)
-  const maxFoulIterations = Math.max(1, Math.floor(options.maxFoulIterations ?? DEFAULT_MAX_FOUL_ITERATIONS))
+  const maxFoulIterations = Math.max(
+    1,
+    Math.floor(options.maxFoulIterations ?? DEFAULT_MAX_FOUL_ITERATIONS),
+  )
   const conditionsList = getConditionSets(options)
   const violations: MonkeyTestViolation[] = []
   let samplesChecked = 0
@@ -278,7 +294,10 @@ export function monkeyTest(ump: AnyUmpire, options: MonkeyTestOptions = {}): Mon
 
       for (const field of fieldNames) {
         const trace = ump.challenge(field, values, conditions)
-        if (trace.enabled !== firstCheck[field].enabled || trace.fair !== firstCheck[field].fair) {
+        if (
+          trace.enabled !== firstCheck[field].enabled ||
+          trace.fair !== firstCheck[field].fair
+        ) {
           if (
             recordViolation(
               'challenge-check-agreement',

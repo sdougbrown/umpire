@@ -17,12 +17,17 @@ npm install @umpire/core @umpire/zod zod
 ```ts
 import { z } from 'zod'
 import { umpire, enabledWhen, requires } from '@umpire/core'
-import { createZodAdapter, deriveErrors, deriveSchema, zodErrors } from '@umpire/zod'
+import {
+  createZodAdapter,
+  deriveErrors,
+  deriveSchema,
+  zodErrors,
+} from '@umpire/zod'
 
 // 1. Define availability rules
 const ump = umpire({
   fields: {
-    email:       { required: true, isEmpty: (v) => !v },
+    email: { required: true, isEmpty: (v) => !v },
     companyName: { required: true, isEmpty: (v) => !v },
   },
   rules: [
@@ -56,7 +61,7 @@ const validation = createZodAdapter({
 
 const umpWithValidation = umpire({
   fields: {
-    email:       { required: true, isEmpty: (v) => !v },
+    email: { required: true, isEmpty: (v) => !v },
     companyName: { required: true, isEmpty: (v) => !v },
   },
   rules: [
@@ -73,6 +78,7 @@ const umpWithValidation = umpire({
 ### `deriveSchema(availability, schemas)`
 
 Builds a `z.object()` from the availability map:
+
 - **Disabled fields** are excluded entirely
 - **Enabled + required** fields use the base schema
 - **Enabled + optional** fields get `.optional()`
@@ -92,6 +98,7 @@ Normalizes a Zod error's `issues` array into `{ field, message }[]` pairs for us
 ### `createZodAdapter({ schemas, build? })`
 
 Creates a convenience adapter with:
+
 - `validators` for `umpire({ validators })`, surfacing the first field-level Zod issue as `error`
 - `run(availability, values)` for the full `deriveSchema() -> safeParse() -> deriveErrors()` flow
 
@@ -139,7 +146,10 @@ const validation = createZodAdapter({
   schemas: fieldSchemas,
   build(baseSchema) {
     return baseSchema.refine(
-      (data) => !data.confirmPassword || !data.password || data.confirmPassword === data.password,
+      (data) =>
+        !data.confirmPassword ||
+        !data.password ||
+        data.confirmPassword === data.password,
       { message: 'Passwords do not match', path: ['confirmPassword'] },
     )
   },
@@ -159,6 +169,7 @@ const { check } = useUmpireWithDevtools('signup', ump, values, conditions, {
 If you already have a precomputed parse result, the helper also accepts `availability`, `result`, and optional `schemaFields` directly.
 
 The first pass shows:
+
 - valid/invalid
 - surfaced error count
 - suppressed and unmapped issue counts
@@ -172,18 +183,20 @@ It does not currently detect skipped `refine()`/`superRefine()` execution on its
 The payoff — one loop renders every field regardless of availability, validation, or fouls:
 
 ```tsx
-{fields.map((field) => {
-  const av = availability[field]
-  const error = validationErrors[field]
+{
+  fields.map((field) => {
+    const av = availability[field]
+    const error = validationErrors[field]
 
-  return (
-    <div className={av.enabled ? '' : 'disabled'}>
-      <input disabled={!av.enabled} value={values[field]} />
-      {!av.enabled && <span>{av.reason}</span>}
-      {av.enabled && error && <span className="error">{error}</span>}
-    </div>
-  )
-})}
+    return (
+      <div className={av.enabled ? '' : 'disabled'}>
+        <input disabled={!av.enabled} value={values[field]} />
+        {!av.enabled && <span>{av.reason}</span>}
+        {av.enabled && error && <span className="error">{error}</span>}
+      </div>
+    )
+  })
+}
 ```
 
 No per-field branching. No `if (field === 'companyName' && plan === 'business')`. The rules and schemas declare everything upfront. The render loop just reads.

@@ -5,8 +5,5 @@
     "composite": false,
     "rootDir": ".."
   },
-  "include": [
-    "src",
-    "type-tests/**/*.ts"
-  ]
+  "include": ["src", "type-tests/**/*.ts"]
 }

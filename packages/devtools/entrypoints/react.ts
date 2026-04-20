@@ -11,9 +11,7 @@ import { snapshotValue } from '@umpire/core/snapshot'
 import type { RegisterOptions } from '../src/types.js'
 import { register, unregister } from '../src/registry.js'
 
-function formatUmpireDebugValue<
-  F extends Record<string, FieldDef>,
->(value: {
+function formatUmpireDebugValue<F extends Record<string, FieldDef>>(value: {
   check: AvailabilityMap<F>
   fouls: Foul<F>[]
 }) {
@@ -73,9 +71,12 @@ export function useUmpireWithDevtools<
   // If React ever warns about this, useLayoutEffect is the correct upgrade path.
   register(id, ump, values, conditions, options)
 
-  useEffect(() => () => {
-    unregister(id)
-  }, [id])
+  useEffect(
+    () => () => {
+      unregister(id)
+    },
+    [id],
+  )
 
   return { check, fouls }
 }

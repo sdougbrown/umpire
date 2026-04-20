@@ -13,9 +13,7 @@ describe('useUmpire', () => {
   it('returns check with correct availability', () => {
     const ump = umpire({
       fields,
-      rules: [
-        enabledWhen('phone', (values) => !!values.name),
-      ],
+      rules: [enabledWhen('phone', (values) => !!values.name)],
     })
 
     const { result } = renderHook(() =>
@@ -30,9 +28,7 @@ describe('useUmpire', () => {
   it('returns disabled when predicate fails', () => {
     const ump = umpire({
       fields,
-      rules: [
-        enabledWhen('phone', (values) => !!values.name),
-      ],
+      rules: [enabledWhen('phone', (values) => !!values.name)],
     })
 
     const { result } = renderHook(() =>
@@ -45,9 +41,7 @@ describe('useUmpire', () => {
   it('recomputes check when values change', () => {
     const ump = umpire({
       fields,
-      rules: [
-        enabledWhen('phone', (values) => !!values.name),
-      ],
+      rules: [enabledWhen('phone', (values) => !!values.name)],
     })
 
     const { result, rerender } = renderHook(
@@ -65,9 +59,7 @@ describe('useUmpire', () => {
   it('returns empty fouls on first render', () => {
     const ump = umpire({
       fields,
-      rules: [
-        enabledWhen('phone', (values) => !!values.name),
-      ],
+      rules: [enabledWhen('phone', (values) => !!values.name)],
     })
 
     const { result } = renderHook(() =>
@@ -80,14 +72,16 @@ describe('useUmpire', () => {
   it('returns fouls when field transitions from enabled to disabled', () => {
     const ump = umpire({
       fields,
-      rules: [
-        enabledWhen('phone', (values) => !!values.name),
-      ],
+      rules: [enabledWhen('phone', (values) => !!values.name)],
     })
 
     const { result, rerender } = renderHook(
       ({ values }) => useUmpire(ump, values),
-      { initialProps: { values: { name: 'Alice', email: '', phone: '555-1234' } } },
+      {
+        initialProps: {
+          values: { name: 'Alice', email: '', phone: '555-1234' },
+        },
+      },
     )
 
     expect(result.current.fouls).toEqual([])
@@ -102,14 +96,16 @@ describe('useUmpire', () => {
   it('tracks prev correctly across rerenders', () => {
     const ump = umpire({
       fields,
-      rules: [
-        enabledWhen('phone', (values) => !!values.name),
-      ],
+      rules: [enabledWhen('phone', (values) => !!values.name)],
     })
 
     const { result, rerender } = renderHook(
       ({ values }) => useUmpire(ump, values),
-      { initialProps: { values: { name: 'Alice', email: '', phone: '555-1234' } } },
+      {
+        initialProps: {
+          values: { name: 'Alice', email: '', phone: '555-1234' },
+        },
+      },
     )
 
     // Second render: still enabled, no foul
@@ -135,21 +131,28 @@ describe('useUmpire', () => {
       fields: nestedFields,
       rules: [
         enabledWhen('note', (values) => {
-          return (values.settings as { allowNote: boolean } | undefined)?.allowNote === true
+          return (
+            (values.settings as { allowNote: boolean } | undefined)
+              ?.allowNote === true
+          )
         }),
       ],
     })
 
     const { result, rerender } = renderHook(
       ({ values }) => useUmpire(ump, values),
-      { initialProps: { values: { settings: sharedSettings, note: 'keep me' } } },
+      {
+        initialProps: { values: { settings: sharedSettings, note: 'keep me' } },
+      },
     )
 
     sharedSettings.allowNote = false
     rerender({ values: { settings: sharedSettings, note: 'keep me' } })
 
     expect(result.current.check.note.enabled).toBe(false)
-    expect(result.current.fouls.some((foul) => foul.field === 'note')).toBe(true)
+    expect(result.current.fouls.some((foul) => foul.field === 'note')).toBe(
+      true,
+    )
   })
 
   it('passes conditions to check', () => {
@@ -162,13 +165,12 @@ describe('useUmpire', () => {
 
     const ump = umpire<typeof ctxFields, Ctx>({
       fields: ctxFields,
-      rules: [
-        enabledWhen('advanced', (_values, ctx) => ctx.premium),
-      ],
+      rules: [enabledWhen('advanced', (_values, ctx) => ctx.premium)],
     })
 
     const { result, rerender } = renderHook(
-      ({ conditions }) => useUmpire(ump, { advanced: '', basic: '' }, conditions),
+      ({ conditions }) =>
+        useUmpire(ump, { advanced: '', basic: '' }, conditions),
       { initialProps: { conditions: { premium: false } as Ctx } },
     )
 

@@ -6,10 +6,18 @@ import type {
 } from '@umpire/core'
 import { isRecord } from '@umpire/core/guards'
 import type { z } from 'zod'
-import { deriveErrors, zodErrors, type NormalizedFieldError } from './derive-errors.js'
+import {
+  deriveErrors,
+  zodErrors,
+  type NormalizedFieldError,
+} from './derive-errors.js'
 import { deriveSchema, type DeriveSchemaOptions } from './derive-schema.js'
 import { assertFieldSchemas } from './schema-guards.js'
-import type { ZodSafeParseResultLike, ZodSchemaLike, ZodErrorLike } from './zod-types.js'
+import type {
+  ZodSafeParseResultLike,
+  ZodSchemaLike,
+  ZodErrorLike,
+} from './zod-types.js'
 
 type FieldSchemas<F extends Record<string, FieldDef>> = Partial<
   Record<keyof F & string, z.ZodTypeAny>
@@ -39,11 +47,15 @@ function firstIssueMessage(error: ZodErrorLike): string | undefined {
   return error.issues[0]?.message
 }
 
-function isFailedParseResult(result: unknown): result is Extract<ZodSafeParseResultLike, { success: false }> {
-  return isRecord(result) &&
+function isFailedParseResult(
+  result: unknown,
+): result is Extract<ZodSafeParseResultLike, { success: false }> {
+  return (
+    isRecord(result) &&
     result.success === false &&
     isRecord(result.error) &&
     Array.isArray(result.error.issues)
+  )
 }
 
 export function createZodAdapter<F extends Record<string, FieldDef>>(
@@ -51,14 +63,12 @@ export function createZodAdapter<F extends Record<string, FieldDef>>(
 ): ZodAdapter<F> {
   assertFieldSchemas(options.schemas, 'createZodAdapter')
 
-  const {
-    schemas,
-    build,
-    rejectFoul,
-  } = options
+  const { schemas, build, rejectFoul } = options
   const validators = {} as ValidationMap<F>
 
-  for (const [field, schema] of Object.entries(schemas) as Array<[keyof F & string, z.ZodTypeAny | undefined]>) {
+  for (const [field, schema] of Object.entries(schemas) as Array<
+    [keyof F & string, z.ZodTypeAny | undefined]
+  >) {
     if (!schema) {
       continue
     }
@@ -72,9 +82,7 @@ export function createZodAdapter<F extends Record<string, FieldDef>>(
 
       const error = firstIssueMessage(result.error)
 
-      return error === undefined
-        ? { valid: false }
-        : { valid: false, error }
+      return error === undefined ? { valid: false } : { valid: false, error }
     }
   }
 
@@ -84,7 +92,9 @@ export function createZodAdapter<F extends Record<string, FieldDef>>(
       const baseSchema = deriveSchema(availability, schemas, { rejectFoul })
       const schema = build ? build(baseSchema) : baseSchema
       const result = schema.safeParse(values)
-      const normalizedErrors = isFailedParseResult(result) ? zodErrors(result.error) : []
+      const normalizedErrors = isFailedParseResult(result)
+        ? zodErrors(result.error)
+        : []
 
       return {
         errors: deriveErrors(availability, normalizedErrors),

@@ -12,8 +12,5 @@
     }
   },
   "include": ["src", "entrypoints"],
-  "references": [
-    { "path": "../core" },
-    { "path": "../reads" }
-  ]
+  "references": [{ "path": "../core" }, { "path": "../reads" }]
 }

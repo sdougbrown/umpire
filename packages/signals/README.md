@@ -34,11 +34,11 @@ import { alienAdapter } from '@umpire/signals/alien'
 
 const signupUmp = umpire({
   fields: {
-    email:           { required: true, isEmpty: (v) => !v },
-    password:        { required: true, isEmpty: (v) => !v },
+    email: { required: true, isEmpty: (v) => !v },
+    password: { required: true, isEmpty: (v) => !v },
     confirmPassword: { required: true, isEmpty: (v) => !v },
-    companyName:     {},
-    companySize:     {},
+    companyName: {},
+    companySize: {},
   },
   rules: [
     requires('confirmPassword', 'password'),

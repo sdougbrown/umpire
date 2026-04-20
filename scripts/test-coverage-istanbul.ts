@@ -28,10 +28,11 @@ function matchesFilter(pkg: WorkspacePackage) {
     return true
   }
 
-  return filters.some((filter) =>
-    filter === pkg.name ||
-    filter === pkg.dirName ||
-    filter === `packages/${pkg.dirName}`,
+  return filters.some(
+    (filter) =>
+      filter === pkg.name ||
+      filter === pkg.dirName ||
+      filter === `packages/${pkg.dirName}`,
   )
 }
 
@@ -64,7 +65,9 @@ async function listPackages() {
     })
   }
 
-  return packages.filter(matchesFilter).sort((a, b) => a.name.localeCompare(b.name))
+  return packages
+    .filter(matchesFilter)
+    .sort((a, b) => a.name.localeCompare(b.name))
 }
 
 async function cleanCoverageDirectories(packages: WorkspacePackage[]) {
@@ -72,7 +75,10 @@ async function cleanCoverageDirectories(packages: WorkspacePackage[]) {
 
   await Promise.all(
     packages.map((pkg) =>
-      rm(path.join(pkg.dir, 'coverage-istanbul'), { recursive: true, force: true }),
+      rm(path.join(pkg.dir, 'coverage-istanbul'), {
+        recursive: true,
+        force: true,
+      }),
     ),
   )
 }
@@ -85,7 +91,11 @@ function runPackageTests(pkg: WorkspacePackage) {
       {
         env: {
           ...process.env,
-          UMPIRE_ISTANBUL_COVERAGE_DIR: path.join(pkg.dir, 'coverage-istanbul', 'raw'),
+          UMPIRE_ISTANBUL_COVERAGE_DIR: path.join(
+            pkg.dir,
+            'coverage-istanbul',
+            'raw',
+          ),
         },
         stdio: 'inherit',
       },
@@ -98,7 +108,11 @@ function runPackageTests(pkg: WorkspacePackage) {
         return
       }
 
-      reject(new Error(`Coverage experiment failed for ${pkg.name} with exit code ${code ?? 'unknown'}.`))
+      reject(
+        new Error(
+          `Coverage experiment failed for ${pkg.name} with exit code ${code ?? 'unknown'}.`,
+        ),
+      )
     })
   })
 }
@@ -171,7 +185,9 @@ for (const pkg of packages) {
 const { coverageMap, rawFileCount } = await readCoverageMaps(packages)
 const summary = await writeReports(coverageMap)
 
-console.log(`\n[istanbul] Merged ${rawFileCount} raw coverage file(s) into ${path.relative(rootDir, outputDir)}/lcov.info`)
+console.log(
+  `\n[istanbul] Merged ${rawFileCount} raw coverage file(s) into ${path.relative(rootDir, outputDir)}/lcov.info`,
+)
 console.log(
   `[istanbul] Statements ${summary.statements.pct}% | Branches ${summary.branches.pct}% | Functions ${summary.functions.pct}% | Lines ${summary.lines.pct}%`,
 )

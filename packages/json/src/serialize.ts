@@ -63,19 +63,35 @@ function createExcluded(
   signature?: string,
 ): ExcludedRule {
   return field
-    ? { type, field, description, ...(key ? { key } : {}), ...(signature ? { signature } : {}) }
-    : { type, description, ...(key ? { key } : {}), ...(signature ? { signature } : {}) }
+    ? {
+        type,
+        field,
+        description,
+        ...(key ? { key } : {}),
+        ...(signature ? { signature } : {}),
+      }
+    : {
+        type,
+        description,
+        ...(key ? { key } : {}),
+        ...(signature ? { signature } : {}),
+      }
 }
 
 function createKey(...parts: string[]): string {
   return parts.map((part) => encodeURIComponent(part)).join(':')
 }
 
-function createFieldSlotKey(field: string, slot: 'default' | 'isEmpty' | 'validator'): string {
+function createFieldSlotKey(
+  field: string,
+  slot: 'default' | 'isEmpty' | 'validator',
+): string {
   return createKey('field', field, slot)
 }
 
-function isValidationEntryObject(value: unknown): value is { validator: unknown; error?: unknown } {
+function isValidationEntryObject(
+  value: unknown,
+): value is { validator: unknown; error?: unknown } {
   return isRecord(value) && 'validator' in value
 }
 
@@ -83,7 +99,9 @@ function createTargetsKeyPart(targets: string[]): string {
   return JSON.stringify([...targets].sort())
 }
 
-function createCheckParamsKeyPart(rule: Extract<JsonRule, { type: 'check' }>): string {
+function createCheckParamsKeyPart(
+  rule: Extract<JsonRule, { type: 'check' }>,
+): string {
   switch (rule.op) {
     case 'matches':
       return JSON.stringify({ pattern: rule.pattern })
@@ -118,15 +136,34 @@ function createRuleKey(rule: JsonRule): string | undefined {
   switch (rule.type) {
     case 'requires':
       return 'dependency' in rule
-        ? createKey('rule', 'requires', rule.field, 'dependency', rule.dependency)
+        ? createKey(
+            'rule',
+            'requires',
+            rule.field,
+            'dependency',
+            rule.dependency,
+          )
         : 'dependencies' in rule
-          ? createKey('rule', 'requires', rule.field, 'dependencies', JSON.stringify(rule.dependencies))
-        : undefined
+          ? createKey(
+              'rule',
+              'requires',
+              rule.field,
+              'dependencies',
+              JSON.stringify(rule.dependencies),
+            )
+          : undefined
     case 'enabledWhen':
       return createKey('rule', 'enabledWhen', rule.field)
     case 'disables':
       return 'source' in rule
-        ? createKey('rule', 'disables', 'source', rule.source, 'targets', createTargetsKeyPart(rule.targets))
+        ? createKey(
+            'rule',
+            'disables',
+            'source',
+            rule.source,
+            'targets',
+            createTargetsKeyPart(rule.targets),
+          )
         : undefined
     case 'oneOf':
       return createKey('rule', 'oneOf', rule.group)
@@ -208,8 +245,10 @@ function mergeExcluded(
   return merged
 }
 
-
-function serializeField(name: string, definition: FieldDef): {
+function serializeField(
+  name: string,
+  definition: FieldDef,
+): {
   field: JsonFieldDef
   excluded: ExcludedRule[]
   coverageKeys: string[]
@@ -227,12 +266,14 @@ function serializeField(name: string, definition: FieldDef): {
       field.default = definition.default
       coverageKeys.push(createFieldSlotKey(name, 'default'))
     } else {
-      excluded.push(createExcluded(
-        'field:default',
-        'Field default is not a JSON primitive and cannot be serialized',
-        name,
-        createFieldSlotKey(name, 'default'),
-      ))
+      excluded.push(
+        createExcluded(
+          'field:default',
+          'Field default is not a JSON primitive and cannot be serialized',
+          name,
+          createFieldSlotKey(name, 'default'),
+        ),
+      )
     }
   }
 
@@ -241,42 +282,52 @@ function serializeField(name: string, definition: FieldDef): {
     field.isEmpty = isEmptyStrategy
     coverageKeys.push(createFieldSlotKey(name, 'isEmpty'))
   } else if (definition.isEmpty !== undefined) {
-    excluded.push(createExcluded(
-      'field:isEmpty',
-      'Field isEmpty uses a custom function and cannot be serialized',
-      name,
-      createFieldSlotKey(name, 'isEmpty'),
-      '(value) => boolean',
-    ))
+    excluded.push(
+      createExcluded(
+        'field:isEmpty',
+        'Field isEmpty uses a custom function and cannot be serialized',
+        name,
+        createFieldSlotKey(name, 'isEmpty'),
+        '(value) => boolean',
+      ),
+    )
   }
 
   return { field, excluded, coverageKeys }
 }
 
-function serializeValidator(field: string, entry: unknown): SerializeValidatorResult {
+function serializeValidator(
+  field: string,
+  entry: unknown,
+): SerializeValidatorResult {
   const coverageKey = createFieldSlotKey(field, 'validator')
   const carried = getJsonDef<JsonValidatorDef>(entry)
 
   if (carried) {
     return {
-          validator: deepClone(carried),
+      validator: deepClone(carried),
       excluded: [],
       coverageKeys: [coverageKey],
     }
   }
 
   const validator = isValidationEntryObject(entry) ? entry.validator : entry
-  const error = isValidationEntryObject(entry) && typeof entry.error === 'string' ? entry.error : undefined
+  const error =
+    isValidationEntryObject(entry) && typeof entry.error === 'string'
+      ? entry.error
+      : undefined
   const metadata = getNamedCheckMetadata(validator)
 
   if (!metadata) {
     return {
-      excluded: [createExcluded(
-        'field:validator',
-        'Field validator cannot be serialized unless it uses portable validator metadata from @umpire/json',
-        field,
-        coverageKey,
-      )],
+      excluded: [
+        createExcluded(
+          'field:validator',
+          'Field validator cannot be serialized unless it uses portable validator metadata from @umpire/json',
+          field,
+          coverageKey,
+        ),
+      ],
       coverageKeys: [],
     }
   }
@@ -285,12 +336,14 @@ function serializeValidator(field: string, entry: unknown): SerializeValidatorRe
 
   if (!serialized) {
     return {
-      excluded: [createExcluded(
-        'field:validator',
-        'Field validator uses metadata that is not part of the JSON validator spec',
-        field,
-        coverageKey,
-      )],
+      excluded: [
+        createExcluded(
+          'field:validator',
+          'Field validator uses metadata that is not part of the JSON validator spec',
+          field,
+          coverageKey,
+        ),
+      ],
       coverageKeys: [],
     }
   }
@@ -309,13 +362,17 @@ function excludeInspection(
   key?: string,
 ): SerializeRuleResult {
   const field =
-    'target' in inspection ? inspection.target
-    : 'targets' in inspection ? inspection.targets[0]
-    : undefined
+    'target' in inspection
+      ? inspection.target
+      : 'targets' in inspection
+        ? inspection.targets[0]
+        : undefined
 
   return {
     rules: [],
-    excluded: [createExcluded(inspection.kind, description, field, key, signature)],
+    excluded: [
+      createExcluded(inspection.kind, description, field, key, signature),
+    ],
     coverageKeys: [],
   }
 }
@@ -336,7 +393,10 @@ function serializeInspection(
       }
 
       if (inspection.predicate?.field && inspection.predicate.namedCheck) {
-        const when = createCheckExprFromMetadata(inspection.predicate.field, inspection.predicate.namedCheck)
+        const when = createCheckExprFromMetadata(
+          inspection.predicate.field,
+          inspection.predicate.namedCheck,
+        )
 
         if (when) {
           const rule: Extract<JsonRule, { type: 'enabledWhen' }> = {
@@ -380,14 +440,20 @@ function serializeInspection(
       }
 
       if (inspection.source.kind !== 'field') {
-        if (inspection.source.predicate?.field && inspection.source.predicate.namedCheck) {
+        if (
+          inspection.source.predicate?.field &&
+          inspection.source.predicate.namedCheck
+        ) {
           const when = createCheckExprFromMetadata(
             inspection.source.predicate.field,
             inspection.source.predicate.namedCheck,
           )
 
           if (when) {
-            const rule: Extract<JsonRule, { type: 'disables'; when: JsonExpr }> = {
+            const rule: Extract<
+              JsonRule,
+              { type: 'disables'; when: JsonExpr }
+            > = {
               type: 'disables',
               when,
               targets: [...inspection.targets],
@@ -409,21 +475,25 @@ function serializeInspection(
       }
 
       return {
-        rules: [{
-          type: 'disables',
-          source: inspection.source.field,
-          targets: [...inspection.targets],
-          ...(inspection.reason ? { reason: inspection.reason } : {}),
-        }],
+        rules: [
+          {
+            type: 'disables',
+            source: inspection.source.field,
+            targets: [...inspection.targets],
+            ...(inspection.reason ? { reason: inspection.reason } : {}),
+          },
+        ],
         excluded: [],
-        coverageKeys: [createKey(
-          'rule',
-          'disables',
-          'source',
-          inspection.source.field,
-          'targets',
-          createTargetsKeyPart(inspection.targets),
-        )],
+        coverageKeys: [
+          createKey(
+            'rule',
+            'disables',
+            'source',
+            inspection.source.field,
+            'targets',
+            createTargetsKeyPart(inspection.targets),
+          ),
+        ],
       }
     case 'fairWhen': {
       if (inspection.hasDynamicReason) {
@@ -436,7 +506,8 @@ function serializeInspection(
       }
 
       const namedCheckRule =
-        inspection.predicate?.field === inspection.target && inspection.predicate.namedCheck
+        inspection.predicate?.field === inspection.target &&
+        inspection.predicate.namedCheck
           ? createCheckRuleFromMetadata(
               inspection.target,
               inspection.predicate.namedCheck,
@@ -453,7 +524,10 @@ function serializeInspection(
       }
 
       if (inspection.predicate?.field && inspection.predicate.namedCheck) {
-        const when = createCheckExprFromMetadata(inspection.predicate.field, inspection.predicate.namedCheck)
+        const when = createCheckExprFromMetadata(
+          inspection.predicate.field,
+          inspection.predicate.namedCheck,
+        )
 
         if (when) {
           const rule: Extract<JsonRule, { type: 'fairWhen' }> = {
@@ -491,26 +565,32 @@ function serializeInspection(
       const fieldDependencies = inspection.dependencies.filter(
         (
           dependency,
-        ): dependency is Extract<(typeof inspection.dependencies)[number], { kind: 'field' }> =>
-          dependency.kind === 'field',
+        ): dependency is Extract<
+          (typeof inspection.dependencies)[number],
+          { kind: 'field' }
+        > => dependency.kind === 'field',
       )
 
-      const serializedDependencies = inspection.dependencies.map((dependency) => {
-        if (dependency.kind === 'field') {
-          return dependency.field
-        }
+      const serializedDependencies = inspection.dependencies.map(
+        (dependency) => {
+          if (dependency.kind === 'field') {
+            return dependency.field
+          }
 
-        if (dependency.predicate?.field && dependency.predicate.namedCheck) {
-          return createCheckExprFromMetadata(
-            dependency.predicate.field,
-            dependency.predicate.namedCheck,
-          )
-        }
+          if (dependency.predicate?.field && dependency.predicate.namedCheck) {
+            return createCheckExprFromMetadata(
+              dependency.predicate.field,
+              dependency.predicate.namedCheck,
+            )
+          }
 
-        return undefined
-      })
+          return undefined
+        },
+      )
 
-      if (serializedDependencies.some((dependency) => dependency === undefined)) {
+      if (
+        serializedDependencies.some((dependency) => dependency === undefined)
+      ) {
         return excludeInspection(
           inspection,
           'requires() with predicate dependencies cannot be serialized unless hydrated from JSON or when those predicates map to portable validators',
@@ -537,28 +617,37 @@ function serializeInspection(
         }
       }
 
-      const [firstDependency] = serializedDependencies as Array<string | JsonExpr>
+      const [firstDependency] = serializedDependencies as Array<
+        string | JsonExpr
+      >
 
-      const rules = serializedDependencies.length === 1
-        ? [typeof firstDependency === 'string'
-            ? {
+      const rules =
+        serializedDependencies.length === 1
+          ? [
+              typeof firstDependency === 'string'
+                ? {
+                    type: 'requires' as const,
+                    field: inspection.target,
+                    dependency: firstDependency,
+                    ...(inspection.reason ? { reason: inspection.reason } : {}),
+                  }
+                : {
+                    type: 'requires' as const,
+                    field: inspection.target,
+                    when: firstDependency,
+                    ...(inspection.reason ? { reason: inspection.reason } : {}),
+                  },
+            ]
+          : [
+              {
                 type: 'requires' as const,
                 field: inspection.target,
-                dependency: firstDependency,
+                dependencies: serializedDependencies as Array<
+                  string | JsonExpr
+                >,
                 ...(inspection.reason ? { reason: inspection.reason } : {}),
-              }
-            : {
-                type: 'requires' as const,
-                field: inspection.target,
-                when: firstDependency,
-                ...(inspection.reason ? { reason: inspection.reason } : {}),
-              }]
-        : [{
-            type: 'requires' as const,
-            field: inspection.target,
-            dependencies: serializedDependencies as Array<string | JsonExpr>,
-            ...(inspection.reason ? { reason: inspection.reason } : {}),
-          }]
+              },
+            ]
 
       return {
         rules,
@@ -567,7 +656,10 @@ function serializeInspection(
       }
     }
     case 'oneOf':
-      if (inspection.hasDynamicActiveBranch || inspection.activeBranch !== undefined) {
+      if (
+        inspection.hasDynamicActiveBranch ||
+        inspection.activeBranch !== undefined
+      ) {
         return excludeInspection(
           inspection,
           'oneOf() activeBranch overrides are not part of the JSON spec',
@@ -586,11 +678,13 @@ function serializeInspection(
       }
 
       return {
-        rules: [{
-          type: 'oneOf',
-          group: inspection.groupName,
-          branches: deepClone(inspection.branches),
-        }],
+        rules: [
+          {
+            type: 'oneOf',
+            group: inspection.groupName,
+            branches: deepClone(inspection.branches),
+          },
+        ],
         excluded: [],
         coverageKeys: [createKey('rule', 'oneOf', inspection.groupName)],
       }
@@ -599,7 +693,10 @@ function serializeInspection(
 
       for (const innerInspection of inspection.rules) {
         const inner = serializeInspection(
-          innerInspection as RuleInspection<Record<string, FieldDef>, Record<string, unknown>>,
+          innerInspection as RuleInspection<
+            Record<string, FieldDef>,
+            Record<string, unknown>
+          >,
           true,
         )
 
@@ -622,10 +719,12 @@ function serializeInspection(
       }
 
       return {
-        rules: [{
-          type: 'anyOf',
-          rules: innerRules,
-        }],
+        rules: [
+          {
+            type: 'anyOf',
+            rules: innerRules,
+          },
+        ],
         excluded: [],
         coverageKeys: createRuleKey({ type: 'anyOf', rules: innerRules })
           ? [createRuleKey({ type: 'anyOf', rules: innerRules }) as string]
@@ -635,12 +734,17 @@ function serializeInspection(
     case 'eitherOf': {
       const jsonBranches: Record<string, JsonRule[]> = {}
 
-      for (const [branchName, branchRules] of Object.entries(inspection.branches)) {
+      for (const [branchName, branchRules] of Object.entries(
+        inspection.branches,
+      )) {
         const serializedBranch: JsonRule[] = []
 
         for (const branchRule of branchRules) {
           const inner = serializeInspection(
-            branchRule as RuleInspection<Record<string, FieldDef>, Record<string, unknown>>,
+            branchRule as RuleInspection<
+              Record<string, FieldDef>,
+              Record<string, unknown>
+            >,
             true,
           )
 
@@ -666,11 +770,13 @@ function serializeInspection(
       }
 
       return {
-        rules: [{
-          type: 'eitherOf',
-          group: inspection.groupName,
-          branches: jsonBranches,
-        }],
+        rules: [
+          {
+            type: 'eitherOf',
+            group: inspection.groupName,
+            branches: jsonBranches,
+          },
+        ],
         excluded: [],
         coverageKeys: [createKey('rule', 'eitherOf', inspection.groupName)],
       }
@@ -694,9 +800,7 @@ function serializeInspection(
 function serializeRule<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
->(
-  rule: Rule<F, C>,
-): SerializeRuleResult {
+>(rule: Rule<F, C>): SerializeRuleResult {
   const jsonDef = getJsonDef<JsonRule>(rule)
   if (jsonDef) {
     return {
@@ -723,7 +827,10 @@ function serializeRule<
   }
 
   return serializeInspection(
-    inspection as RuleInspection<Record<string, FieldDef>, Record<string, unknown>>,
+    inspection as RuleInspection<
+      Record<string, FieldDef>,
+      Record<string, unknown>
+    >,
     false,
   )
 }
@@ -731,10 +838,10 @@ function serializeRule<
 export function toJson<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown> = Record<string, unknown>,
->(
-  config: ToJsonConfig<F, C>,
-): UmpireJsonSchema {
-  const meta = getJsonDef<SerializeMeta>(config.fields) ?? getJsonDef<SerializeMeta>(config.rules)
+>(config: ToJsonConfig<F, C>): UmpireJsonSchema {
+  const meta =
+    getJsonDef<SerializeMeta>(config.fields) ??
+    getJsonDef<SerializeMeta>(config.rules)
   const fields = {} as Record<string, JsonFieldDef>
   const rules: JsonRule[] = []
   const validators = {} as Record<string, JsonValidatorDef>

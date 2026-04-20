@@ -36,7 +36,12 @@ export function buildGraph<
   const deferredEdgeGroups: DeferredGraphEdgeGroup[] = []
   const seenEdges = new Set<string>()
 
-  function addEdge(from: string, to: string, type: string, ordering: boolean): void {
+  function addEdge(
+    from: string,
+    to: string,
+    type: string,
+    ordering: boolean,
+  ): void {
     const edgeKey = `${from}:${to}:${type}:${ordering ? 'ordering' : 'informational'}`
     if (seenEdges.has(edgeKey)) {
       return
@@ -77,7 +82,9 @@ export function buildGraph<
     if (metadata?.kind === 'oneOf') {
       deferredEdgeGroups.push({
         type: rule.type,
-        branches: Object.keys(metadata.branches).map((branchName) => [...metadata.branches[branchName]]),
+        branches: Object.keys(metadata.branches).map((branchName) => [
+          ...metadata.branches[branchName],
+        ]),
       })
 
       continue
@@ -159,7 +166,10 @@ export function detectCycles(graph: DependencyGraph): void {
   }
 }
 
-export function topologicalSort(graph: DependencyGraph, fieldNames: string[]): string[] {
+export function topologicalSort(
+  graph: DependencyGraph,
+  fieldNames: string[],
+): string[] {
   const orderedFields = uniqueNodes(fieldNames)
   const incomingCounts = new Map<string, number>()
 
@@ -167,7 +177,9 @@ export function topologicalSort(graph: DependencyGraph, fieldNames: string[]): s
     incomingCounts.set(field, graph.incomingCounts.get(field) ?? 0)
   }
 
-  const queue = orderedFields.filter((field) => (incomingCounts.get(field) ?? 0) === 0)
+  const queue = orderedFields.filter(
+    (field) => (incomingCounts.get(field) ?? 0) === 0,
+  )
   const result: string[] = []
 
   for (let index = 0; index < queue.length; index += 1) {
@@ -213,10 +225,18 @@ export function exportGraph(graph: DependencyGraph): {
   }
 
   for (const group of graph.deferredEdgeGroups) {
-    for (let sourceIndex = 0; sourceIndex < group.branches.length; sourceIndex += 1) {
+    for (
+      let sourceIndex = 0;
+      sourceIndex < group.branches.length;
+      sourceIndex += 1
+    ) {
       const sourceBranch = group.branches[sourceIndex]
 
-      for (let targetIndex = 0; targetIndex < group.branches.length; targetIndex += 1) {
+      for (
+        let targetIndex = 0;
+        targetIndex < group.branches.length;
+        targetIndex += 1
+      ) {
         if (sourceIndex === targetIndex) {
           continue
         }

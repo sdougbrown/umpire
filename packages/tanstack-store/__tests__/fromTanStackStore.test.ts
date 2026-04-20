@@ -3,7 +3,9 @@ import { enabledWhen, requires, umpire } from '@umpire/core'
 import { fromTanStackStore } from '../src/index.js'
 
 const fields = {
-  username: { isEmpty: (v: unknown) => v === '' || v === undefined || v === null },
+  username: {
+    isEmpty: (v: unknown) => v === '' || v === undefined || v === null,
+  },
   password: {},
   confirmPassword: { default: '' },
   inviteCode: { default: '' },
@@ -98,9 +100,12 @@ describe('fromTanStackStore', () => {
     type ConditionFields = typeof conditionFields
 
     const conditionRules = [
-      enabledWhen<ConditionFields, Conditions>('inviteCode', (_values, conditions) => {
-        return conditions.requireInvite
-      }),
+      enabledWhen<ConditionFields, Conditions>(
+        'inviteCode',
+        (_values, conditions) => {
+          return conditions.requireInvite
+        },
+      ),
     ]
 
     const store = createFormStore()
@@ -182,7 +187,10 @@ describe('fromTanStackStore', () => {
       fields: nestedFields,
       rules: [
         enabledWhen('note', (values) => {
-          return (values.settings as { allowNote: boolean } | undefined)?.allowNote === true
+          return (
+            (values.settings as { allowNote: boolean } | undefined)
+              ?.allowNote === true
+          )
         }),
       ],
     })

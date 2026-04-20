@@ -1,14 +1,25 @@
 import type { JsonPrimitive } from '@umpire/core'
 import type { Expr } from '@umpire/dsl'
 
-export type JsonConditionType = 'boolean' | 'string' | 'number' | 'string[]' | 'number[]'
+export type JsonConditionType =
+  | 'boolean'
+  | 'string'
+  | 'number'
+  | 'string[]'
+  | 'number[]'
 
 export interface JsonConditionDef {
   type: JsonConditionType
   description?: string
 }
 
-export type JsonIsEmptyStrategy = 'string' | 'number' | 'boolean' | 'array' | 'object' | 'present'
+export type JsonIsEmptyStrategy =
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'array'
+  | 'object'
+  | 'present'
 
 export interface JsonFieldDef {
   required?: boolean
@@ -51,7 +62,12 @@ export type JsonRequiresDependency = string | JsonExpr
 
 export type JsonRule =
   | { type: 'requires'; field: string; dependency: string; reason?: string }
-  | { type: 'requires'; field: string; dependencies: JsonRequiresDependency[]; reason?: string }
+  | {
+      type: 'requires'
+      field: string
+      dependencies: JsonRequiresDependency[]
+      reason?: string
+    }
   | { type: 'requires'; field: string; when: JsonExpr; reason?: string }
   | { type: 'enabledWhen'; field: string; when: JsonExpr; reason?: string }
   | { type: 'disables'; source: string; targets: string[]; reason?: string }

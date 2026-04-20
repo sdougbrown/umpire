@@ -18,8 +18,7 @@ const rule: Rule.RuleModule = {
   meta: {
     type: 'problem',
     docs: {
-      description:
-        'Disallow circular requires dependencies between fields.',
+      description: 'Disallow circular requires dependencies between fields.',
       recommended: true,
     },
     messages: {

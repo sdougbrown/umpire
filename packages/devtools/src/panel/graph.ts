@@ -1,7 +1,4 @@
-import type {
-  ScorecardResult,
-  UmpireGraphEdge,
-} from '@umpire/core'
+import type { ScorecardResult, UmpireGraphEdge } from '@umpire/core'
 import { getFieldTone, getRuleTone } from './theme.js'
 
 export type GraphLayout = {
@@ -32,8 +29,8 @@ export type GraphLayout = {
 }
 
 export const NODE_FONT_SIZE = 10
-const NODE_CHAR_WIDTH = 9.15  // tweak if text overflows nodes
-const NODE_PAD_X = 16  // 8px each side
+const NODE_CHAR_WIDTH = 9.15 // tweak if text overflows nodes
+const NODE_PAD_X = 16 // 8px each side
 const NODE_MIN_WIDTH = 50
 const NODE_HEIGHT = 28
 const COLUMN_GAP = 48
@@ -42,12 +39,19 @@ const PADDING_X = 24
 const PADDING_Y = 20
 
 function calcNodeWidth(fieldName: string): number {
-  return Math.max(NODE_MIN_WIDTH, Math.ceil(fieldName.length * NODE_CHAR_WIDTH + NODE_PAD_X))
+  return Math.max(
+    NODE_MIN_WIDTH,
+    Math.ceil(fieldName.length * NODE_CHAR_WIDTH + NODE_PAD_X),
+  )
 }
 
-function buildRanks(graph: ScorecardResult<Record<string, {}>, Record<string, unknown>>['graph']) {
+function buildRanks(
+  graph: ScorecardResult<Record<string, {}>, Record<string, unknown>>['graph'],
+) {
   const incoming = new Map<string, number>(graph.nodes.map((node) => [node, 0]))
-  const outgoing = new Map<string, string[]>(graph.nodes.map((node) => [node, []]))
+  const outgoing = new Map<string, string[]>(
+    graph.nodes.map((node) => [node, []]),
+  )
 
   for (const edge of graph.edges) {
     outgoing.get(edge.from)?.push(edge.to)
@@ -55,7 +59,9 @@ function buildRanks(graph: ScorecardResult<Record<string, {}>, Record<string, un
   }
 
   const queue = graph.nodes.filter((node) => (incoming.get(node) ?? 0) === 0)
-  const rankByNode = new Map<string, number>(graph.nodes.map((node) => [node, 0]))
+  const rankByNode = new Map<string, number>(
+    graph.nodes.map((node) => [node, 0]),
+  )
 
   while (queue.length > 0) {
     const current = queue.shift()
@@ -152,7 +158,7 @@ export function layoutGraph(
         x,
         y,
       }
-    })
+    }),
   )
 
   const edges = scorecard.graph.edges
@@ -162,11 +168,17 @@ export function layoutGraph(
   const lastRank = sortedRanks.at(-1) ?? 0
   const lastColumnX = columnX.get(lastRank) ?? PADDING_X
   const lastColumnWidth = columnWidths.get(lastRank) ?? NODE_MIN_WIDTH
-  const tallestColumn = Math.max(...[...columns.values()].map((col) => col.length), 1)
+  const tallestColumn = Math.max(
+    ...[...columns.values()].map((col) => col.length),
+    1,
+  )
 
   return {
     edges,
-    height: PADDING_Y * 2 + tallestColumn * NODE_HEIGHT + (tallestColumn - 1) * ROW_GAP,
+    height:
+      PADDING_Y * 2 +
+      tallestColumn * NODE_HEIGHT +
+      (tallestColumn - 1) * ROW_GAP,
     nodes,
     width: lastColumnX + lastColumnWidth + PADDING_X,
   }

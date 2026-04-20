@@ -37,7 +37,11 @@
           {
             "type": "enabledWhen",
             "field": "starterGate",
-            "when": { "op": "fieldInCond", "field": "starter", "condition": "weatherBand" }
+            "when": {
+              "op": "fieldInCond",
+              "field": "starter",
+              "condition": "weatherBand"
+            }
           }
         ]
       },

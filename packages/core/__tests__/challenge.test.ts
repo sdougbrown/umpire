@@ -48,9 +48,13 @@ describe('challenge', () => {
         requires<TestFields, TestConditions>('submit', 'email', {
           reason: 'Enter a valid email address',
         }),
-        enabledWhen<TestFields, TestConditions>('submit', (values) => values.password === 'secret', {
-          reason: 'Enter a password',
-        }),
+        enabledWhen<TestFields, TestConditions>(
+          'submit',
+          (values) => values.password === 'secret',
+          {
+            reason: 'Enter a password',
+          },
+        ),
       ],
     })
 
@@ -173,8 +177,14 @@ describe('challenge', () => {
           expect.objectContaining({
             rule: 'anyOf',
             inner: [
-              expect.objectContaining({ rule: 'requires', dependency: 'startTime' }),
-              expect.objectContaining({ rule: 'enabledWhen', reason: 'fallback failed' }),
+              expect.objectContaining({
+                rule: 'requires',
+                dependency: 'startTime',
+              }),
+              expect.objectContaining({
+                rule: 'enabledWhen',
+                reason: 'fallback failed',
+              }),
             ],
           }),
         ],
@@ -218,7 +228,10 @@ describe('challenge', () => {
       method: 'auto-detected',
       branches: {
         hourList: { fields: ['everyHour'], anySatisfied: false },
-        interval: { fields: ['startTime', 'endTime', 'repeatEvery'], anySatisfied: true },
+        interval: {
+          fields: ['startTime', 'endTime', 'repeatEvery'],
+          anySatisfied: true,
+        },
       },
     })
     expect(challenge.directReasons).toEqual([
@@ -244,8 +257,12 @@ describe('challenge', () => {
       },
       rules: [
         anyOf<TestFields>(
-          enabledWhen<TestFields>('submit', () => false, { reason: 'first failed' }),
-          enabledWhen<TestFields>('submit', () => false, { reason: 'second failed' }),
+          enabledWhen<TestFields>('submit', () => false, {
+            reason: 'first failed',
+          }),
+          enabledWhen<TestFields>('submit', () => false, {
+            reason: 'second failed',
+          }),
         ),
       ],
     })
@@ -257,8 +274,16 @@ describe('challenge', () => {
         rule: 'anyOf',
         passed: false,
         inner: [
-          expect.objectContaining({ rule: 'enabledWhen', reason: 'first failed', passed: false }),
-          expect.objectContaining({ rule: 'enabledWhen', reason: 'second failed', passed: false }),
+          expect.objectContaining({
+            rule: 'enabledWhen',
+            reason: 'first failed',
+            passed: false,
+          }),
+          expect.objectContaining({
+            rule: 'enabledWhen',
+            reason: 'second failed',
+            passed: false,
+          }),
         ],
       }),
     ])
@@ -350,9 +375,7 @@ describe('challenge', () => {
       rules: [
         disables<TestFields>('dates', ['startTime']),
         eitherOf<TestFields>('endTimePaths', {
-          scheduled: [
-            requires('endTime', 'startTime'),
-          ],
+          scheduled: [requires('endTime', 'startTime')],
           fallback: [
             enabledWhen('endTime', () => false, { reason: 'fallback failed' }),
           ],
@@ -379,13 +402,19 @@ describe('challenge', () => {
               scheduled: {
                 passed: false,
                 inner: [
-                  expect.objectContaining({ rule: 'requires', dependency: 'startTime' }),
+                  expect.objectContaining({
+                    rule: 'requires',
+                    dependency: 'startTime',
+                  }),
                 ],
               },
               fallback: {
                 passed: false,
                 inner: [
-                  expect.objectContaining({ rule: 'enabledWhen', reason: 'fallback failed' }),
+                  expect.objectContaining({
+                    rule: 'enabledWhen',
+                    reason: 'fallback failed',
+                  }),
                 ],
               },
             },
@@ -415,12 +444,8 @@ describe('challenge', () => {
       rules: [
         disables<TestFields>('dates', ['endTime']),
         eitherOf<TestFields>('endTimePaths', {
-          scheduled: [
-            requires('endTime', 'startTime'),
-          ],
-          fallback: [
-            enabledWhen('endTime', () => true),
-          ],
+          scheduled: [requires('endTime', 'startTime')],
+          fallback: [enabledWhen('endTime', () => true)],
         }),
         requires<TestFields>('submit', 'endTime'),
       ],
@@ -438,7 +463,9 @@ describe('challenge', () => {
         reason: 'overridden by dates',
       }),
     ])
-    expect(challenge.transitiveDeps.map((entry) => entry.field)).not.toContain('startTime')
+    expect(challenge.transitiveDeps.map((entry) => entry.field)).not.toContain(
+      'startTime',
+    )
   })
 
   test('surfaces preserved field metadata for check()-based predicates', () => {
@@ -461,7 +488,10 @@ describe('challenge', () => {
         ),
         requires<TestFields>(
           'submit',
-          check('password', (value) => typeof value === 'string' && value.length >= 8),
+          check(
+            'password',
+            (value) => typeof value === 'string' && value.length >= 8,
+          ),
           { reason: 'Enter a longer password' },
         ),
         disables<TestFields>(
@@ -581,11 +611,16 @@ describe('challenge', () => {
             const matches = values.cpu === values.motherboard
 
             return new Map([
-              ['motherboard', {
-                enabled: true,
-                fair: matches,
-                reason: matches ? null : 'Selected motherboard no longer matches the CPU socket',
-              }],
+              [
+                'motherboard',
+                {
+                  enabled: true,
+                  fair: matches,
+                  reason: matches
+                    ? null
+                    : 'Selected motherboard no longer matches the CPU socket',
+                },
+              ],
             ])
           },
         }),

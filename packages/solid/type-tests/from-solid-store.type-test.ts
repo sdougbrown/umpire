@@ -20,7 +20,11 @@ const typedUmp = umpire<Fields, Conditions>({
     label: { default: '' },
   },
   rules: [
-    enabledWhen('label', (_values, conditions) => conditions.tier === 'pro' && conditions.stage > 0),
+    enabledWhen(
+      'label',
+      (_values, conditions) =>
+        conditions.tier === 'pro' && conditions.stage > 0,
+    ),
   ],
 })
 

@@ -3,7 +3,10 @@ import { deepClone } from './clone.js'
 
 import type { ExprBuilder } from './types.js'
 
-export const expr: ExprBuilder<Record<string, FieldDef>, Record<string, unknown>> = {
+export const expr: ExprBuilder<
+  Record<string, FieldDef>,
+  Record<string, unknown>
+> = {
   eq(field, value) {
     return { op: 'eq', field, value }
   },

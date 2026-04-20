@@ -47,9 +47,7 @@
           "fair": true,
           "required": false,
           "reason": "Email entry is disabled",
-          "reasons": [
-            "Email entry is disabled"
-          ],
+          "reasons": ["Email entry is disabled"],
           "satisfied": true
         }
       }

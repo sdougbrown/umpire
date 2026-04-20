@@ -13,7 +13,9 @@ type RuleOptions<
   C extends Record<string, unknown>,
 > = {
   reason?: ReasonOption<F, C>
-  trace?: RuleTraceAttachment<FieldValues<F>, C> | RuleTraceAttachment<FieldValues<F>, C>[]
+  trace?:
+    | RuleTraceAttachment<FieldValues<F>, C>
+    | RuleTraceAttachment<FieldValues<F>, C>[]
 }
 
 type Predicate<
@@ -27,10 +29,10 @@ type FairPredicate<
   C extends Record<string, unknown>,
 > = (value: NonNullable<V>, values: FieldValues<F>, conditions: C) => boolean
 
-type FieldSelector<
-  F extends Record<string, FieldDef>,
-  V = unknown,
-> = (keyof F & string) | { readonly __umpfield: keyof F & string } | { readonly __umpfield: string }
+type FieldSelector<F extends Record<string, FieldDef>, V = unknown> =
+  | (keyof F & string)
+  | { readonly __umpfield: keyof F & string }
+  | { readonly __umpfield: string }
 
 export type AttachedFieldRule =
   | {
@@ -40,7 +42,11 @@ export type AttachedFieldRule =
     }
   | {
       kind: 'fairWhen'
-      predicate: FairPredicate<unknown, Record<string, FieldDef>, Record<string, unknown>>
+      predicate: FairPredicate<
+        unknown,
+        Record<string, FieldDef>,
+        Record<string, unknown>
+      >
       options?: RuleOptions<Record<string, FieldDef>, Record<string, unknown>>
     }
   | {
@@ -91,22 +97,30 @@ export type FieldBuilder<V = unknown> = BaseFieldBuilder<V> & {
   readonly [FIELD_STATE]: FieldBuilderState<V>
 }
 
-export type FieldRef<V = unknown, Name extends string = string> = FieldBuilder<V> & {
+export type FieldRef<
+  V = unknown,
+  Name extends string = string,
+> = FieldBuilder<V> & {
   readonly __umpfield: Name
 }
 
 export type FieldInput<V = unknown> = FieldDef<V> | FieldBuilder<V>
 
 export type NormalizeField<T> =
-  T extends FieldBuilder<infer V> ? FieldDef<V>
-  : T extends FieldDef<infer V> ? FieldDef<V>
-  : FieldDef
+  T extends FieldBuilder<infer V>
+    ? FieldDef<V>
+    : T extends FieldDef<infer V>
+      ? FieldDef<V>
+      : FieldDef
 
 export type NormalizeFields<F extends Record<string, FieldInput>> = {
   [K in keyof F]: NormalizeField<F[K]>
 }
 
-function pushRule<V>(builder: FieldBuilder<V>, rule: AttachedFieldRule): FieldBuilder<V> {
+function pushRule<V>(
+  builder: FieldBuilder<V>,
+  rule: AttachedFieldRule,
+): FieldBuilder<V> {
   builder[FIELD_STATE].rules.push(rule)
   return builder
 }
@@ -134,10 +148,7 @@ function createFieldBuilder<V>(name?: string): FieldBuilder<V> {
     fairWhen<
       F extends Record<string, FieldDef>,
       C extends Record<string, unknown> = Record<string, unknown>,
-    >(
-      predicate: FairPredicate<V, F, C>,
-      options?: RuleOptions<F, C>,
-    ) {
+    >(predicate: FairPredicate<V, F, C>, options?: RuleOptions<F, C>) {
       return pushRule(this, {
         kind: 'fairWhen',
         predicate: predicate as AttachedFairWhen['predicate'],
@@ -147,10 +158,7 @@ function createFieldBuilder<V>(name?: string): FieldBuilder<V> {
     enabledWhen<
       F extends Record<string, FieldDef>,
       C extends Record<string, unknown> = Record<string, unknown>,
-    >(
-      predicate: Predicate<F, C>,
-      options?: RuleOptions<F, C>,
-    ) {
+    >(predicate: Predicate<F, C>, options?: RuleOptions<F, C>) {
       return pushRule(this, {
         kind: 'enabledWhen',
         predicate: predicate as AttachedEnabledWhen['predicate'],
@@ -160,10 +168,7 @@ function createFieldBuilder<V>(name?: string): FieldBuilder<V> {
     requires<
       F extends Record<string, FieldDef>,
       C extends Record<string, unknown> = Record<string, unknown>,
-    >(
-      dependency: FieldSelector<F>,
-      options?: RuleOptions<F, C>,
-    ) {
+    >(dependency: FieldSelector<F>, options?: RuleOptions<F, C>) {
       return pushRule(this, {
         kind: 'requires',
         dependency: getFieldNameOrThrow(dependency),
@@ -199,10 +204,7 @@ export function getFieldBuilderName(value: unknown): string | undefined {
   return typeof name === 'string' ? name : undefined
 }
 
-export function getFieldNameOrThrow<
-  F extends Record<string, FieldDef>,
-  V,
->(
+export function getFieldNameOrThrow<F extends Record<string, FieldDef>, V>(
   field: FieldSelector<F, V>,
 ): keyof F & string {
   if (typeof field === 'string') {
@@ -211,7 +213,9 @@ export function getFieldNameOrThrow<
 
   const name = getFieldBuilderName(field)
   if (!name) {
-    throw new Error('[@umpire/core] Named field builder required when passing a field() value to a rule')
+    throw new Error(
+      '[@umpire/core] Named field builder required when passing a field() value to a rule',
+    )
   }
 
   return name as keyof F & string
@@ -221,12 +225,16 @@ export function getFieldBuilderDef<V>(builder: FieldBuilder<V>): FieldDef<V> {
   return { ...builder[FIELD_STATE].definition }
 }
 
-export function getFieldBuilderRules(builder: FieldBuilder): AttachedFieldRule[] {
+export function getFieldBuilderRules(
+  builder: FieldBuilder,
+): AttachedFieldRule[] {
   return [...builder[FIELD_STATE].rules]
 }
 
 export function field<V = unknown>(): FieldBuilder<V>
-export function field<V = unknown, Name extends string = string>(name: Name): FieldRef<V, Name>
+export function field<V = unknown, Name extends string = string>(
+  name: Name,
+): FieldRef<V, Name>
 export function field<V = unknown>(name?: string): FieldBuilder<V> {
   return createFieldBuilder(name)
 }

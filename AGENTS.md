@@ -37,6 +37,7 @@ Quick reference (root): `yarn test`, `yarn build`, `yarn typecheck`.
 ## Releases and Versioning
 
 Changesets workflow with `.changeset/config.json`:
+
 - `updateInternalDependencies: "minor"` ensures adapter packages get a patch bump when `core` bumps minor or major, triggering a new publish with updated dep ranges.
 - All packages are kept in sync: when a referenced package bumps, dependents are re-published automatically.
 - This maintains consistency without requiring a full major cascade on every internal change.

@@ -25,13 +25,13 @@ export default [
 
 ## Rules
 
-| Rule | Severity | What it catches |
-|------|----------|-----------------|
-| `no-unknown-fields` | `warn` | Field names in rules that aren't declared in `fields` |
-| `no-inline-umpire-init` | `warn` | `umpire()` called inside a component or hook body without `useMemo` |
-| `no-self-disable` | `error` | A field listed as both source and target of `disables()` |
-| `no-contradicting-rules` | `error` | `requires`/`disables` pairs that make a field permanently unavailable |
-| `no-circular-requires` | `error` | Circular `requires` chains where fields mutually depend on each other |
+| Rule                     | Severity | What it catches                                                       |
+| ------------------------ | -------- | --------------------------------------------------------------------- |
+| `no-unknown-fields`      | `warn`   | Field names in rules that aren't declared in `fields`                 |
+| `no-inline-umpire-init`  | `warn`   | `umpire()` called inside a component or hook body without `useMemo`   |
+| `no-self-disable`        | `error`  | A field listed as both source and target of `disables()`              |
+| `no-contradicting-rules` | `error`  | `requires`/`disables` pairs that make a field permanently unavailable |
+| `no-circular-requires`   | `error`  | Circular `requires` chains where fields mutually depend on each other |
 
 ## Docs
 

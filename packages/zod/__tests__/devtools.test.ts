@@ -47,15 +47,17 @@ const demoUmp = umpire({
 
 describe('zodValidationExtension', () => {
   test('summarizes surfaced, suppressed, and unmapped issues from a safeParse result', () => {
-    const result = z.object({
-      email: z.string().email('Enter a valid email'),
-      companyName: z.string().min(1, 'Company name is required'),
-      companySize: z.string().min(1, 'Company size is required'),
-    }).safeParse({
-      email: 'nope',
-      companyName: '',
-      companySize: '',
-    })
+    const result = z
+      .object({
+        email: z.string().email('Enter a valid email'),
+        companyName: z.string().min(1, 'Company name is required'),
+        companySize: z.string().min(1, 'Company size is required'),
+      })
+      .safeParse({
+        email: 'nope',
+        companyName: '',
+        companySize: '',
+      })
 
     if (result.success) {
       throw new Error('Expected parse to fail')
@@ -112,15 +114,18 @@ describe('zodValidationExtension', () => {
     expect(view?.sections).toContainEqual({
       kind: 'items',
       title: 'Suppressed Issues',
-      items: [{
-        id: 'companyName:0',
-        title: 'companyName',
-        badge: { tone: 'muted', value: 'disabled' },
-        body: 'Company name is required',
-        rows: [{ label: 'availability reason', value: 'business plan required' }],
-      }],
+      items: [
+        {
+          id: 'companyName:0',
+          title: 'companyName',
+          badge: { tone: 'muted', value: 'disabled' },
+          body: 'Company name is required',
+          rows: [
+            { label: 'availability reason', value: 'business plan required' },
+          ],
+        },
+      ],
     })
-
   })
 
   test('labels form-level issues as unmapped', () => {
@@ -129,10 +134,12 @@ describe('zodValidationExtension', () => {
       result: {
         success: false,
         error: {
-          issues: [{
-            path: [],
-            message: 'Passwords do not match',
-          }],
+          issues: [
+            {
+              path: [],
+              message: 'Passwords do not match',
+            },
+          ],
         },
       },
     })
@@ -158,12 +165,14 @@ describe('zodValidationExtension', () => {
     expect(view?.sections).toContainEqual({
       kind: 'items',
       title: 'Unmapped Issues',
-      items: [{
-        id: ':0',
-        title: '(form)',
-        badge: { tone: 'fair', value: 'unmapped' },
-        body: 'Passwords do not match',
-      }],
+      items: [
+        {
+          id: ':0',
+          title: '(form)',
+          badge: { tone: 'fair', value: 'unmapped' },
+          body: 'Passwords do not match',
+        },
+      ],
     })
   })
 
@@ -210,7 +219,9 @@ describe('zodValidationExtension', () => {
       ]),
     })
 
-    expect(view?.sections.find((section) => section.title === 'Derived Error Map')).toBeUndefined()
+    expect(
+      view?.sections.find((section) => section.title === 'Derived Error Map'),
+    ).toBeUndefined()
     expect(view?.sections).toContainEqual({
       kind: 'rows',
       title: 'Derived Schema',
@@ -228,9 +239,13 @@ describe('zodValidationExtension', () => {
         companyName: { default: '' },
       },
       rules: [
-        enabledWhen('companyName', (_v, c: { plan: 'personal' | 'business' }) => c.plan === 'business', {
-          reason: 'business plan required',
-        }),
+        enabledWhen(
+          'companyName',
+          (_v, c: { plan: 'personal' | 'business' }) => c.plan === 'business',
+          {
+            reason: 'business plan required',
+          },
+        ),
       ],
     })
 
@@ -279,9 +294,7 @@ describe('zodValidationExtension', () => {
     expect(view?.sections).toContainEqual({
       kind: 'rows',
       title: 'Derived Error Map',
-      rows: [
-        { label: 'email', value: 'Enter a valid email' },
-      ],
+      rows: [{ label: 'email', value: 'Enter a valid email' }],
     })
 
     expect(view?.sections).toContainEqual({
@@ -335,10 +348,12 @@ describe('zodValidationExtension', () => {
       result: {
         success: false,
         error: {
-          issues: [{
-            path: ['companyName'],
-            message: 'Company name is required',
-          }],
+          issues: [
+            {
+              path: ['companyName'],
+              message: 'Company name is required',
+            },
+          ],
         },
       },
     })
@@ -364,13 +379,15 @@ describe('zodValidationExtension', () => {
     expect(view?.sections).toContainEqual({
       kind: 'items',
       title: 'Suppressed Issues',
-      items: [{
-        id: 'companyName:0',
-        title: 'companyName',
-        badge: { tone: 'muted', value: 'disabled' },
-        body: 'Company name is required',
-        rows: undefined,
-      }],
+      items: [
+        {
+          id: 'companyName:0',
+          title: 'companyName',
+          badge: { tone: 'muted', value: 'disabled' },
+          body: 'Company name is required',
+          rows: undefined,
+        },
+      ],
     })
   })
 })

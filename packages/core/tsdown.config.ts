@@ -12,7 +12,7 @@ export default defineConfig([
     sourcemap: true,
   },
   {
-    entry: { 'index': 'src/index.ts' },
+    entry: { index: 'src/index.ts' },
     format: ['iife'],
     globalName: 'Umpire',
     platform: 'browser',

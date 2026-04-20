@@ -25,7 +25,8 @@ export const theme = {
   unavailable: '#6c7288',
 } as const
 
-export const fontFamily = "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace"
+export const fontFamily =
+  "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace"
 
 export function getFieldTone(
   field: ScorecardField<Record<string, { required?: boolean }>>,
