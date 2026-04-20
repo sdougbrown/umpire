@@ -6,7 +6,9 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "paths": {
       "@umpire/core": ["../core/src/index.ts"],
-      "@umpire/core/*": ["../core/src/*"]
+      "@umpire/core/*": ["../core/src/*"],
+      "@umpire/reads": ["../reads/src/index.ts"],
+      "@umpire/reads/*": ["../reads/src/*"]
     }
   },
   "include": ["src", "entrypoints"],
