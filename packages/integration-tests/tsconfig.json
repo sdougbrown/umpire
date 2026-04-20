@@ -4,6 +4,7 @@
     "types": ["bun-types"],
     "paths": {
       "@umpire/core": ["../core/src/index.ts"],
+      "@umpire/core/snapshot": ["../core/src/snapshot.ts"],
       "@umpire/core/*": ["../core/src/*"],
       "@umpire/devtools": ["../devtools/src/index.ts"],
       "@umpire/devtools/react": ["../devtools/entrypoints/react.ts"],
