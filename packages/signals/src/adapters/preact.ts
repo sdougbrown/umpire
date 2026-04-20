@@ -11,7 +11,7 @@ export const preactAdapter: SignalProtocol = {
     const s = signal(initial)
     return {
       get: () => s.value,
-      set: (v: unknown) => {
+      set: (v) => {
         s.value = v
       },
     }

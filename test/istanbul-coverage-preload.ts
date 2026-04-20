@@ -48,6 +48,10 @@ function shouldInstrument(filePath: string) {
     return false
   }
 
+  if (/\/test-setup\.[^.]+$/u.test(relativePath)) {
+    return false
+  }
+
   return !/\.(test|spec)\.[^.]+$/u.test(relativePath)
 }
 

@@ -80,5 +80,12 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "@preact/signals-core": "^1.12.1",
+    "alien-signals": "^3.0.0",
+    "signal-polyfill": "^0.2.0",
+    "solid-js": "^1.0.0",
+    "vue": "^3.0.0"
   }
 }
