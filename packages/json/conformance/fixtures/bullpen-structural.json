@@ -46,12 +46,8 @@
         "type": "oneOf",
         "group": "bullpenCall",
         "branches": {
-          "phone": [
-            "bullpenPhone"
-          ],
-          "signal": [
-            "outfieldSignal"
-          ]
+          "phone": ["bullpenPhone"],
+          "signal": ["outfieldSignal"]
         }
       },
       {
@@ -133,18 +129,12 @@
         "pitcherCard": {
           "fastball": 62
         },
-        "benchBats": [
-          "Soto",
-          "Verdugo"
-        ],
+        "benchBats": ["Soto", "Verdugo"],
         "stealCoverOn": false
       },
       "conditions": {
         "isPlayoffs": false,
-        "availablePitchers": [
-          "Cole",
-          "Holmes"
-        ]
+        "availablePitchers": ["Cole", "Holmes"]
       },
       "expectedAvailability": {
         "startingPitcher": {
@@ -168,9 +158,7 @@
           "fair": true,
           "required": false,
           "reason": "conflicts with phone strategy",
-          "reasons": [
-            "conflicts with phone strategy"
-          ],
+          "reasons": ["conflicts with phone strategy"],
           "satisfied": false
         },
         "closerReady": {
@@ -233,10 +221,7 @@
         "pitcherCard": {
           "fastball": 62
         },
-        "benchBats": [
-          "Soto",
-          "Verdugo"
-        ],
+        "benchBats": ["Soto", "Verdugo"],
         "stealCoverOn": true
       },
       "prev": {
@@ -246,18 +231,12 @@
         "pitcherCard": {
           "fastball": 62
         },
-        "benchBats": [
-          "Soto",
-          "Verdugo"
-        ],
+        "benchBats": ["Soto", "Verdugo"],
         "stealCoverOn": true
       },
       "conditions": {
         "isPlayoffs": false,
-        "availablePitchers": [
-          "Cole",
-          "Holmes"
-        ]
+        "availablePitchers": ["Cole", "Holmes"]
       },
       "expectedAvailability": {
         "startingPitcher": {
@@ -273,9 +252,7 @@
           "fair": true,
           "required": false,
           "reason": "conflicts with signal strategy",
-          "reasons": [
-            "conflicts with signal strategy"
-          ],
+          "reasons": ["conflicts with signal strategy"],
           "satisfied": true
         },
         "outfieldSignal": {
@@ -348,16 +325,12 @@
         "pitcherCard": {
           "fastball": 62
         },
-        "benchBats": [
-          "Soto"
-        ],
+        "benchBats": ["Soto"],
         "stealCoverOn": true
       },
       "conditions": {
         "isPlayoffs": false,
-        "availablePitchers": [
-          "Holmes"
-        ]
+        "availablePitchers": ["Holmes"]
       },
       "expectedAvailability": {
         "startingPitcher": {
@@ -365,9 +338,7 @@
           "fair": false,
           "required": true,
           "reason": "Starting pitcher is not available tonight",
-          "reasons": [
-            "Starting pitcher is not available tonight"
-          ],
+          "reasons": ["Starting pitcher is not available tonight"],
           "satisfied": true
         },
         "bullpenPhone": {
@@ -375,9 +346,7 @@
           "fair": true,
           "required": false,
           "reason": "requires startingPitcher",
-          "reasons": [
-            "requires startingPitcher"
-          ],
+          "reasons": ["requires startingPitcher"],
           "satisfied": true
         },
         "outfieldSignal": {
@@ -385,9 +354,7 @@
           "fair": true,
           "required": false,
           "reason": "conflicts with phone strategy",
-          "reasons": [
-            "conflicts with phone strategy"
-          ],
+          "reasons": ["conflicts with phone strategy"],
           "satisfied": false
         },
         "closerReady": {

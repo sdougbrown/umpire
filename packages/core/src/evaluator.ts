@@ -2,9 +2,20 @@ import {
   appendCompositeFailureReasons,
   combineCompositeResults,
 } from './composite.js'
-import { getInternalRuleMetadata, isFairRule, isGateRule, resolveReason } from './rules.js'
+import {
+  getInternalRuleMetadata,
+  isFairRule,
+  isGateRule,
+  resolveReason,
+} from './rules.js'
 import { isSatisfied } from './satisfaction.js'
-import type { AvailabilityMap, FieldDef, FieldValues, Rule, RuleEvaluation } from './types.js'
+import type {
+  AvailabilityMap,
+  FieldDef,
+  FieldValues,
+  Rule,
+  RuleEvaluation,
+} from './types.js'
 
 type RulePhaseBuckets<
   F extends Record<string, FieldDef>,
@@ -46,7 +57,9 @@ function partitionRulesByPhase<
 export function indexRulesByTargetPhase<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
->(rulesByTarget: Map<string, Rule<F, C>[]>): Map<string, RulePhaseBuckets<F, C>> {
+>(
+  rulesByTarget: Map<string, Rule<F, C>[]>,
+): Map<string, RulePhaseBuckets<F, C>> {
   const rulesByTargetPhase = new Map<string, RulePhaseBuckets<F, C>>()
 
   for (const [field, rules] of rulesByTarget) {
@@ -134,7 +147,9 @@ export function evaluateRuleForField<
         )
       }
 
-      branchResults.push(combineCompositeResults(metadata.constraint, 'and', innerResults))
+      branchResults.push(
+        combineCompositeResults(metadata.constraint, 'and', innerResults),
+      )
     }
 
     return combineCompositeResults(metadata.constraint, 'or', branchResults)
@@ -156,7 +171,8 @@ export function evaluateRuleForField<
     enabled: result.enabled,
     fair: result.fair,
     reason: result.reason,
-    reasons: result.reasons && result.reasons.length > 0 ? result.reasons : undefined,
+    reasons:
+      result.reasons && result.reasons.length > 0 ? result.reasons : undefined,
   }
 }
 
@@ -176,7 +192,8 @@ export function evaluate<
   const availability = {} as AvailabilityMap<F>
   const baseRuleCache = new Map<Rule<F, C>, Map<string, RuleEvaluation>>()
   const resolvedRulesByTarget = rulesByTarget ?? indexRulesByTarget(rules)
-  const resolvedRulesByTargetPhase = rulesByTargetPhase ?? indexRulesByTargetPhase(resolvedRulesByTarget)
+  const resolvedRulesByTargetPhase =
+    rulesByTargetPhase ?? indexRulesByTargetPhase(resolvedRulesByTarget)
 
   for (const field of topoOrder) {
     const { gateRules, fairRules } =
@@ -242,7 +259,7 @@ export function evaluate<
       enabled,
       satisfied: isSatisfied(values[field], fields[field]),
       fair,
-      required: enabled ? fields[field].required ?? false : false,
+      required: enabled ? (fields[field].required ?? false) : false,
       reason,
       reasons,
     }

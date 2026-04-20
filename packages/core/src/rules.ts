@@ -5,7 +5,10 @@ import {
 import { shouldWarnInDev } from './dev.js'
 import { getFieldBuilderName, getFieldNameOrThrow } from './field.js'
 import { isSatisfied } from './satisfaction.js'
-import { isNamedCheck as isNamedCheckValidator, runFieldValidator } from './validation.js'
+import {
+  isNamedCheck as isNamedCheckValidator,
+  runFieldValidator,
+} from './validation.js'
 import type {
   FieldValidator,
   FieldDef,
@@ -124,13 +127,15 @@ type RuleOptions<
   C extends Record<string, unknown>,
 > = {
   reason?: ReasonOption<F, C>
-  trace?: RuleTraceAttachment<FieldValues<F>, C> | RuleTraceAttachment<FieldValues<F>, C>[]
+  trace?:
+    | RuleTraceAttachment<FieldValues<F>, C>
+    | RuleTraceAttachment<FieldValues<F>, C>[]
 }
 
-type FieldSelector<
-  F extends Record<string, FieldDef>,
-  V = unknown,
-> = (keyof F & string) | { readonly __umpfield: keyof F & string } | { readonly __umpfield: string }
+type FieldSelector<F extends Record<string, FieldDef>, V = unknown> =
+  | (keyof F & string)
+  | { readonly __umpfield: keyof F & string }
+  | { readonly __umpfield: string }
 
 type Source<
   F extends Record<string, FieldDef>,
@@ -147,7 +152,11 @@ type FairPredicate<
   V,
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
-> = ((value: NonNullable<V>, values: FieldValues<F>, conditions: C) => boolean) & {
+> = ((
+  value: NonNullable<V>,
+  values: FieldValues<F>,
+  conditions: C,
+) => boolean) & {
   _checkField?: keyof F & string
 }
 
@@ -171,10 +180,9 @@ type OneOfOptions<
   C extends Record<string, unknown>,
   BranchName extends string = string,
 > = RuleOptions<F, C> & {
-  activeBranch?: BranchName | ((
-    values: FieldValues<F>,
-    conditions: C,
-  ) => BranchName | null | undefined)
+  activeBranch?:
+    | BranchName
+    | ((values: FieldValues<F>, conditions: C) => BranchName | null | undefined)
 }
 
 export type InternalPredicate<
@@ -187,7 +195,8 @@ export type InternalSource<
   C extends Record<string, unknown>,
 > = Source<F, C>
 
-export type InternalOneOfBranches<F extends Record<string, FieldDef>> = OneOfBranches<F>
+export type InternalOneOfBranches<F extends Record<string, FieldDef>> =
+  OneOfBranches<F>
 
 export type InternalFairPredicate<
   V,
@@ -315,10 +324,7 @@ function createResultMap<F extends Record<string, FieldDef>>(
   const results = new Map<string, RuleEvaluation>()
 
   for (const target of targets) {
-    results.set(
-      target,
-      resultForTarget(target),
-    )
+    results.set(target, resultForTarget(target))
   }
 
   return results
@@ -340,9 +346,10 @@ export function resolveReason<
   return reason ?? fallback
 }
 
-function getCheckField<F extends Record<string, FieldDef>, C extends Record<string, unknown>>(
-  source: Predicate<F, C>,
-): (keyof F & string) | undefined {
+function getCheckField<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(source: Predicate<F, C>): (keyof F & string) | undefined {
   return source._checkField
 }
 
@@ -350,18 +357,14 @@ function getFairCheckField<
   V,
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
->(
-  predicate: FairPredicate<V, F, C>,
-): (keyof F & string) | undefined {
+>(predicate: FairPredicate<V, F, C>): (keyof F & string) | undefined {
   return predicate._checkField
 }
 
 export function getSourceField<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
->(
-  source: InternalSource<F, C>,
-): (keyof F & string) | undefined {
+>(source: InternalSource<F, C>): (keyof F & string) | undefined {
   if (typeof source === 'string') {
     return source
   }
@@ -373,9 +376,7 @@ function normalizeSource<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
   V = unknown,
->(
-  source: SourceInput<F, C, V>,
-): Source<F, C> {
+>(source: SourceInput<F, C, V>): Source<F, C> {
   if (typeof source === 'function') {
     return source
   }
@@ -401,8 +402,12 @@ export function getInternalRuleMetadata<
   return (rule as InternalRuleCarrier<F, C>)._umpire
 }
 
-function cloneNamedCheckMetadata(metadata: NamedCheckMetadata): NamedCheckMetadata {
-  const params = metadata.params ? Object.freeze({ ...metadata.params }) : undefined
+function cloneNamedCheckMetadata(
+  metadata: NamedCheckMetadata,
+): NamedCheckMetadata {
+  const params = metadata.params
+    ? Object.freeze({ ...metadata.params })
+    : undefined
 
   if (!params) {
     return Object.freeze({ __check: metadata.__check })
@@ -414,8 +419,12 @@ function cloneNamedCheckMetadata(metadata: NamedCheckMetadata): NamedCheckMetada
   })
 }
 
-function isNamedCheckMetadataCarrier(value: unknown): value is NamedCheckMetadataCarrier {
-  return (typeof value === 'function' || typeof value === 'object') && value !== null
+function isNamedCheckMetadataCarrier(
+  value: unknown,
+): value is NamedCheckMetadataCarrier {
+  return (
+    (typeof value === 'function' || typeof value === 'object') && value !== null
+  )
 }
 
 function hasNamedCheckMetadata(
@@ -424,7 +433,9 @@ function hasNamedCheckMetadata(
   return isNamedCheckMetadataCarrier(value) && value._namedCheck !== undefined
 }
 
-export function getNamedCheckMetadata(value: unknown): NamedCheckMetadata | undefined {
+export function getNamedCheckMetadata(
+  value: unknown,
+): NamedCheckMetadata | undefined {
   if (isNamedCheckValidator(value)) {
     return cloneNamedCheckMetadata(value)
   }
@@ -437,7 +448,10 @@ export function getNamedCheckMetadata(value: unknown): NamedCheckMetadata | unde
 }
 
 function getPredicateField(value: unknown): string | undefined {
-  if ((typeof value !== 'function' && typeof value !== 'object') || value === null) {
+  if (
+    (typeof value !== 'function' && typeof value !== 'object') ||
+    value === null
+  ) {
     return undefined
   }
 
@@ -489,7 +503,9 @@ function inspectReasonOption<
   return { hasDynamicReason: false }
 }
 
-function inspectOperand<Field extends string = string>(value: unknown): RuleOperandInspection<Field> {
+function inspectOperand<Field extends string = string>(
+  value: unknown,
+): RuleOperandInspection<Field> {
   if (typeof value === 'string') {
     return {
       kind: 'field',
@@ -521,7 +537,10 @@ function getBranchRules<
 function resolveCompositeRuleShape<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
->(label: string, rules: Rule<F, C>[]): {
+>(
+  label: string,
+  rules: Rule<F, C>[],
+): {
   targets: Array<keyof F & string>
   sources: Array<keyof F & string>
   constraint: RuleConstraint
@@ -535,7 +554,9 @@ function resolveCompositeRuleShape<
       currentTargets.length !== expectedTargets.length ||
       currentTargets.some((target, index) => target !== expectedTargets[index])
     ) {
-      throw new Error(`[@umpire/core] ${label} rules must target the same fields`)
+      throw new Error(
+        `[@umpire/core] ${label} rules must target the same fields`,
+      )
     }
   }
 
@@ -543,7 +564,9 @@ function resolveCompositeRuleShape<
 
   for (const innerRule of rules.slice(1)) {
     if (getRuleConstraint(innerRule) !== constraint) {
-      throw new Error(`[@umpire/core] ${label} cannot mix fairWhen rules with availability rules`)
+      throw new Error(
+        `[@umpire/core] ${label} cannot mix fairWhen rules with availability rules`,
+      )
     }
   }
 
@@ -596,7 +619,8 @@ export function inspectRule<
       kind: 'requires',
       target: rule.targets[0],
       dependencies: metadata.dependencies.map((dependency) =>
-        inspectOperand<keyof F & string>(dependency)),
+        inspectOperand<keyof F & string>(dependency),
+      ),
       ...inspectReasonOption(metadata.options),
     }
   }
@@ -610,13 +634,16 @@ export function inspectRule<
         typeof metadata.options?.activeBranch === 'string'
           ? metadata.options.activeBranch
           : undefined,
-      hasDynamicActiveBranch: typeof metadata.options?.activeBranch === 'function',
+      hasDynamicActiveBranch:
+        typeof metadata.options?.activeBranch === 'function',
       ...inspectReasonOption(metadata.options),
     }
   }
 
   if (metadata.kind === 'anyOf') {
-    const inspectedRules = metadata.rules.map((innerRule) => inspectRule(innerRule))
+    const inspectedRules = metadata.rules.map((innerRule) =>
+      inspectRule(innerRule),
+    )
 
     if (inspectedRules.some((entry) => entry === undefined)) {
       return undefined
@@ -639,7 +666,8 @@ export function inspectRule<
 
     if (
       Object.values(inspectedBranches).some((branchRules) =>
-        branchRules.some((entry) => entry === undefined))
+        branchRules.some((entry) => entry === undefined),
+      )
     ) {
       return undefined
     }
@@ -648,7 +676,10 @@ export function inspectRule<
       kind: 'eitherOf',
       groupName: metadata.groupName,
       constraint: metadata.constraint,
-      branches: inspectedBranches as Record<string, Array<RuleInspection<F, C>>>,
+      branches: inspectedBranches as Record<
+        string,
+        Array<RuleInspection<F, C>>
+      >,
     }
   }
 
@@ -702,7 +733,9 @@ export function getGraphSourceInfo<
 
   if (metadata?.kind === 'anyOf') {
     const ordering = uniqueFields(
-      metadata.rules.flatMap((innerRule) => getGraphSourceInfo(innerRule).ordering),
+      metadata.rules.flatMap(
+        (innerRule) => getGraphSourceInfo(innerRule).ordering,
+      ),
     )
     const orderingSet = new Set(ordering)
     const informational = uniqueFields(
@@ -720,7 +753,9 @@ export function getGraphSourceInfo<
   if (metadata?.kind === 'eitherOf') {
     const branchRules = getBranchRules(metadata.branches)
     const ordering = uniqueFields(
-      branchRules.flatMap((innerRule) => getGraphSourceInfo(innerRule).ordering),
+      branchRules.flatMap(
+        (innerRule) => getGraphSourceInfo(innerRule).ordering,
+      ),
     )
     const orderingSet = new Set(ordering)
     const informational = uniqueFields(
@@ -748,9 +783,10 @@ export function getGraphSourceInfo<
   }
 }
 
-function getSourceFields<F extends Record<string, FieldDef>, C extends Record<string, unknown>>(
-  source: InternalSource<F, C>,
-): Array<keyof F & string> {
+function getSourceFields<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(source: InternalSource<F, C>): Array<keyof F & string> {
   const checkField = getSourceField(source)
   return checkField ? [checkField] : []
 }
@@ -759,16 +795,15 @@ function getFairSourceFields<
   V,
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
->(
-  predicate: FairPredicate<V, F, C>,
-): Array<keyof F & string> {
+>(predicate: FairPredicate<V, F, C>): Array<keyof F & string> {
   const checkField = getFairCheckField(predicate)
   return checkField ? [checkField] : []
 }
 
-function getSourceLabel<F extends Record<string, FieldDef>, C extends Record<string, unknown>>(
-  source: Source<F, C>,
-): string {
+function getSourceLabel<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(source: Source<F, C>): string {
   if (typeof source === 'string') {
     return source
   }
@@ -776,7 +811,10 @@ function getSourceLabel<F extends Record<string, FieldDef>, C extends Record<str
   return getCheckField(source) ?? 'condition'
 }
 
-function isSourceActive<F extends Record<string, FieldDef>, C extends Record<string, unknown>>(
+function isSourceActive<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(
   source: Source<F, C>,
   values: FieldValues<F>,
   conditions: C,
@@ -793,7 +831,11 @@ function isRuleOptions<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
 >(value: unknown): value is RuleOptions<F, C> {
-  return typeof value === 'object' && value !== null && ('reason' in value || 'trace' in value)
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    ('reason' in value || 'trace' in value)
+  )
 }
 
 function uniqueFields<F extends Record<string, FieldDef>>(
@@ -878,9 +920,7 @@ export function isGateRule<
 export function defineRule<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown> = Record<string, unknown>,
->(
-  config: DefineRuleConfig<F, C>,
-): Rule<F, C> {
+>(config: DefineRuleConfig<F, C>): Rule<F, C> {
   const rule: InternalRuleCarrier<F, C> = {
     type: config.type,
     targets: uniqueFields([...config.targets]),
@@ -905,7 +945,9 @@ function branchHasSatisfiedField<F extends Record<string, FieldDef>>(
     return false
   }
 
-  return branchFields.some((field) => isSatisfied(values[field], fields?.[field]))
+  return branchFields.some((field) =>
+    isSatisfied(values[field], fields?.[field]),
+  )
 }
 
 function warnAmbiguousOneOf(groupName: string, branchNames: string[]): void {
@@ -937,7 +979,11 @@ export function resolveOneOfState<
       branchName,
       {
         fields: [...branches[branchName]],
-        anySatisfied: branchHasSatisfiedField(branches[branchName], values, fields),
+        anySatisfied: branchHasSatisfiedField(
+          branches[branchName],
+          values,
+          fields,
+        ),
       },
     ]),
   ) as Record<string, { fields: string[]; anySatisfied: boolean }>
@@ -960,7 +1006,9 @@ export function resolveOneOfState<
       }
     }
     if (!(resolvedBranch in branches)) {
-      throw new Error(`[@umpire/core] Unknown active branch "${resolvedBranch}" for oneOf("${groupName}")`)
+      throw new Error(
+        `[@umpire/core] Unknown active branch "${resolvedBranch}" for oneOf("${groupName}")`,
+      )
     }
     return {
       activeBranch: resolvedBranch,
@@ -1047,7 +1095,12 @@ export function enabledWhen<
         enabled: passed,
         reason: passed
           ? null
-          : resolveReason(options?.reason, values, conditions, 'condition not met'),
+          : resolveReason(
+              options?.reason,
+              values,
+              conditions,
+              'condition not met',
+            ),
       }))
     },
   }
@@ -1138,7 +1191,9 @@ export function disables<
 
       return createResultMap(resolvedTargets, () => ({
         enabled: !active,
-        reason: active ? resolveReason(options?.reason, values, conditions, defaultReason) : null,
+        reason: active
+          ? resolveReason(options?.reason, values, conditions, defaultReason)
+          : null,
       }))
     },
   }
@@ -1163,11 +1218,14 @@ export function requires<
   const target = getFieldNameOrThrow(field)
   const maybeOptions = deps[deps.length - 1]
   const options = isRuleOptions<F, C>(maybeOptions) ? maybeOptions : undefined
-  const dependencies: Array<Source<F, C>> = (options ? deps.slice(0, -1) : deps)
-    .map((dependency) => normalizeSource(dependency as SourceInput<F, C>))
+  const dependencies: Array<Source<F, C>> = (
+    options ? deps.slice(0, -1) : deps
+  ).map((dependency) => normalizeSource(dependency as SourceInput<F, C>))
 
   if (dependencies.length === 0) {
-    throw new Error(`[@umpire/core] requires("${target}") requires at least one dependency`)
+    throw new Error(
+      `[@umpire/core] requires("${target}") requires at least one dependency`,
+    )
   }
 
   const rule: InternalRuleCarrier<F, C> = {
@@ -1197,7 +1255,12 @@ export function requires<
             ? `requires ${dependency}`
             : `required condition not met`
 
-        const resolvedReason = resolveReason(options?.reason, values, conditions, fallback)
+        const resolvedReason = resolveReason(
+          options?.reason,
+          values,
+          conditions,
+          fallback,
+        )
 
         if (reason === null) {
           reason = resolvedReason
@@ -1237,32 +1300,43 @@ export function oneOf<
   const branchNames = Object.keys(resolvedBranches)
 
   if (branchNames.length === 0) {
-    throw new Error(`[@umpire/core] oneOf("${groupName}") must include at least one branch`)
+    throw new Error(
+      `[@umpire/core] oneOf("${groupName}") must include at least one branch`,
+    )
   }
 
   for (const branchName of branchNames) {
     const fields = resolvedBranches[branchName]
 
     if (fields.length === 0) {
-      throw new Error(`[@umpire/core] oneOf("${groupName}") branch "${branchName}" must not be empty`)
+      throw new Error(
+        `[@umpire/core] oneOf("${groupName}") branch "${branchName}" must not be empty`,
+      )
     }
 
     for (const field of fields) {
       if (seenFields.has(field)) {
-        throw new Error(`[@umpire/core] oneOf("${groupName}") field "${field}" appears in multiple branches`)
+        throw new Error(
+          `[@umpire/core] oneOf("${groupName}") field "${field}" appears in multiple branches`,
+        )
       }
 
       seenFields.add(field)
     }
   }
 
-  if (typeof options?.activeBranch === 'string' && !(options.activeBranch in resolvedBranches)) {
+  if (
+    typeof options?.activeBranch === 'string' &&
+    !(options.activeBranch in resolvedBranches)
+  ) {
     throw new Error(
       `[@umpire/core] Unknown active branch "${options.activeBranch}" for oneOf("${groupName}")`,
     )
   }
 
-  const targets = branchNames.flatMap((branchName) => resolvedBranches[branchName])
+  const targets = branchNames.flatMap(
+    (branchName) => resolvedBranches[branchName],
+  )
 
   const rule: InternalRuleCarrier<F, C> = {
     type: 'oneOf',
@@ -1284,7 +1358,8 @@ export function oneOf<
       }
 
       return createResultMap(targets, (target) => {
-        const inActiveBranch = resolvedBranches[resolution.activeBranch as string].includes(target)
+        const inActiveBranch =
+          resolvedBranches[resolution.activeBranch as string].includes(target)
         return {
           enabled: inActiveBranch,
           reason: inActiveBranch
@@ -1318,7 +1393,10 @@ export function anyOf<
     throw new Error('[@umpire/core] anyOf() requires at least one rule')
   }
 
-  const { targets, sources, constraint } = resolveCompositeRuleShape('anyOf()', rules)
+  const { targets, sources, constraint } = resolveCompositeRuleShape(
+    'anyOf()',
+    rules,
+  )
 
   const rule: InternalRuleCarrier<F, C> = {
     type: 'anyOf',
@@ -1330,8 +1408,9 @@ export function anyOf<
       )
 
       return createResultMap(targets, (target) => {
-        const targetResults = evaluations
-          .map((evaluation) => getCompositeTargetEvaluation(evaluation, target))
+        const targetResults = evaluations.map((evaluation) =>
+          getCompositeTargetEvaluation(evaluation, target),
+        )
 
         return combineCompositeResults(constraint, 'or', targetResults)
       })
@@ -1350,25 +1429,29 @@ export function anyOf<
 export function eitherOf<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown> = Record<string, unknown>,
->(
-  groupName: string,
-  branches: EitherOfBranches<F, C>,
-): Rule<F, C> {
+>(groupName: string, branches: EitherOfBranches<F, C>): Rule<F, C> {
   const branchNames = Object.keys(branches)
 
   if (branchNames.length === 0) {
-    throw new Error(`[@umpire/core] eitherOf("${groupName}") must include at least one branch`)
+    throw new Error(
+      `[@umpire/core] eitherOf("${groupName}") must include at least one branch`,
+    )
   }
 
   for (const branchName of branchNames) {
     if (branches[branchName].length === 0) {
-      throw new Error(`[@umpire/core] eitherOf("${groupName}") branch "${branchName}" must not be empty`)
+      throw new Error(
+        `[@umpire/core] eitherOf("${groupName}") branch "${branchName}" must not be empty`,
+      )
     }
   }
 
   const rules = getBranchRules(branches)
   const label = `eitherOf("${groupName}")`
-  const { targets, sources, constraint } = resolveCompositeRuleShape(label, rules)
+  const { targets, sources, constraint } = resolveCompositeRuleShape(
+    label,
+    rules,
+  )
 
   const rule: InternalRuleCarrier<F, C> = {
     type: 'eitherOf',
@@ -1379,14 +1462,16 @@ export function eitherOf<
         branchNames.map((branchName) => [
           branchName,
           branches[branchName].map((branchRule) =>
-            branchRule.evaluate(values, conditions, prev, fields, availability)),
+            branchRule.evaluate(values, conditions, prev, fields, availability),
+          ),
         ]),
       ) as Record<string, Array<Map<string, RuleEvaluation>>>
 
       return createResultMap(targets, (target) => {
         const branchResults = branchNames.map((branchName) => {
-          const targetResults = branchEvaluations[branchName].map((evaluation) =>
-            getCompositeTargetEvaluation(evaluation, target))
+          const targetResults = branchEvaluations[branchName].map(
+            (evaluation) => getCompositeTargetEvaluation(evaluation, target),
+          )
 
           return combineCompositeResults(constraint, 'and', targetResults)
         })

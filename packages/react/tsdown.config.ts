@@ -18,7 +18,7 @@ export default defineConfig([
   },
   // Externalized IIFE — user provides React + core via script tags
   {
-    entry: { 'index': 'src/index.ts' },
+    entry: { index: 'src/index.ts' },
     format: ['iife'],
     globalName: 'UmpireReact',
     platform: 'browser',

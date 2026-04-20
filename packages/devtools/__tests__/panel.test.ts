@@ -47,15 +47,20 @@ describe('Panel', () => {
 
     expect(toggle).not.toBeNull()
 
-    toggle?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }))
+    toggle?.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, composed: true }),
+    )
     await flushUi()
 
-    const conditionsTab = [...(root?.querySelectorAll('button') ?? [])]
-      .find((button) => button.textContent?.trim().toLowerCase() === 'conditions')
+    const conditionsTab = [...(root?.querySelectorAll('button') ?? [])].find(
+      (button) => button.textContent?.trim().toLowerCase() === 'conditions',
+    )
 
     expect(conditionsTab).not.toBeNull()
 
-    conditionsTab?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }))
+    conditionsTab?.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, composed: true }),
+    )
     await flushUi()
 
     const text = root?.textContent ?? ''
@@ -69,28 +74,26 @@ describe('Panel', () => {
   })
 
   it('renders custom extension tabs from register options', async () => {
-    register(
-      'signup',
-      demoUmp,
-      { email: 'alex@example.com' },
-      undefined,
-      {
-        extensions: [{
+    register('signup', demoUmp, { email: 'alex@example.com' }, undefined, {
+      extensions: [
+        {
           id: 'validation',
           label: 'validation',
           inspect: () => ({
-            sections: [{
-              kind: 'rows',
-              title: 'Summary',
-              rows: [
-                { label: 'status', value: 'blocked' },
-                { label: 'issueCount', value: 2 },
-              ],
-            }],
+            sections: [
+              {
+                kind: 'rows',
+                title: 'Summary',
+                rows: [
+                  { label: 'status', value: 'blocked' },
+                  { label: 'issueCount', value: 2 },
+                ],
+              },
+            ],
           }),
-        }],
-      },
-    )
+        },
+      ],
+    })
 
     mount()
 
@@ -100,15 +103,20 @@ describe('Panel', () => {
 
     expect(toggle).not.toBeNull()
 
-    toggle?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }))
+    toggle?.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, composed: true }),
+    )
     await flushUi()
 
-    const validationTab = [...(root?.querySelectorAll('button') ?? [])]
-      .find((button) => button.textContent?.trim().toLowerCase() === 'validation')
+    const validationTab = [...(root?.querySelectorAll('button') ?? [])].find(
+      (button) => button.textContent?.trim().toLowerCase() === 'validation',
+    )
 
     expect(validationTab).not.toBeNull()
 
-    validationTab?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }))
+    validationTab?.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, composed: true }),
+    )
     await flushUi()
 
     const text = root?.textContent ?? ''
@@ -136,13 +144,9 @@ describe('Panel', () => {
       ],
     })
 
-    register(
-      'signup',
-      readsUmp,
-      { email: 'alex@example.com' },
-      undefined,
-      { reads },
-    )
+    register('signup', readsUmp, { email: 'alex@example.com' }, undefined, {
+      reads,
+    })
 
     mount({ defaultTab: 'reads' })
 
@@ -152,7 +156,9 @@ describe('Panel', () => {
 
     expect(toggle).not.toBeNull()
 
-    toggle?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }))
+    toggle?.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, composed: true }),
+    )
     await flushUi()
 
     const text = root?.textContent ?? ''
@@ -204,15 +210,20 @@ describe('Panel', () => {
 
     expect(toggle).not.toBeNull()
 
-    toggle?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }))
+    toggle?.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, composed: true }),
+    )
     await flushUi()
 
-    const submitRow = [...(root?.querySelectorAll('tr') ?? [])]
-      .find((row) => row.textContent?.includes('submit'))
+    const submitRow = [...(root?.querySelectorAll('tr') ?? [])].find((row) =>
+      row.textContent?.includes('submit'),
+    )
 
     expect(submitRow).not.toBeNull()
 
-    submitRow?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }))
+    submitRow?.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, composed: true }),
+    )
     await flushUi()
 
     const text = root?.textContent ?? ''

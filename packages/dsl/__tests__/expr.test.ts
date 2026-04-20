@@ -5,7 +5,11 @@ describe('expr builders', () => {
     const allowedLeagues = ['al', 'nl']
     const weatherBands = ['clear', 'windy']
     const slider = { op: 'eq', field: 'pitchType', value: 'slider' } as const
-    const curveball = { op: 'eq', field: 'pitchType', value: 'curveball' } as const
+    const curveball = {
+      op: 'eq',
+      field: 'pitchType',
+      value: 'curveball',
+    } as const
 
     const built = {
       neq: expr.neq('pitchType', 'sinker'),
@@ -42,8 +46,16 @@ describe('expr builders', () => {
       notIn: { op: 'notIn', field: 'league', values: ['al', 'nl'] },
       cond: { op: 'cond', condition: 'isPlayoffs' },
       condEq: { op: 'condEq', condition: 'weatherBand', value: 'windy' },
-      condIn: { op: 'condIn', condition: 'weatherBand', values: ['clear', 'windy'] },
-      fieldInCond: { op: 'fieldInCond', field: 'starter', condition: 'availableStarters' },
+      condIn: {
+        op: 'condIn',
+        condition: 'weatherBand',
+        values: ['clear', 'windy'],
+      },
+      fieldInCond: {
+        op: 'fieldInCond',
+        field: 'starter',
+        condition: 'availableStarters',
+      },
       and: {
         op: 'and',
         exprs: [

@@ -1,6 +1,12 @@
 import { h, render } from 'preact'
 import { Panel } from './panel/Panel.js'
-import { register, setFoulLogDepth, snapshot, subscribe, unregister } from './registry.js'
+import {
+  register,
+  setFoulLogDepth,
+  snapshot,
+  subscribe,
+  unregister,
+} from './registry.js'
 import { createShadowHost, removeShadowHost } from './shadow.js'
 import type { MountOptions } from './types.js'
 

@@ -2,10 +2,7 @@ import type { AvailabilityMap, FieldDef, Foul } from '@umpire/core'
 
 export function formatUmpireDebugValue<
   F extends Record<string, FieldDef>,
->(value: {
-  check: AvailabilityMap<F>
-  fouls: Foul<F>[]
-}) {
+>(value: { check: AvailabilityMap<F>; fouls: Foul<F>[] }) {
   const { check, fouls } = value
 
   return {

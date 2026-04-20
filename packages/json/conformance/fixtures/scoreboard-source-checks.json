@@ -55,9 +55,7 @@
             "value": 5
           }
         },
-        "targets": [
-          "replayBoard"
-        ],
+        "targets": ["replayBoard"],
         "reason": "Replay board locks once a scouting note is posted"
       }
     ]
@@ -146,9 +144,7 @@
           "fair": true,
           "required": false,
           "reason": "Need a valid scorer email and password before submit",
-          "reasons": [
-            "Need a valid scorer email and password before submit"
-          ],
+          "reasons": ["Need a valid scorer email and password before submit"],
           "satisfied": true
         },
         "replayBoard": {
@@ -156,9 +152,7 @@
           "fair": true,
           "required": false,
           "reason": "Replay board needs a valid scorer email",
-          "reasons": [
-            "Replay board needs a valid scorer email"
-          ],
+          "reasons": ["Replay board needs a valid scorer email"],
           "satisfied": true
         },
         "scoutingNote": {
@@ -210,9 +204,7 @@
           "fair": true,
           "required": false,
           "reason": "Replay board locks once a scouting note is posted",
-          "reasons": [
-            "Replay board locks once a scouting note is posted"
-          ],
+          "reasons": ["Replay board locks once a scouting note is posted"],
           "satisfied": true
         },
         "scoutingNote": {

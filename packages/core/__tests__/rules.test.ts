@@ -67,27 +67,41 @@ describe('enabledWhen', () => {
     const dynamicReasonRule = enabledWhen<TestFields, TestConditions>(
       'alpha',
       () => false,
-      { reason: (_values, conditions) => (conditions.allow ? 'allowed' : 'denied') },
+      {
+        reason: (_values, conditions) =>
+          conditions.allow ? 'allowed' : 'denied',
+      },
     )
 
-    expect(staticReasonRule.evaluate({}, { allow: false }).get('alpha')?.reason).toBe('blocked')
-    expect(dynamicReasonRule.evaluate({}, { allow: false }).get('alpha')?.reason).toBe('denied')
+    expect(
+      staticReasonRule.evaluate({}, { allow: false }).get('alpha')?.reason,
+    ).toBe('blocked')
+    expect(
+      dynamicReasonRule.evaluate({}, { allow: false }).get('alpha')?.reason,
+    ).toBe('denied')
   })
 })
 
 describe('disables', () => {
   test('with field name source uses source metadata and satisfaction semantics', () => {
-    const rule = disables<TestFields, TestConditions>('beta', ['alpha', 'gamma'])
+    const rule = disables<TestFields, TestConditions>('beta', [
+      'alpha',
+      'gamma',
+    ])
 
     expect(rule.type).toBe('disables')
     expect(rule.sources).toEqual(['beta'])
     expect(rule.targets).toEqual(['alpha', 'gamma'])
 
-    expect(rule.evaluate({ beta: 'present' }, { allow: true }).get('alpha')).toEqual({
+    expect(
+      rule.evaluate({ beta: 'present' }, { allow: true }).get('alpha'),
+    ).toEqual({
       enabled: false,
       reason: 'overridden by beta',
     })
-    expect(rule.evaluate({ beta: undefined }, { allow: true }).get('alpha')).toEqual({
+    expect(
+      rule.evaluate({ beta: undefined }, { allow: true }).get('alpha'),
+    ).toEqual({
       enabled: true,
       reason: null,
     })
@@ -101,7 +115,9 @@ describe('disables', () => {
 
     expect(rule.sources).toEqual(['beta'])
     expect(rule.targets).toEqual(['alpha', 'gamma'])
-    expect(rule.evaluate({ beta: 'present' }, { allow: true }).get('alpha')).toEqual({
+    expect(
+      rule.evaluate({ beta: 'present' }, { allow: true }).get('alpha'),
+    ).toEqual({
       enabled: false,
       reason: 'overridden by beta',
     })
@@ -118,24 +134,25 @@ describe('disables', () => {
   })
 
   test('with check() source extracts the source field', () => {
-    const rule = disables<TestFields, TestConditions>(check('beta', (value) => value === 'ok'), [
-      'alpha',
-    ])
+    const rule = disables<TestFields, TestConditions>(
+      check('beta', (value) => value === 'ok'),
+      ['alpha'],
+    )
 
     expect(rule.sources).toEqual(['beta'])
-    expect(rule.evaluate({ beta: 'ok' }, { allow: true }).get('alpha')?.reason).toBe(
-      'overridden by beta',
-    )
+    expect(
+      rule.evaluate({ beta: 'ok' }, { allow: true }).get('alpha')?.reason,
+    ).toBe('overridden by beta')
   })
 
   test('requires named builders when passing builders to source or targets', () => {
-    expect(() =>
-      disables(field<string>(), ['alpha']),
-    ).toThrow('Named field builder required when passing a field() value to a rule')
+    expect(() => disables(field<string>(), ['alpha'])).toThrow(
+      'Named field builder required when passing a field() value to a rule',
+    )
 
-    expect(() =>
-      disables('beta', [field<string>()]),
-    ).toThrow('Named field builder required when passing a field() value to a rule')
+    expect(() => disables('beta', [field<string>()])).toThrow(
+      'Named field builder required when passing a field() value to a rule',
+    )
   })
 })
 
@@ -146,7 +163,9 @@ describe('requires', () => {
     expect(rule.type).toBe('requires')
     expect(rule.targets).toEqual(['alpha'])
     expect(rule.sources).toEqual(['beta'])
-    expect(rule.evaluate({ beta: undefined }, { allow: true }).get('alpha')).toMatchObject({
+    expect(
+      rule.evaluate({ beta: undefined }, { allow: true }).get('alpha'),
+    ).toMatchObject({
       enabled: false,
       reason: 'requires beta',
     })
@@ -163,16 +182,22 @@ describe('requires', () => {
 
     expect(rule.targets).toEqual(['alpha'])
     expect(rule.sources).toEqual(['beta'])
-    expect(rule.evaluate({ beta: undefined }, { allow: true }).get('alpha')).toMatchObject({
+    expect(
+      rule.evaluate({ beta: undefined }, { allow: true }).get('alpha'),
+    ).toMatchObject({
       enabled: false,
       reason: 'requires beta',
     })
   })
 
   test('detects options when the last arg has a reason property', () => {
-    const rule = requires<TestFields, TestConditions>('alpha', 'beta', { reason: 'custom reason' })
+    const rule = requires<TestFields, TestConditions>('alpha', 'beta', {
+      reason: 'custom reason',
+    })
 
-    expect(rule.evaluate({ beta: undefined }, { allow: true }).get('alpha')).toMatchObject({
+    expect(
+      rule.evaluate({ beta: undefined }, { allow: true }).get('alpha'),
+    ).toMatchObject({
       enabled: false,
       reason: 'custom reason',
     })
@@ -193,14 +218,16 @@ describe('requires', () => {
 
   test('throws when no dependencies are provided', () => {
     expect(() =>
-      requires<TestFields, TestConditions>('alpha', { reason: 'custom reason' }),
+      requires<TestFields, TestConditions>('alpha', {
+        reason: 'custom reason',
+      }),
     ).toThrow('requires("alpha") requires at least one dependency')
   })
 
   test('requires named builders when passing builders as dependencies', () => {
-    expect(() =>
-      requires('alpha', field<string>()),
-    ).toThrow('Named field builder required when passing a field() value to a rule')
+    expect(() => requires('alpha', field<string>())).toThrow(
+      'Named field builder required when passing a field() value to a rule',
+    )
   })
 })
 
@@ -235,7 +262,9 @@ describe('oneOf', () => {
         first: [field<string>()],
         second: ['beta'],
       }),
-    ).toThrow('Named field builder required when passing a field() value to a rule')
+    ).toThrow(
+      'Named field builder required when passing a field() value to a rule',
+    )
   })
 
   test('returns all fields as targets', () => {
@@ -259,7 +288,9 @@ describe('oneOf', () => {
 
     expect(rule.targets).toEqual(['alpha', 'beta', 'gamma'])
     expect(rule.sources).toEqual(['alpha', 'beta', 'gamma'])
-    expect(rule.evaluate({ beta: 'active' }, { allow: true }).get('alpha')).toEqual({
+    expect(
+      rule.evaluate({ beta: 'active' }, { allow: true }).get('alpha'),
+    ).toEqual({
       enabled: false,
       reason: 'conflicts with second strategy',
     })
@@ -332,10 +363,15 @@ describe('oneOf', () => {
         first: ['alpha'],
         second: ['beta'],
       },
-      { activeBranch: (values) => (values.delta === 'pick-second' ? 'second' : 'first') },
+      {
+        activeBranch: (values) =>
+          values.delta === 'pick-second' ? 'second' : 'first',
+      },
     )
 
-    expect(rule.evaluate({ delta: 'pick-second' }, { allow: true }).get('alpha')).toEqual({
+    expect(
+      rule.evaluate({ delta: 'pick-second' }, { allow: true }).get('alpha'),
+    ).toEqual({
       enabled: false,
       reason: 'conflicts with second strategy',
     })
@@ -411,7 +447,11 @@ describe('oneOf', () => {
         second: ['beta'],
       })
 
-      expect(rule.evaluate({ alpha: 'set', beta: 'set' }, { allow: true }).get('beta')).toEqual({
+      expect(
+        rule
+          .evaluate({ alpha: 'set', beta: 'set' }, { allow: true })
+          .get('beta'),
+      ).toEqual({
         enabled: false,
         reason: 'conflicts with first strategy',
       })
@@ -483,18 +523,19 @@ describe('anyOf', () => {
     )
 
     expect(
-      rule.evaluate(
-        { beta: 'stale' },
-        { allow: true },
-        undefined,
-        fields,
-        {
+      rule
+        .evaluate({ beta: 'stale' }, { allow: true }, undefined, fields, {
           alpha: { enabled: true, required: false, reason: null, reasons: [] },
-          beta: { enabled: false, required: false, reason: 'disabled', reasons: ['disabled'] },
+          beta: {
+            enabled: false,
+            required: false,
+            reason: 'disabled',
+            reasons: ['disabled'],
+          },
           gamma: { enabled: true, required: false, reason: null, reasons: [] },
           delta: { enabled: true, required: false, reason: null, reasons: [] },
-        },
-      ).get('gamma'),
+        })
+        .get('gamma'),
     ).toEqual({
       enabled: false,
       reason: 'need beta',
@@ -531,24 +572,18 @@ describe('eitherOf', () => {
   test('validates that all inner rules share the same constraint', () => {
     expect(() =>
       eitherOf<TestFields, TestConditions>('auth', {
-        sso: [
-          enabledWhen('alpha', () => true),
-        ],
-        password: [
-          fairWhen('alpha', () => true),
-        ],
+        sso: [enabledWhen('alpha', () => true)],
+        password: [fairWhen('alpha', () => true)],
       }),
-    ).toThrow('eitherOf("auth") cannot mix fairWhen rules with availability rules')
+    ).toThrow(
+      'eitherOf("auth") cannot mix fairWhen rules with availability rules',
+    )
   })
 
   test('passes if one branch passes', () => {
     const rule = eitherOf<TestFields, TestConditions>('auth', {
-      sso: [
-        enabledWhen('alpha', () => false, { reason: 'sso unavailable' }),
-      ],
-      password: [
-        enabledWhen('alpha', () => true, { reason: 'need password' }),
-      ],
+      sso: [enabledWhen('alpha', () => false, { reason: 'sso unavailable' })],
+      password: [enabledWhen('alpha', () => true, { reason: 'need password' })],
     })
 
     expect(rule.evaluate({}, { allow: false }).get('alpha')).toEqual({
@@ -559,12 +594,8 @@ describe('eitherOf', () => {
 
   test('passes if multiple branches pass', () => {
     const rule = eitherOf<TestFields, TestConditions>('auth', {
-      sso: [
-        enabledWhen('alpha', () => true, { reason: 'sso unavailable' }),
-      ],
-      password: [
-        enabledWhen('alpha', () => true, { reason: 'need password' }),
-      ],
+      sso: [enabledWhen('alpha', () => true, { reason: 'sso unavailable' })],
+      password: [enabledWhen('alpha', () => true, { reason: 'need password' })],
       magicLink: [
         enabledWhen('alpha', () => false, { reason: 'magic link unavailable' }),
       ],
@@ -578,9 +609,7 @@ describe('eitherOf', () => {
 
   test('collects flattened failure reasons in branch order when every branch fails', () => {
     const rule = eitherOf<TestFields, TestConditions>('auth', {
-      sso: [
-        enabledWhen('alpha', () => false, { reason: 'sso unavailable' }),
-      ],
+      sso: [enabledWhen('alpha', () => false, { reason: 'sso unavailable' })],
       password: [
         enabledWhen('alpha', () => false, { reason: 'enter a password' }),
         enabledWhen('alpha', () => false, { reason: 'password too short' }),
@@ -608,13 +637,22 @@ describe('eitherOf', () => {
       ],
     })
 
-    expect(rule.evaluate({ alpha: 'am5', beta: 'am5' }, { allow: false }).get('alpha')).toEqual({
+    expect(
+      rule
+        .evaluate({ alpha: 'am5', beta: 'am5' }, { allow: false })
+        .get('alpha'),
+    ).toEqual({
       enabled: true,
       fair: true,
       reason: null,
     })
     expect(
-      rule.evaluate({ alpha: 'am5', beta: 'lga1700', delta: 'missing' }, { allow: false }).get('alpha'),
+      rule
+        .evaluate(
+          { alpha: 'am5', beta: 'lga1700', delta: 'missing' },
+          { allow: false },
+        )
+        .get('alpha'),
     ).toEqual({
       enabled: true,
       fair: false,
@@ -630,12 +668,16 @@ describe('defineRule', () => {
       type: 'customEnabled',
       targets: ['alpha', 'alpha'],
       sources: ['beta', 'beta'],
-      evaluate: () => new Map([
-        ['alpha', {
-          enabled: false,
-          reason: 'custom blocked',
-        }],
-      ]),
+      evaluate: () =>
+        new Map([
+          [
+            'alpha',
+            {
+              enabled: false,
+              reason: 'custom blocked',
+            },
+          ],
+        ]),
     })
 
     expect(rule.type).toBe('customEnabled')
@@ -657,11 +699,14 @@ describe('defineRule', () => {
         const matches = values.alpha === values.beta
 
         return new Map([
-          ['alpha', {
-            enabled: true,
-            fair: matches,
-            reason: matches ? null : 'socket mismatch',
-          }],
+          [
+            'alpha',
+            {
+              enabled: true,
+              fair: matches,
+              reason: matches ? null : 'socket mismatch',
+            },
+          ],
         ])
       },
     })
@@ -674,23 +719,35 @@ describe('defineRule', () => {
         const allowed = values.delta === 'override'
 
         return new Map([
-          ['alpha', {
-            enabled: true,
-            fair: allowed,
-            reason: allowed ? null : 'delta override missing',
-          }],
+          [
+            'alpha',
+            {
+              enabled: true,
+              fair: allowed,
+              reason: allowed ? null : 'delta override missing',
+            },
+          ],
         ])
       },
     })
     const rule = anyOf(socketRule, allowDeltaRule)
 
-    expect(rule.evaluate({ alpha: 'am5', beta: 'am5' }, { allow: false }).get('alpha')).toEqual({
+    expect(
+      rule
+        .evaluate({ alpha: 'am5', beta: 'am5' }, { allow: false })
+        .get('alpha'),
+    ).toEqual({
       enabled: true,
       fair: true,
       reason: null,
     })
     expect(
-      rule.evaluate({ alpha: 'am5', beta: 'lga1700', delta: 'missing' }, { allow: false }).get('alpha'),
+      rule
+        .evaluate(
+          { alpha: 'am5', beta: 'lga1700', delta: 'missing' },
+          { allow: false },
+        )
+        .get('alpha'),
     ).toEqual({
       enabled: true,
       fair: false,
@@ -723,7 +780,10 @@ describe('check', () => {
   })
 
   test('supports function validators', () => {
-    const predicate = check<TestFields, TestConditions>('alpha', (value) => value === 'ok')
+    const predicate = check<TestFields, TestConditions>(
+      'alpha',
+      (value) => value === 'ok',
+    )
 
     expect(predicate({ alpha: 'ok' }, { allow: true })).toBe(true)
     expect(predicate({ alpha: 'nope' }, { allow: true })).toBe(false)
@@ -778,7 +838,10 @@ describe('check', () => {
       params: { value: 3 },
       validate: (value: string) => value.length >= 3,
     })
-    const plainPredicate = check<TestFields, TestConditions>('beta', (value) => value === 'ok')
+    const plainPredicate = check<TestFields, TestConditions>(
+      'beta',
+      (value) => value === 'ok',
+    )
 
     expect(inspectPredicate(namedPredicate)).toEqual({
       field: 'alpha',
@@ -806,14 +869,21 @@ describe('inspectRule', () => {
       __check: 'email',
       validate: (value: string) => value.includes('@'),
     })
-    const enabledRule = enabledWhen<TestFields, TestConditions>('alpha', namedPredicate, {
-      reason: 'need a valid email',
-    })
+    const enabledRule = enabledWhen<TestFields, TestConditions>(
+      'alpha',
+      namedPredicate,
+      {
+        reason: 'need a valid email',
+      },
+    )
     const fairRule = requires<TestFields, TestConditions>(
       'gamma',
       'beta',
       check('delta', (value) => value === 'ok'),
-      { reason: (_values, conditions) => (conditions.allow ? 'allowed' : 'blocked') },
+      {
+        reason: (_values, conditions) =>
+          conditions.allow ? 'allowed' : 'blocked',
+      },
     )
     const choiceRule = oneOf<TestFields, TestConditions>(
       'mode',
@@ -822,7 +892,8 @@ describe('inspectRule', () => {
         second: ['beta'],
       },
       {
-        activeBranch: (values) => (values.delta === 'pick-second' ? 'second' : 'first'),
+        activeBranch: (values) =>
+          values.delta === 'pick-second' ? 'second' : 'first',
       },
     )
 
@@ -865,9 +936,7 @@ describe('inspectRule', () => {
       type: 'customEnabled',
       targets: ['alpha'],
       sources: ['beta'],
-      evaluate: () => new Map([
-        ['alpha', { enabled: true, reason: null }],
-      ]),
+      evaluate: () => new Map([['alpha', { enabled: true, reason: null }]]),
     })
     const rule = anyOf<TestFields, TestConditions>(
       enabledWhen('alpha', () => false, { reason: 'nope' }),
@@ -902,12 +971,8 @@ describe('inspectRule', () => {
 
   test('describes eitherOf branches', () => {
     const rule = eitherOf<TestFields, TestConditions>('auth', {
-      sso: [
-        enabledWhen('alpha', () => false, { reason: 'sso unavailable' }),
-      ],
-      password: [
-        enabledWhen('alpha', () => true),
-      ],
+      sso: [enabledWhen('alpha', () => false, { reason: 'sso unavailable' })],
+      password: [enabledWhen('alpha', () => true)],
     })
 
     expect(inspectRule(rule)).toEqual({
@@ -939,15 +1004,11 @@ describe('inspectRule', () => {
       type: 'opaque',
       targets: ['alpha'],
       sources: ['beta'],
-      evaluate: () => new Map([
-        ['alpha', { enabled: true, reason: null }],
-      ]),
+      evaluate: () => new Map([['alpha', { enabled: true, reason: null }]]),
     }
 
     const rule = eitherOf<TestFields, TestConditions>('auth', {
-      password: [
-        enabledWhen('alpha', () => true),
-      ],
+      password: [enabledWhen('alpha', () => true)],
       opaque: [opaqueRule],
     })
 

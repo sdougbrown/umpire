@@ -94,10 +94,7 @@ describe('react hooks', () => {
     })
 
     expect(registerSpy).toHaveBeenCalledTimes(2)
-    expect(renders).toEqual([
-      { fouls: [] },
-      { fouls: ['target'] },
-    ])
+    expect(renders).toEqual([{ fouls: [] }, { fouls: ['target'] }])
     expect(registry.snapshot().get('demo')?.previous?.values.gate).toBe('open')
   })
 })

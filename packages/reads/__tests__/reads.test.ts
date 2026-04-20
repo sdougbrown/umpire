@@ -62,12 +62,10 @@ function createFixtureReads(options: { onIdsResolve?: () => void } = {}) {
 
       return Boolean(input.cpu && motherboard === input.cpu)
     },
-    boardSummary: ({ input, read }) => `${input.cpu ?? ''}:${read('selections').motherboard ?? ''}`,
-    activeMotherboard: ({ read }) => (
-      read('motherboardFair')
-        ? read('selections').motherboard
-        : undefined
-    ),
+    boardSummary: ({ input, read }) =>
+      `${input.cpu ?? ''}:${read('selections').motherboard ?? ''}`,
+    activeMotherboard: ({ read }) =>
+      read('motherboardFair') ? read('selections').motherboard : undefined,
   })
 }
 
@@ -92,8 +90,12 @@ describe('@umpire/reads', () => {
       const input = { cpu: 'am5', motherboard: 'lga1700' }
       const predicate = fromRead(reads, 'motherboardFair')
 
-      expect(reads.motherboardFair(input)).toBe(reads.resolve(input).motherboardFair)
-      expect(predicate(undefined, input)).toBe(reads.resolve(input).motherboardFair)
+      expect(reads.motherboardFair(input)).toBe(
+        reads.resolve(input).motherboardFair,
+      )
+      expect(predicate(undefined, input)).toBe(
+        reads.resolve(input).motherboardFair,
+      )
     })
 
     test('fromRead supports selecting the input from arbitrary arguments', () => {
@@ -122,7 +124,9 @@ describe('@umpire/reads', () => {
         }),
       )
 
-      expect(predicate(undefined, { cpu: 'am5', motherboard: 'am5' })).toBe(true)
+      expect(predicate(undefined, { cpu: 'am5', motherboard: 'am5' })).toBe(
+        true,
+      )
       expect(selectedPredicate('lga1700', 'am5')).toBe(false)
     })
   })
@@ -136,7 +140,9 @@ describe('@umpire/reads', () => {
         },
       })
 
-      expect(reads.resolve({ cpu: 'am5', motherboard: 'am5', ram: '32gb' })).toMatchObject({
+      expect(
+        reads.resolve({ cpu: 'am5', motherboard: 'am5', ram: '32gb' }),
+      ).toMatchObject({
         ids: {
           cpu: 'am5',
           motherboard: 'am5',
@@ -166,21 +172,30 @@ describe('@umpire/reads', () => {
       expect(inspected.nodes.cpuPresent.dependsOnFields).toEqual(['cpu'])
       expect(inspected.nodes.cpuPresent.dependsOnReads).toEqual([])
 
-      expect(inspected.nodes.cpuAndRamPresent.dependsOnFields).toEqual(['cpu', 'ram'])
+      expect(inspected.nodes.cpuAndRamPresent.dependsOnFields).toEqual([
+        'cpu',
+        'ram',
+      ])
       expect(inspected.nodes.cpuAndRamPresent.dependsOnReads).toEqual([])
 
       expect(inspected.nodes.selectionPresent.dependsOnFields).toEqual([])
-      expect(inspected.nodes.selectionPresent.dependsOnReads).toEqual(['selections'])
+      expect(inspected.nodes.selectionPresent.dependsOnReads).toEqual([
+        'selections',
+      ])
 
       expect(inspected.nodes.motherboardFair.dependsOnFields).toEqual(['cpu'])
-      expect(inspected.nodes.motherboardFair.dependsOnReads).toEqual(['selections'])
+      expect(inspected.nodes.motherboardFair.dependsOnReads).toEqual([
+        'selections',
+      ])
 
       expect(inspected.nodes.activeMotherboard.dependsOnFields).toEqual([])
       expect(inspected.nodes.activeMotherboard.dependsOnReads).toEqual([
         'motherboardFair',
         'selections',
       ])
-      expect(inspected.nodes.activeMotherboard.dependsOnReads).not.toContain('ids')
+      expect(inspected.nodes.activeMotherboard.dependsOnReads).not.toContain(
+        'ids',
+      )
     })
   })
 
@@ -224,78 +239,80 @@ describe('@umpire/reads', () => {
         ram: '32gb',
       }).graph.edges
 
-      expect(edges).toEqual(expect.arrayContaining([
-        {
-          from: 'cpu',
-          to: 'ids',
-          type: 'field',
-        },
-        {
-          from: 'motherboard',
-          to: 'ids',
-          type: 'field',
-        },
-        {
-          from: 'ram',
-          to: 'ids',
-          type: 'field',
-        },
-        {
-          from: 'cpu',
-          to: 'cpuPresent',
-          type: 'field',
-        },
-        {
-          from: 'cpu',
-          to: 'cpuAndRamPresent',
-          type: 'field',
-        },
-        {
-          from: 'ram',
-          to: 'cpuAndRamPresent',
-          type: 'field',
-        },
-        {
-          from: 'cpu',
-          to: 'motherboardFair',
-          type: 'field',
-        },
-        {
-          from: 'cpu',
-          to: 'boardSummary',
-          type: 'field',
-        },
-        {
-          from: 'ids',
-          to: 'selections',
-          type: 'read',
-        },
-        {
-          from: 'selections',
-          to: 'selectionPresent',
-          type: 'read',
-        },
-        {
-          from: 'selections',
-          to: 'motherboardFair',
-          type: 'read',
-        },
-        {
-          from: 'selections',
-          to: 'boardSummary',
-          type: 'read',
-        },
-        {
-          from: 'motherboardFair',
-          to: 'activeMotherboard',
-          type: 'read',
-        },
-        {
-          from: 'selections',
-          to: 'activeMotherboard',
-          type: 'read',
-        },
-      ]))
+      expect(edges).toEqual(
+        expect.arrayContaining([
+          {
+            from: 'cpu',
+            to: 'ids',
+            type: 'field',
+          },
+          {
+            from: 'motherboard',
+            to: 'ids',
+            type: 'field',
+          },
+          {
+            from: 'ram',
+            to: 'ids',
+            type: 'field',
+          },
+          {
+            from: 'cpu',
+            to: 'cpuPresent',
+            type: 'field',
+          },
+          {
+            from: 'cpu',
+            to: 'cpuAndRamPresent',
+            type: 'field',
+          },
+          {
+            from: 'ram',
+            to: 'cpuAndRamPresent',
+            type: 'field',
+          },
+          {
+            from: 'cpu',
+            to: 'motherboardFair',
+            type: 'field',
+          },
+          {
+            from: 'cpu',
+            to: 'boardSummary',
+            type: 'field',
+          },
+          {
+            from: 'ids',
+            to: 'selections',
+            type: 'read',
+          },
+          {
+            from: 'selections',
+            to: 'selectionPresent',
+            type: 'read',
+          },
+          {
+            from: 'selections',
+            to: 'motherboardFair',
+            type: 'read',
+          },
+          {
+            from: 'selections',
+            to: 'boardSummary',
+            type: 'read',
+          },
+          {
+            from: 'motherboardFair',
+            to: 'activeMotherboard',
+            type: 'read',
+          },
+          {
+            from: 'selections',
+            to: 'activeMotherboard',
+            type: 'read',
+          },
+        ]),
+      )
     })
 
     test('inspect graph includes bridge edges after read-backed rules register', () => {
@@ -303,7 +320,9 @@ describe('@umpire/reads', () => {
 
       fairWhenRead('motherboard', 'motherboardFair', reads)
 
-      expect(reads.inspect({ cpu: 'am5', motherboard: 'am5' }).graph.edges).toEqual(
+      expect(
+        reads.inspect({ cpu: 'am5', motherboard: 'am5' }).graph.edges,
+      ).toEqual(
         expect.arrayContaining([
           {
             from: 'motherboardFair',
@@ -322,7 +341,9 @@ describe('@umpire/reads', () => {
         beta: ({ read }) => read('alpha'),
       })
 
-      expect(() => reads.resolve({})).toThrow('createReads circular dependency: alpha -> beta -> alpha')
+      expect(() => reads.resolve({})).toThrow(
+        'createReads circular dependency: alpha -> beta -> alpha',
+      )
     })
   })
 
@@ -333,13 +354,15 @@ describe('@umpire/reads', () => {
       fairWhenRead('motherboard', 'motherboardFair', reads)
       fairWhenRead('motherboard', 'motherboardFair', reads)
 
-      expect(reads.inspect({ cpu: 'am5', motherboard: 'am5' }).bridges).toEqual([
-        {
-          type: 'fairWhen',
-          read: 'motherboardFair',
-          field: 'motherboard',
-        },
-      ])
+      expect(reads.inspect({ cpu: 'am5', motherboard: 'am5' }).bridges).toEqual(
+        [
+          {
+            type: 'fairWhen',
+            read: 'motherboardFair',
+            field: 'motherboard',
+          },
+        ],
+      )
     })
 
     test('registers enabledWhen bridges with the correct type', () => {
@@ -361,13 +384,15 @@ describe('@umpire/reads', () => {
 
       fairWhenRead(field<string>('motherboard'), 'motherboardFair', reads)
 
-      expect(reads.inspect({ cpu: 'am5', motherboard: 'am5' }).bridges).toEqual([
-        {
-          type: 'fairWhen',
-          read: 'motherboardFair',
-          field: 'motherboard',
-        },
-      ])
+      expect(reads.inspect({ cpu: 'am5', motherboard: 'am5' }).bridges).toEqual(
+        [
+          {
+            type: 'fairWhen',
+            read: 'motherboardFair',
+            field: 'motherboard',
+          },
+        ],
+      )
     })
 
     test('throws when an unnamed field builder is used with a read-backed rule', () => {
@@ -396,14 +421,16 @@ describe('@umpire/reads', () => {
         ],
       })
 
-      expect(ump.check({ cpu: 'am5', motherboard: 'am5' }).motherboard).toEqual({
-        enabled: true,
-        satisfied: true,
-        fair: true,
-        required: false,
-        reason: null,
-        reasons: [],
-      })
+      expect(ump.check({ cpu: 'am5', motherboard: 'am5' }).motherboard).toEqual(
+        {
+          enabled: true,
+          satisfied: true,
+          fair: true,
+          required: false,
+          reason: null,
+          reasons: [],
+        },
+      )
     })
 
     test('fairWhenRead fails with the configured reason when the read returns false', () => {
@@ -422,7 +449,9 @@ describe('@umpire/reads', () => {
         ],
       })
 
-      expect(ump.check({ cpu: 'am5', motherboard: 'lga1700' }).motherboard).toEqual({
+      expect(
+        ump.check({ cpu: 'am5', motherboard: 'lga1700' }).motherboard,
+      ).toEqual({
         enabled: true,
         satisfied: true,
         fair: false,
@@ -451,14 +480,16 @@ describe('@umpire/reads', () => {
         ],
       })
 
-      expect(ump.check({ cpu: 'am5', motherboard: 'am5' }).motherboard).toEqual({
-        enabled: true,
-        satisfied: true,
-        fair: true,
-        required: false,
-        reason: null,
-        reasons: [],
-      })
+      expect(ump.check({ cpu: 'am5', motherboard: 'am5' }).motherboard).toEqual(
+        {
+          enabled: true,
+          satisfied: true,
+          fair: true,
+          required: false,
+          reason: null,
+          reasons: [],
+        },
+      )
       expect(ump.check({ motherboard: 'am5' }).motherboard).toEqual({
         enabled: false,
         satisfied: true,
@@ -516,9 +547,8 @@ describe('@umpire/reads', () => {
         { cpu?: string; motherboard?: string },
         { motherboardFair: boolean }
       >({
-        motherboardFair: ({ input }) => (
-          !input.motherboard || input.cpu === input.motherboard
-        ),
+        motherboardFair: ({ input }) =>
+          !input.motherboard || input.cpu === input.motherboard,
       })
       const ump = umpire<
         {
@@ -538,10 +568,8 @@ describe('@umpire/reads', () => {
       })
 
       expect(
-        ump.check(
-          { motherboard: 'am5' },
-          { cpu: 'am5', motherboard: 'am5' },
-        ).motherboard,
+        ump.check({ motherboard: 'am5' }, { cpu: 'am5', motherboard: 'am5' })
+          .motherboard,
       ).toEqual({
         enabled: true,
         satisfied: true,
@@ -591,7 +619,9 @@ describe('@umpire/reads', () => {
         ],
       })
 
-      expect(ump.check({ motherboard: 'am5' }, { cpu: 'am5' }).motherboard).toEqual({
+      expect(
+        ump.check({ motherboard: 'am5' }, { cpu: 'am5' }).motherboard,
+      ).toEqual({
         enabled: true,
         satisfied: true,
         fair: true,
@@ -599,7 +629,9 @@ describe('@umpire/reads', () => {
         reason: null,
         reasons: [],
       })
-      expect(ump.check({ motherboard: 'lga1700' }, { cpu: 'am5' }).motherboard).toEqual({
+      expect(
+        ump.check({ motherboard: 'lga1700' }, { cpu: 'am5' }).motherboard,
+      ).toEqual({
         enabled: true,
         satisfied: true,
         fair: false,

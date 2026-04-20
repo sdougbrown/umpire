@@ -41,12 +41,12 @@ Most packages build with `tsc`; `@umpire/devtools` builds with `tsdown`. For doc
 
 `yarn workspace @umpire/<pkg> test` runs only that package's tests and forwards extra args to `bun test`:
 
-| Need                          | Command                                                                 |
-| ----------------------------- | ----------------------------------------------------------------------- |
-| Single test file              | `yarn workspace @umpire/<pkg> test path/to/file.test.ts`                |
-| Filter by test name           | `yarn workspace @umpire/<pkg> test -t "pattern"`                        |
-| Watch mode                    | `yarn workspace @umpire/<pkg> test --watch`                             |
-| Disable workspace alias mocks | `BUN_DISABLE_WORKSPACE_MOCKS=true yarn workspace @umpire/<pkg> test`    |
+| Need                          | Command                                                              |
+| ----------------------------- | -------------------------------------------------------------------- |
+| Single test file              | `yarn workspace @umpire/<pkg> test path/to/file.test.ts`             |
+| Filter by test name           | `yarn workspace @umpire/<pkg> test -t "pattern"`                     |
+| Watch mode                    | `yarn workspace @umpire/<pkg> test --watch`                          |
+| Disable workspace alias mocks | `BUN_DISABLE_WORKSPACE_MOCKS=true yarn workspace @umpire/<pkg> test` |
 
 ### Heads-up: "isolated" means test scope, not dependency isolation
 

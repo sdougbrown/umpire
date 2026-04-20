@@ -2,18 +2,23 @@ import { enabledWhen, requires, umpire } from '@umpire/core'
 import { createReads, enabledWhenRead, fairWhenRead } from '@umpire/reads'
 import { monkeyTest } from '../src/index.js'
 
-const createAvailability = (fieldNames: string[], resolve: (field: string) => { enabled: boolean; fair: boolean }) =>
-  Object.fromEntries(fieldNames.map((field) => {
-    const status = resolve(field)
+const createAvailability = (
+  fieldNames: string[],
+  resolve: (field: string) => { enabled: boolean; fair: boolean },
+) =>
+  Object.fromEntries(
+    fieldNames.map((field) => {
+      const status = resolve(field)
 
-    return [
-      field,
-      {
-        enabled: status.enabled,
-        fair: status.fair,
-      },
-    ]
-  }))
+      return [
+        field,
+        {
+          enabled: status.enabled,
+          fair: status.fair,
+        },
+      ]
+    }),
+  )
 
 const createChallenge = (field: string, enabled: boolean, fair: boolean) => ({
   field,
@@ -51,8 +56,10 @@ describe('monkeyTest', () => {
 
   test('passes a stable umpire with reads-backed rules', () => {
     const reads = createReads({
-      motherboardFair: ({ input }) => !input.motherboard || input.cpu === input.motherboard,
-      canSubmit: ({ input }) => Boolean(input.cpu) && Boolean(input.motherboard),
+      motherboardFair: ({ input }) =>
+        !input.motherboard || input.cpu === input.motherboard,
+      canSubmit: ({ input }) =>
+        Boolean(input.cpu) && Boolean(input.motherboard),
     })
 
     const ump = umpire({
@@ -86,19 +93,27 @@ describe('monkeyTest', () => {
         unstable: {},
       },
       rules: [
-        enabledWhen('unstable', () => {
-          flip = !flip
-          return flip
-        }, {
-          reason: 'Impure predicate',
-        }),
+        enabledWhen(
+          'unstable',
+          () => {
+            flip = !flip
+            return flip
+          },
+          {
+            reason: 'Impure predicate',
+          },
+        ),
       ],
     })
 
     const result = monkeyTest(ump)
 
     expect(result.passed).toBe(false)
-    expect(result.violations.some((violation) => violation.invariant === 'determinism')).toBe(true)
+    expect(
+      result.violations.some(
+        (violation) => violation.invariant === 'determinism',
+      ),
+    ).toBe(true)
   })
 
   test('returns the expected result shape and random-sampling count', () => {
@@ -157,17 +172,25 @@ describe('monkeyTest', () => {
     const result = monkeyTest(ump)
 
     expect(result.passed).toBe(false)
-    expect(result.violations.map((violation) => violation.invariant)).toEqual(expect.arrayContaining([
-      'init-clean',
-      'self-play',
-      'foul-convergence',
-      'challenge-check-agreement',
-      'disabled-field-immunity',
-    ]))
-    expect(result.violations.some((violation) =>
-      violation.description.includes('to null'))).toBe(true)
-    expect(result.violations.some((violation) =>
-      violation.description.includes('to undefined'))).toBe(true)
+    expect(result.violations.map((violation) => violation.invariant)).toEqual(
+      expect.arrayContaining([
+        'init-clean',
+        'self-play',
+        'foul-convergence',
+        'challenge-check-agreement',
+        'disabled-field-immunity',
+      ]),
+    )
+    expect(
+      result.violations.some((violation) =>
+        violation.description.includes('to null'),
+      ),
+    ).toBe(true)
+    expect(
+      result.violations.some((violation) =>
+        violation.description.includes('to undefined'),
+      ),
+    ).toBe(true)
   })
 
   test('stops after the first exhaustive sample once max violations are reached', () => {

@@ -24,7 +24,9 @@ describe('devtools dist smoke', () => {
   test('slim bundle can register and mount built devtools state', () => {
     slimBundle.register(smokeId, demoUmp, { email: 'alex@example.com' })
 
-    expect(slimBundle.snapshot().get(smokeId)?.snapshot.values.email).toBe('alex@example.com')
+    expect(slimBundle.snapshot().get(smokeId)?.snapshot.values.email).toBe(
+      'alex@example.com',
+    )
 
     const cleanup = slimBundle.mount()
 

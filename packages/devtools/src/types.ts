@@ -26,7 +26,12 @@ export type MountOptions = {
   defaultTab?: DevtoolsTab
 }
 
-export type DevtoolsExtensionTone = 'accent' | 'enabled' | 'disabled' | 'fair' | 'muted'
+export type DevtoolsExtensionTone =
+  | 'accent'
+  | 'enabled'
+  | 'disabled'
+  | 'fair'
+  | 'muted'
 
 export type DevtoolsExtensionRow = {
   label: string
@@ -109,10 +114,22 @@ export type DevtoolsFoulEvent = {
 }
 
 export type AnySnapshot = Snapshot<Record<string, unknown>>
-export type AnyScorecard = ScorecardResult<Record<string, FieldDef>, Record<string, unknown>>
-export type AnyUmpire = Umpire<Record<string, FieldDef>, Record<string, unknown>>
-export type AnyReadInspection = ReadTableInspection<Record<string, unknown>, Record<string, unknown>>
-export type AnyDevtoolsExtension = DevtoolsExtension<Record<string, FieldDef>, Record<string, unknown>>
+export type AnyScorecard = ScorecardResult<
+  Record<string, FieldDef>,
+  Record<string, unknown>
+>
+export type AnyUmpire = Umpire<
+  Record<string, FieldDef>,
+  Record<string, unknown>
+>
+export type AnyReadInspection = ReadTableInspection<
+  Record<string, unknown>,
+  Record<string, unknown>
+>
+export type AnyDevtoolsExtension = DevtoolsExtension<
+  Record<string, FieldDef>,
+  Record<string, unknown>
+>
 
 export type ResolvedDevtoolsExtension = {
   id: string

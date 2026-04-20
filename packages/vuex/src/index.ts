@@ -22,17 +22,18 @@ export function fromVuexStore<
 ): UmpireStore<F> {
   const previousState = trackPreviousState(store.state)
 
-  return fromStore(ump, {
-    getState: () => store.state,
-    subscribe(listener) {
-      return store.subscribe((_mutation, nextState) => {
-        listener(nextState, previousState.next(nextState))
-      })
+  return fromStore(
+    ump,
+    {
+      getState: () => store.state,
+      subscribe(listener) {
+        return store.subscribe((_mutation, nextState) => {
+          listener(nextState, previousState.next(nextState))
+        })
+      },
     },
-  }, options)
+    options,
+  )
 }
 
-export type {
-  FromStoreOptions,
-  UmpireStore,
-} from '@umpire/store'
+export type { FromStoreOptions, UmpireStore } from '@umpire/store'

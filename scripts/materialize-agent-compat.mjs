@@ -5,113 +5,125 @@ import {
   readlinkSync,
   rmSync,
   symlinkSync,
-  writeFileSync
-} from 'node:fs';
-import { dirname, join } from 'node:path';
+  writeFileSync,
+} from 'node:fs'
+import { dirname, join } from 'node:path'
 
 // ── Config ───────────────────────────────────────────────────────────────────
 // Folders (relative to the package root) where the AGENTS.md compat file
 // should be materialized during `npm pack`. Add more paths here to distribute
 // rules to additional agent runtimes (e.g. '.codex/rules', '.cursor/rules').
-const compatPaths = ['.claude/rules'];
+const compatPaths = ['.claude/rules']
 // ─────────────────────────────────────────────────────────────────────────────
 
-const action = process.argv[2];
+const action = process.argv[2]
 
 if (action !== 'prepack' && action !== 'postpack') {
-  throw new Error('Expected `prepack` or `postpack`.');
+  throw new Error('Expected `prepack` or `postpack`.')
 }
 
-const packageDir = process.cwd();
-const packageJson = JSON.parse(readFileSync(join(packageDir, 'package.json'), 'utf8'));
-const agentsPath = join(packageDir, 'AGENTS.md');
-const compatFilename = `${packageJson.name.slice(1).replaceAll('/', '-')}.md`;
-const statePath = join(packageDir, '.pack-agent-compat-state.json');
+const packageDir = process.cwd()
+const packageJson = JSON.parse(
+  readFileSync(join(packageDir, 'package.json'), 'utf8'),
+)
+const agentsPath = join(packageDir, 'AGENTS.md')
+const compatFilename = `${packageJson.name.slice(1).replaceAll('/', '-')}.md`
+const statePath = join(packageDir, '.pack-agent-compat-state.json')
 
 function resolvedCompatPaths() {
-  return compatPaths.map(folder => join(packageDir, folder, compatFilename));
+  return compatPaths.map((folder) => join(packageDir, folder, compatFilename))
 }
 
 function captureCompatState(compatPath) {
   try {
-    const stat = lstatSync(compatPath);
+    const stat = lstatSync(compatPath)
 
     if (stat.isSymbolicLink()) {
       return {
         existed: true,
         type: 'symlink',
-        linkname: readlinkSync(compatPath)
-      };
+        linkname: readlinkSync(compatPath),
+      }
     }
 
     if (stat.isFile()) {
       return {
         existed: true,
         type: 'file',
-        content: readFileSync(compatPath, 'utf8')
-      };
+        content: readFileSync(compatPath, 'utf8'),
+      }
     }
 
-    throw new Error(`Unsupported compatibility file entry at ${compatPath}`);
+    throw new Error(`Unsupported compatibility file entry at ${compatPath}`)
   } catch (error) {
-    if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
-      return { existed: false };
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      error.code === 'ENOENT'
+    ) {
+      return { existed: false }
     }
 
-    throw error;
+    throw error
   }
 }
 
 function restoreCompatState(compatPath, state) {
-  rmSync(compatPath, { force: true, recursive: true });
+  rmSync(compatPath, { force: true, recursive: true })
 
   if (state.existed) {
-    mkdirSync(dirname(compatPath), { recursive: true });
+    mkdirSync(dirname(compatPath), { recursive: true })
 
     if (state.type === 'symlink') {
-      symlinkSync(state.linkname, compatPath);
+      symlinkSync(state.linkname, compatPath)
     } else if (state.type === 'file') {
-      writeFileSync(compatPath, state.content);
+      writeFileSync(compatPath, state.content)
     } else {
-      throw new Error(`Unsupported compatibility file state for ${compatPath}`);
+      throw new Error(`Unsupported compatibility file state for ${compatPath}`)
     }
   }
 }
 
 function restoreAllFromStateFile() {
   try {
-    const savedState = JSON.parse(readFileSync(statePath, 'utf8'));
+    const savedState = JSON.parse(readFileSync(statePath, 'utf8'))
     for (const [path, state] of Object.entries(savedState)) {
-      restoreCompatState(path, state);
+      restoreCompatState(path, state)
     }
-    rmSync(statePath, { force: true });
+    rmSync(statePath, { force: true })
   } catch (error) {
-    if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
-      return;
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      error.code === 'ENOENT'
+    ) {
+      return
     }
-    throw error;
+    throw error
   }
 }
 
 if (action === 'prepack') {
   // Clean up any stale state from an interrupted previous pack
-  restoreAllFromStateFile();
+  restoreAllFromStateFile()
 
-  const agents = readFileSync(agentsPath, 'utf8');
-  const paths = resolvedCompatPaths();
-  const savedState = {};
+  const agents = readFileSync(agentsPath, 'utf8')
+  const paths = resolvedCompatPaths()
+  const savedState = {}
 
   for (const compatPath of paths) {
-    savedState[compatPath] = captureCompatState(compatPath);
+    savedState[compatPath] = captureCompatState(compatPath)
   }
 
-  writeFileSync(statePath, JSON.stringify(savedState));
+  writeFileSync(statePath, JSON.stringify(savedState))
 
   for (const compatPath of paths) {
-    mkdirSync(dirname(compatPath), { recursive: true });
-    rmSync(compatPath, { force: true, recursive: true });
-    writeFileSync(compatPath, agents);
+    mkdirSync(dirname(compatPath), { recursive: true })
+    rmSync(compatPath, { force: true, recursive: true })
+    writeFileSync(compatPath, agents)
   }
 } else {
-  restoreAllFromStateFile();
+  restoreAllFromStateFile()
 }

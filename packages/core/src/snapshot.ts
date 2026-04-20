@@ -1,7 +1,4 @@
-function cloneSnapshotValue<T>(
-  value: T,
-  seen: WeakMap<object, unknown>,
-): T {
+function cloneSnapshotValue<T>(value: T, seen: WeakMap<object, unknown>): T {
   if (value === null || typeof value !== 'object') {
     return value
   }

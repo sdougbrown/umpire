@@ -54,9 +54,7 @@
         "bullpenPhone": "call the bridge arm"
       },
       "conditions": {
-        "availablePitchers": [
-          "Holmes"
-        ]
+        "availablePitchers": ["Holmes"]
       },
       "expectedAvailability": {
         "startingPitcher": {
@@ -64,9 +62,7 @@
           "fair": false,
           "required": true,
           "reason": "Starting pitcher is not available tonight",
-          "reasons": [
-            "Starting pitcher is not available tonight"
-          ],
+          "reasons": ["Starting pitcher is not available tonight"],
           "satisfied": true
         },
         "catcherPlan": {
@@ -74,9 +70,7 @@
           "fair": true,
           "required": false,
           "reason": "requires startingPitcher",
-          "reasons": [
-            "requires startingPitcher"
-          ],
+          "reasons": ["requires startingPitcher"],
           "satisfied": true
         },
         "bullpenPhone": {
@@ -84,9 +78,7 @@
           "fair": true,
           "required": false,
           "reason": "requires catcherPlan",
-          "reasons": [
-            "requires catcherPlan"
-          ],
+          "reasons": ["requires catcherPlan"],
           "satisfied": true
         }
       }
@@ -99,10 +91,7 @@
         "bullpenPhone": "call the bridge arm"
       },
       "conditions": {
-        "availablePitchers": [
-          "Cole",
-          "Holmes"
-        ]
+        "availablePitchers": ["Cole", "Holmes"]
       },
       "expectedAvailability": {
         "startingPitcher": {

@@ -32,7 +32,10 @@ import {
 
 // ── Shared fixtures ────────────────────────────────────────────────────
 
-const MINES: Array<[number, number]> = [[1, 1], [2, 3]]
+const MINES: Array<[number, number]> = [
+  [1, 1],
+  [2, 3],
+]
 let board: Board
 
 beforeEach(() => {
@@ -40,7 +43,10 @@ beforeEach(() => {
 })
 
 const playing: GameConditions = { gameStatus: 'playing', flagMode: false }
-const playingFlagMode: GameConditions = { gameStatus: 'playing', flagMode: true }
+const playingFlagMode: GameConditions = {
+  gameStatus: 'playing',
+  flagMode: true,
+}
 const lost: GameConditions = { gameStatus: 'lost', flagMode: false }
 const won: GameConditions = { gameStatus: 'won', flagMode: false }
 
@@ -231,7 +237,7 @@ describe('minesweeper × umpire', () => {
 
     // Cell was enabled+flagged before, now disabled+revealed.
     // play() should report a foul recommending cleanup.
-    const c30Foul = fouls.find(f => f.field === cellKey(3, 0))
+    const c30Foul = fouls.find((f) => f.field === cellKey(3, 0))
     expect(c30Foul).toBeDefined()
     expect(c30Foul!.suggestedValue).toBeUndefined()
   })

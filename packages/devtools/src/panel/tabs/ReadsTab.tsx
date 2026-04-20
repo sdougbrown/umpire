@@ -35,7 +35,9 @@ export function ReadsTab({ inspection }: Props) {
   }
 
   const allReadIds = inspection.graph.nodes
-  const visibleReadIds = showAllReads ? allReadIds : allReadIds.slice(0, MAX_READ_ITEMS)
+  const visibleReadIds = showAllReads
+    ? allReadIds
+    : allReadIds.slice(0, MAX_READ_ITEMS)
   const hiddenCount = allReadIds.length - visibleReadIds.length
 
   return (
@@ -52,7 +54,10 @@ export function ReadsTab({ inspection }: Props) {
           }}
         >
           {inspection.bridges.map((bridge) => (
-            <span key={`${bridge.type}:${bridge.read}:${bridge.field}`} style={pillStyle(theme.accent, true)}>
+            <span
+              key={`${bridge.type}:${bridge.read}:${bridge.field}`}
+              style={pillStyle(theme.accent, true)}
+            >
               {bridge.read} {'->'} {bridge.field} ({bridge.type})
             </span>
           ))}
@@ -72,8 +77,16 @@ export function ReadsTab({ inspection }: Props) {
               padding: 12,
             }}
           >
-            <div style={{ alignItems: 'center', display: 'flex', justifyContent: 'space-between' }}>
-              <strong style={{ color: theme.fg, fontSize: 12 }}>{readId}</strong>
+            <div
+              style={{
+                alignItems: 'center',
+                display: 'flex',
+                justifyContent: 'space-between',
+              }}
+            >
+              <strong style={{ color: theme.fg, fontSize: 12 }}>
+                {readId}
+              </strong>
               <span style={pillStyle(theme.ruleOneOf, true)}>
                 {formatValue(node.value)}
               </span>
@@ -115,7 +128,9 @@ export function ReadsTab({ inspection }: Props) {
             }}
             type="button"
           >
-            {showAllReads ? 'Show fewer reads' : `Show all reads (+${hiddenCount})`}
+            {showAllReads
+              ? 'Show fewer reads'
+              : `Show all reads (+${hiddenCount})`}
           </button>
         </div>
       )}

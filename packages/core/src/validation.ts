@@ -21,45 +21,69 @@ type NormalizedValidationResult =
 
 // `check()` remains boolean-only at the public API boundary, but the runtime
 // validator shapes are otherwise shared with richer validation entries.
-type SupportedValidator<T = unknown> = FieldValidator<T> | ValidationValidator<T>
+type SupportedValidator<T = unknown> =
+  | FieldValidator<T>
+  | ValidationValidator<T>
 
 type ValidationEntryObject<T = unknown> = {
   validator: ValidationValidator<T>
   error?: string
 }
 
-function isSafeParseValidator<T = unknown>(validator: unknown): validator is SafeParseValidator<T> {
+function isSafeParseValidator<T = unknown>(
+  validator: unknown,
+): validator is SafeParseValidator<T> {
   return isRecord(validator) && typeof validator.safeParse === 'function'
 }
 
-function isStringTestValidator(validator: unknown): validator is StringTestValidator {
+function isStringTestValidator(
+  validator: unknown,
+): validator is StringTestValidator {
   return isRecord(validator) && typeof validator.test === 'function'
 }
 
-export function isNamedCheck<T = unknown>(validator: unknown): validator is NamedCheck<T> {
-  return isRecord(validator) &&
+export function isNamedCheck<T = unknown>(
+  validator: unknown,
+): validator is NamedCheck<T> {
+  return (
+    isRecord(validator) &&
     typeof validator.__check === 'string' &&
     typeof validator.validate === 'function'
+  )
 }
 
-function isSupportedValidator<T = unknown>(validator: unknown): validator is SupportedValidator<T> {
-  return typeof validator === 'function' ||
+function isSupportedValidator<T = unknown>(
+  validator: unknown,
+): validator is SupportedValidator<T> {
+  return (
+    typeof validator === 'function' ||
     isNamedCheck<T>(validator) ||
     isSafeParseValidator<T>(validator) ||
     isStringTestValidator(validator)
+  )
 }
 
 function isValidationResult(result: unknown): result is ValidationResult {
-  return isRecord(result) &&
+  return (
+    isRecord(result) &&
     typeof result.valid === 'boolean' &&
-    (!('error' in result) || result.error === undefined || typeof result.error === 'string')
+    (!('error' in result) ||
+      result.error === undefined ||
+      typeof result.error === 'string')
+  )
 }
 
-function isValidationEntryObject<T = unknown>(entry: unknown): entry is ValidationEntryObject<T> {
-  return isRecord(entry) &&
+function isValidationEntryObject<T = unknown>(
+  entry: unknown,
+): entry is ValidationEntryObject<T> {
+  return (
+    isRecord(entry) &&
     'validator' in entry &&
     isSupportedValidator<T>(entry.validator) &&
-    (!('error' in entry) || entry.error === undefined || typeof entry.error === 'string')
+    (!('error' in entry) ||
+      entry.error === undefined ||
+      typeof entry.error === 'string')
+  )
 }
 
 function normalizeValidationResult(
@@ -78,7 +102,7 @@ function normalizeValidationResult(
     if (shouldWarnInDev()) {
       console.warn(
         '[@umpire/core] Validation functions must return a boolean or { valid, error? }. ' +
-        'Received an unsupported result and treated it as invalid.',
+          'Received an unsupported result and treated it as invalid.',
       )
     }
 

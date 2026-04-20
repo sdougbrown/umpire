@@ -39,7 +39,7 @@ jobs:
         # `yarn install --immutable` in CI fails on the resulting PR because the
         # lockfile still references the old version constraints.
         with:
-          title: "🐪 Version Packages"
+          title: '🐪 Version Packages'
           version: yarn changeset version && yarn install
         env:
           GITHUB_TOKEN: ${{ secrets.CHANGESETS_GITHUB_TOKEN != '' && secrets.CHANGESETS_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}

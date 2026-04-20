@@ -13,7 +13,8 @@ export const ReadInputType = {
   CONDITIONS: 'conditions',
 } as const
 
-export type ReadInputTypeValue = typeof ReadInputType[keyof typeof ReadInputType]
+export type ReadInputTypeValue =
+  (typeof ReadInputType)[keyof typeof ReadInputType]
 
 type ReadContext<
   Input extends Record<string, unknown>,
@@ -32,7 +33,8 @@ type ReadResolvers<
 
 export type PredicateReadKey<Reads extends Record<string, unknown>> = {
   [K in keyof Reads]-?: Reads[K] extends boolean ? K : never
-}[keyof Reads] & string
+}[keyof Reads] &
+  string
 
 export type ReadBridge<ReadId extends string = string> = {
   type: 'enabledWhen' | 'fairWhen'
@@ -88,18 +90,17 @@ export type ReadTable<
 > = {
   from<K extends PredicateReadKey<Reads>>(
     key: K,
-  ): (
-    value: unknown,
-    values: Input,
-    conditions?: unknown,
-  ) => Reads[K]
+  ): (value: unknown, values: Input, conditions?: unknown) => Reads[K]
   from<K extends PredicateReadKey<Reads>, Args extends unknown[]>(
     key: K,
     selectInput: (...args: Args) => Input,
   ): (...args: Args) => Reads[K]
   inspect(input: Input): ReadTableInspection<Input, Reads>
   resolve(input: Input): Reads
-  trace<K extends keyof Reads & string, C extends Record<string, unknown> = Record<string, unknown>>(
+  trace<
+    K extends keyof Reads & string,
+    C extends Record<string, unknown> = Record<string, unknown>,
+  >(
     key: K,
   ): RuleTraceAttachment<Input, C>
   trace<
@@ -189,16 +190,17 @@ function getReadBridgeStore<
 function registerReadBridge<
   Input extends Record<string, unknown>,
   Reads extends Record<string, unknown>,
->(
-  table: ReadTable<Input, Reads>,
-  bridge: ReadBridge<keyof Reads & string>,
-) {
+>(table: ReadTable<Input, Reads>, bridge: ReadBridge<keyof Reads & string>) {
   const bridges = getReadBridgeStore(table)
 
-  if (bridges.some((entry) =>
-    entry.type === bridge.type &&
-    entry.read === bridge.read &&
-    entry.field === bridge.field)) {
+  if (
+    bridges.some(
+      (entry) =>
+        entry.type === bridge.type &&
+        entry.read === bridge.read &&
+        entry.field === bridge.field,
+    )
+  ) {
     return
   }
 
@@ -214,13 +216,12 @@ function getReadRuleFieldName(field: unknown) {
     return String(field.__umpfield)
   }
 
-  throw new Error('[@umpire/reads] Named field required when using a read-backed rule')
+  throw new Error(
+    '[@umpire/reads] Named field required when using a read-backed rule',
+  )
 }
 
-function mergeReadTrace<T>(
-  trace: T,
-  existing: T | T[] | undefined,
-) {
+function mergeReadTrace<T>(trace: T, existing: T | T[] | undefined) {
   return existing
     ? [...(Array.isArray(existing) ? existing : [existing]), trace]
     : trace
@@ -233,11 +234,7 @@ export function fromRead<
 >(
   table: ReadTable<Input, Reads>,
   key: K,
-): (
-  value: unknown,
-  values: Input,
-  conditions?: unknown,
-) => Reads[K]
+): (value: unknown, values: Input, conditions?: unknown) => Reads[K]
 export function fromRead<
   Input extends Record<string, unknown>,
   Reads extends Record<string, unknown>,
@@ -261,11 +258,8 @@ export function fromRead<
     return (...args: unknown[]) => table[key](selectInput(...args)) as Reads[K]
   }
 
-  return (
-    _value: unknown,
-    values: Input,
-    _conditions?: unknown,
-  ) => table[key](values) as Reads[K]
+  return (_value: unknown, values: Input, _conditions?: unknown) =>
+    table[key](values) as Reads[K]
 }
 
 export function fairWhenRead<
@@ -321,10 +315,11 @@ export function fairWhenRead<
     | FairWhenReadConfig<F, C, Input>,
 ): Rule<F, C> {
   const fieldName = getReadRuleFieldName(field)
-  const inputType = (
-    options as { inputType?: ReadInputTypeValue } | undefined
-  )?.inputType ?? ReadInputType.VALUES
-  const selectInput = options && 'selectInput' in options ? options.selectInput : undefined
+  const inputType =
+    (options as { inputType?: ReadInputTypeValue } | undefined)?.inputType ??
+    ReadInputType.VALUES
+  const selectInput =
+    options && 'selectInput' in options ? options.selectInput : undefined
   const resolveInput = (
     values: FieldValues<F>,
     conditions: C,
@@ -347,9 +342,11 @@ export function fairWhenRead<
     field: fieldName,
   })
 
-  const trace = ((selectInput || inputType === ReadInputType.CONDITIONS)
-    ? table.trace<K, FieldValues<F>, C>(key, resolveInput)
-    : table.trace<K, C>(key)) as RuleTraceAttachment<FieldValues<F>, C>
+  const trace = (
+    selectInput || inputType === ReadInputType.CONDITIONS
+      ? table.trace<K, FieldValues<F>, C>(key, resolveInput)
+      : table.trace<K, C>(key)
+  ) as RuleTraceAttachment<FieldValues<F>, C>
   const mergedTrace = mergeReadTrace(trace, options?.trace)
   const {
     inputType: _inputType,
@@ -361,7 +358,9 @@ export function fairWhenRead<
   }
 
   const predicate = ((_value: unknown, values: FieldValues<F>, conditions: C) =>
-    table[key](resolveInput(values, conditions))) as Parameters<typeof fairWhen<F, C, unknown>>[1]
+    table[key](resolveInput(values, conditions))) as Parameters<
+    typeof fairWhen<F, C, unknown>
+  >[1]
 
   return fairWhen(field, predicate, {
     ...ruleOptions,
@@ -422,10 +421,11 @@ export function enabledWhenRead<
     | EnabledWhenReadConfig<F, C, Input>,
 ): Rule<F, C> {
   const fieldName = getReadRuleFieldName(field)
-  const inputType = (
-    options as { inputType?: ReadInputTypeValue } | undefined
-  )?.inputType ?? ReadInputType.VALUES
-  const selectInput = options && 'selectInput' in options ? options.selectInput : undefined
+  const inputType =
+    (options as { inputType?: ReadInputTypeValue } | undefined)?.inputType ??
+    ReadInputType.VALUES
+  const selectInput =
+    options && 'selectInput' in options ? options.selectInput : undefined
   const resolveInput = (
     values: FieldValues<F>,
     conditions: C,
@@ -448,9 +448,11 @@ export function enabledWhenRead<
     field: fieldName,
   })
 
-  const trace = ((selectInput || inputType === ReadInputType.CONDITIONS)
-    ? table.trace<K, FieldValues<F>, C>(key, resolveInput)
-    : table.trace<K, C>(key)) as RuleTraceAttachment<FieldValues<F>, C>
+  const trace = (
+    selectInput || inputType === ReadInputType.CONDITIONS
+      ? table.trace<K, FieldValues<F>, C>(key, resolveInput)
+      : table.trace<K, C>(key)
+  ) as RuleTraceAttachment<FieldValues<F>, C>
   const mergedTrace = mergeReadTrace(trace, options?.trace)
   const {
     inputType: _inputType,
@@ -461,8 +463,13 @@ export function enabledWhenRead<
     selectInput?: ReadRuleInputSelector<F, C, Input>
   }
 
-  const predicate = ((values: FieldValues<F>, conditions: C, prev?: FieldValues<F>) =>
-    table[key](resolveInput(values, conditions, prev))) as Parameters<typeof enabledWhen<F, C>>[1]
+  const predicate = ((
+    values: FieldValues<F>,
+    conditions: C,
+    prev?: FieldValues<F>,
+  ) => table[key](resolveInput(values, conditions, prev))) as Parameters<
+    typeof enabledWhen<F, C>
+  >[1]
 
   return enabledWhen(field, predicate, {
     ...ruleOptions,
@@ -473,21 +480,21 @@ export function enabledWhenRead<
 export function createReads<
   Input extends Record<string, unknown>,
   Reads extends Record<string, unknown>,
->(
-  resolvers: ReadResolvers<Input, Reads>,
-): ReadTable<Input, Reads> {
+>(resolvers: ReadResolvers<Input, Reads>): ReadTable<Input, Reads> {
   const keys = Object.keys(resolvers) as Array<keyof Reads & string>
   const bridgeStore: ReadBridge<keyof Reads & string>[] = []
 
   function createSession(input: Input) {
     const cache = new Map<keyof Reads & string, Reads[keyof Reads & string]>()
     const stack: Array<keyof Reads & string> = []
-    const readDependencies = new Map<keyof Reads & string, Set<keyof Reads & string>>(
-      keys.map((key) => [key, new Set<keyof Reads & string>()]),
-    )
-    const fieldDependencies = new Map<keyof Reads & string, Set<keyof Input & string>>(
-      keys.map((key) => [key, new Set<keyof Input & string>()]),
-    )
+    const readDependencies = new Map<
+      keyof Reads & string,
+      Set<keyof Reads & string>
+    >(keys.map((key) => [key, new Set<keyof Reads & string>()]))
+    const fieldDependencies = new Map<
+      keyof Reads & string,
+      Set<keyof Input & string>
+    >(keys.map((key) => [key, new Set<keyof Input & string>()]))
 
     const trackedInput = new Proxy(input, {
       get(target, property, receiver) {
@@ -514,7 +521,9 @@ export function createReads<
 
       if (stack.includes(key)) {
         const cycle = [...stack, key].map(String).join(' -> ')
-        throw new Error(`[@umpire/reads] createReads circular dependency: ${cycle}`)
+        throw new Error(
+          `[@umpire/reads] createReads circular dependency: ${cycle}`,
+        )
       }
 
       stack.push(key)
@@ -560,7 +569,7 @@ export function createReads<
       graph: {
         nodes: [...keys],
         edges: [
-          ...keys.flatMap((key) => ([
+          ...keys.flatMap((key) => [
             ...session.getReadDependencies(key).map((from) => ({
               from,
               to: key,
@@ -571,7 +580,7 @@ export function createReads<
               to: key,
               type: 'field' as const,
             })),
-          ])),
+          ]),
           ...bridgeStore.map((bridge) => ({
             from: bridge.read,
             to: bridge.field,
@@ -602,11 +611,8 @@ export function createReads<
       return (...args: unknown[]) => resolveRead(key, selectInput(...args))
     }
 
-    return (
-      _value: unknown,
-      values: Input,
-      _conditions?: unknown,
-    ) => resolveRead(key, values)
+    return (_value: unknown, values: Input, _conditions?: unknown) =>
+      resolveRead(key, values)
   }
 
   function buildTrace<
@@ -635,7 +641,7 @@ export function createReads<
       inspect(values: Values | Input, conditions?: C, prev?: Values) {
         const input = selectInput
           ? selectInput(values as Values, conditions as C, prev)
-          : values as Input
+          : (values as Input)
         const inspected = inspectInput(input)
         const node = inspected.nodes[key]
 
@@ -664,7 +670,10 @@ export function createReads<
   })
 
   for (const key of keys) {
-    table[key] = ((input: Input) => resolveRead(key, input)) as ReadTable<Input, Reads>[typeof key]
+    table[key] = ((input: Input) => resolveRead(key, input)) as ReadTable<
+      Input,
+      Reads
+    >[typeof key]
   }
 
   return table

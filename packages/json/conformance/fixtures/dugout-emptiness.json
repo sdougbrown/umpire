@@ -121,9 +121,7 @@
       "id": "false-and-numbers-can-still-be-present",
       "values": {
         "scoutingNote": "Attack away early",
-        "benchBats": [
-          "Verdugo"
-        ],
+        "benchBats": ["Verdugo"],
         "pitcherCard": {
           "firstPitch": "four-seam"
         },

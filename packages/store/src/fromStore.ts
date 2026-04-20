@@ -82,7 +82,9 @@ export function fromStore<
       return currentAvailability
     },
 
-    subscribe(listener: (availability: AvailabilityMap<F>) => void): () => void {
+    subscribe(
+      listener: (availability: AvailabilityMap<F>) => void,
+    ): () => void {
       listeners.add(listener)
       return () => {
         listeners.delete(listener)

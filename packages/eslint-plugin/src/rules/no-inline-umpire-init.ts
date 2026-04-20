@@ -28,8 +28,9 @@ const rule: Rule.RuleModule = {
       CallExpression(node: estree.CallExpression) {
         if (!isUmpireCall(node)) return
 
-        const ancestors: estree.Node[] =
-          context.sourceCode.getAncestors(node as estree.Node)
+        const ancestors: estree.Node[] = context.sourceCode.getAncestors(
+          node as estree.Node,
+        )
 
         let reactFunctionDepth = -1
         let useMemoDepth = -1
@@ -51,10 +52,7 @@ const rule: Rule.RuleModule = {
 
           // Record the nearest React component or hook boundary so useMemo only
           // suppresses when it sits inside that boundary.
-          const name = resolveFunctionName(
-            ancestor as estree.Function,
-            parent,
-          )
+          const name = resolveFunctionName(ancestor as estree.Function, parent)
           if (name && isReactName(name) && reactFunctionDepth === -1) {
             reactFunctionDepth = i
           }
@@ -64,7 +62,10 @@ const rule: Rule.RuleModule = {
           useMemoDepth !== -1 && useMemoDepth > reactFunctionDepth
 
         if (reactFunctionDepth !== -1 && !wrappedInUseMemo) {
-          context.report({ node: node as unknown as estree.Node, messageId: 'inlineInit' })
+          context.report({
+            node: node as unknown as estree.Node,
+            messageId: 'inlineInit',
+          })
         }
       },
     }
@@ -105,7 +106,10 @@ function resolveFunctionName(
     return fn.id.name
   }
   // const MyComp = () => {} or const MyComp = function() {}
-  if (parent?.type === 'VariableDeclarator' && parent.id.type === 'Identifier') {
+  if (
+    parent?.type === 'VariableDeclarator' &&
+    parent.id.type === 'Identifier'
+  ) {
     return parent.id.name
   }
   // { render: function() {} } — named property

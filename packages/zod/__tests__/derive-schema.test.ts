@@ -45,37 +45,28 @@ function createAvailability(
 
 describe('deriveSchema', () => {
   test('omits disabled fields from the schema', () => {
-    const schema = deriveSchema(
-      createAvailability(),
-      {
-        requiredName: z.string(),
-        disabledSecret: z.string(),
-      },
-    )
+    const schema = deriveSchema(createAvailability(), {
+      requiredName: z.string(),
+      disabledSecret: z.string(),
+    })
 
     expect(Object.keys(schema.shape)).toEqual(['requiredName'])
     expect(schema.shape.disabledSecret).toBeUndefined()
   })
 
   test('keeps enabled required fields required', () => {
-    const schema = deriveSchema(
-      createAvailability(),
-      {
-        requiredName: z.string(),
-      },
-    )
+    const schema = deriveSchema(createAvailability(), {
+      requiredName: z.string(),
+    })
 
     expect(schema.safeParse({}).success).toBe(false)
     expect(schema.safeParse({ requiredName: 'Douglas' }).success).toBe(true)
   })
 
   test('makes enabled non-required fields optional', () => {
-    const schema = deriveSchema(
-      createAvailability(),
-      {
-        optionalNickname: z.string(),
-      },
-    )
+    const schema = deriveSchema(createAvailability(), {
+      optionalNickname: z.string(),
+    })
 
     expect(schema.safeParse({}).success).toBe(true)
     expect(schema.safeParse({ optionalNickname: 'Doug' }).success).toBe(true)
@@ -89,26 +80,25 @@ describe('deriveSchema', () => {
   })
 
   test('skips enabled fields that do not have a matching schema', () => {
-    const schema = deriveSchema(
-      createAvailability(),
-      {
-        requiredName: z.string(),
-      },
-    )
+    const schema = deriveSchema(createAvailability(), {
+      requiredName: z.string(),
+    })
 
     expect(schema.shape.missingSchema).toBeUndefined()
     expect(Object.keys(schema.shape)).toEqual(['requiredName'])
   })
 
   test('throws if given a z.object instead of per-field schemas', () => {
-    expect(() => deriveSchema(
-      createAvailability(),
-      z.object({
-        requiredName: z.string(),
-      }) as never,
-    )).toThrow(
+    expect(() =>
+      deriveSchema(
+        createAvailability(),
+        z.object({
+          requiredName: z.string(),
+        }) as never,
+      ),
+    ).toThrow(
       'deriveSchema() expects per-field schemas, not a z.object(). ' +
-      'Pass formSchema.shape instead of formSchema.',
+        'Pass formSchema.shape instead of formSchema.',
     )
   })
 })

@@ -1,7 +1,4 @@
-import type {
-  ChallengeTrace,
-  ChallengeTraceAttachment,
-} from '@umpire/core'
+import type { ChallengeTrace, ChallengeTraceAttachment } from '@umpire/core'
 import { formatValue, getReasonMeta, getTraceMeta } from './format.js'
 import type { ReasonLike } from './format.js'
 import {
@@ -28,11 +25,7 @@ type BranchReasonGroup = {
   inner: ReasonLike[]
 }
 
-function MetaRows({
-  entries,
-}: {
-  entries: Array<[string, unknown]>
-}) {
+function MetaRows({ entries }: { entries: Array<[string, unknown]> }) {
   if (entries.length === 0) {
     return null
   }
@@ -49,10 +42,16 @@ function MetaRows({
     >
       {entries.map(([key, value]) => (
         <>
-          <dt key={`${key}:label`} style={{ color: theme.fgMuted, fontSize: 11 }}>
+          <dt
+            key={`${key}:label`}
+            style={{ color: theme.fgMuted, fontSize: 11 }}
+          >
             {key}
           </dt>
-          <dd key={`${key}:value`} style={{ color: theme.fg, fontSize: 11, margin: 0 }}>
+          <dd
+            key={`${key}:value`}
+            style={{ color: theme.fg, fontSize: 11, margin: 0 }}
+          >
             {formatValue(value, 80)}
           </dd>
         </>
@@ -82,16 +81,34 @@ function BranchGroupsView({
             padding: 12,
           }}
         >
-          <div style={{ alignItems: 'center', display: 'flex', gap: 8, justifyContent: 'space-between' }}>
-            <strong style={{ color: theme.fg, fontSize: 12 }}>{branchName}</strong>
-            <span style={pillStyle(branch.passed ? theme.enabled : theme.disabled, true)}>
+          <div
+            style={{
+              alignItems: 'center',
+              display: 'flex',
+              gap: 8,
+              justifyContent: 'space-between',
+            }}
+          >
+            <strong style={{ color: theme.fg, fontSize: 12 }}>
+              {branchName}
+            </strong>
+            <span
+              style={pillStyle(
+                branch.passed ? theme.enabled : theme.disabled,
+                true,
+              )}
+            >
               {branch.passed ? 'match' : 'no match'}
             </span>
           </div>
 
           <div style={{ display: 'grid', gap: 0 }}>
             {branch.inner.map((entry, index) => (
-              <ReasonView key={`${branchName}:${entry.rule}:${index}`} depth={depth + 1} reason={entry} />
+              <ReasonView
+                key={`${branchName}:${entry.rule}:${index}`}
+                depth={depth + 1}
+                reason={entry}
+              />
             ))}
           </div>
         </div>
@@ -120,7 +137,10 @@ function TraceAttachmentView({ trace }: { trace: ChallengeTraceAttachment }) {
 
       {trace.dependencies && trace.dependencies.length > 0 && (
         <div style={{ color: theme.fgMuted, fontSize: 11 }}>
-          depends on: {trace.dependencies.map((dependency) => `${dependency.kind}:${dependency.id}`).join(', ')}
+          depends on:{' '}
+          {trace.dependencies
+            .map((dependency) => `${dependency.kind}:${dependency.id}`)
+            .join(', ')}
         </div>
       )}
     </div>
@@ -129,14 +149,15 @@ function TraceAttachmentView({ trace }: { trace: ChallengeTraceAttachment }) {
 
 function ReasonView({ depth = 0, reason }: ReasonProps) {
   const tone = getRuleTone(reason.rule)
-  const inner = Array.isArray(reason.inner) ? reason.inner as ReasonLike[] : []
-  const branches = (
+  const inner = Array.isArray(reason.inner)
+    ? (reason.inner as ReasonLike[])
+    : []
+  const branches =
     reason.branches &&
     typeof reason.branches === 'object' &&
     !Array.isArray(reason.branches)
-  )
-    ? reason.branches as Record<string, BranchReasonGroup>
-    : null
+      ? (reason.branches as Record<string, BranchReasonGroup>)
+      : null
   const passed = reason.passed ?? false
 
   return (
@@ -150,10 +171,19 @@ function ReasonView({ depth = 0, reason }: ReasonProps) {
         padding: '12px 12px 12px 14px',
       }}
     >
-      <div style={{ alignItems: 'center', display: 'flex', gap: 8, justifyContent: 'space-between' }}>
+      <div
+        style={{
+          alignItems: 'center',
+          display: 'flex',
+          gap: 8,
+          justifyContent: 'space-between',
+        }}
+      >
         <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>
           <span style={pillStyle(tone, true)}>{reason.rule}</span>
-          <span style={pillStyle(passed ? theme.enabled : theme.disabled, true)}>
+          <span
+            style={pillStyle(passed ? theme.enabled : theme.disabled, true)}
+          >
             {passed ? 'pass' : 'fail'}
           </span>
         </div>
@@ -170,7 +200,10 @@ function ReasonView({ depth = 0, reason }: ReasonProps) {
       {Array.isArray(reason.trace) && reason.trace.length > 0 && (
         <div>
           {reason.trace.map((trace) => (
-            <TraceAttachmentView key={`${trace.kind}:${trace.id}`} trace={trace} />
+            <TraceAttachmentView
+              key={`${trace.kind}:${trace.id}`}
+              trace={trace}
+            />
           ))}
         </div>
       )}
@@ -182,7 +215,11 @@ function ReasonView({ depth = 0, reason }: ReasonProps) {
       {inner.length > 0 && (
         <div style={{ display: 'grid', gap: 0 }}>
           {inner.map((entry, index) => (
-            <ReasonView key={`${entry.rule}:${index}`} depth={depth + 1} reason={entry} />
+            <ReasonView
+              key={`${entry.rule}:${index}`}
+              depth={depth + 1}
+              reason={entry}
+            />
           ))}
         </div>
       )}
@@ -192,7 +229,13 @@ function ReasonView({ depth = 0, reason }: ReasonProps) {
 
 export function ChallengeDrawer({ field, onBack, trace }: Props) {
   return (
-    <div style={{ display: 'grid', gridTemplateRows: 'auto minmax(0, 1fr)', height: '100%' }}>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateRows: 'auto minmax(0, 1fr)',
+        height: '100%',
+      }}
+    >
       <div
         style={{
           alignItems: 'center',
@@ -227,17 +270,26 @@ export function ChallengeDrawer({ field, onBack, trace }: Props) {
         </div>
 
         <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>
-          <span style={pillStyle(trace.enabled ? theme.enabled : theme.disabled, true)}>
+          <span
+            style={pillStyle(
+              trace.enabled ? theme.enabled : theme.disabled,
+              true,
+            )}
+          >
             {trace.enabled ? 'enabled' : 'disabled'}
           </span>
-          <span style={pillStyle(trace.fair ? theme.enabled : theme.fair, true)}>
+          <span
+            style={pillStyle(trace.fair ? theme.enabled : theme.fair, true)}
+          >
             {trace.fair ? 'fair' : 'fair fail'}
           </span>
         </div>
       </div>
 
       <div style={scrollPaneStyle()}>
-        <section style={{ borderBottom: `1px solid ${theme.border}`, padding: 14 }}>
+        <section
+          style={{ borderBottom: `1px solid ${theme.border}`, padding: 14 }}
+        >
           <h3 style={sectionHeadingStyle()}>Direct Reasons</h3>
         </section>
         <div style={{ display: 'grid' }}>
@@ -246,7 +298,9 @@ export function ChallengeDrawer({ field, onBack, trace }: Props) {
           ))}
         </div>
 
-        <section style={{ borderBottom: `1px solid ${theme.border}`, padding: 14 }}>
+        <section
+          style={{ borderBottom: `1px solid ${theme.border}`, padding: 14 }}
+        >
           <h3 style={sectionHeadingStyle()}>Transitive Dependencies</h3>
         </section>
         {trace.transitiveDeps.length === 0 ? (
@@ -264,9 +318,23 @@ export function ChallengeDrawer({ field, onBack, trace }: Props) {
                 padding: 14,
               }}
             >
-              <div style={{ alignItems: 'center', display: 'flex', gap: 8, justifyContent: 'space-between' }}>
-                <strong style={{ color: theme.fg, fontSize: 12 }}>{dependency.field}</strong>
-                <span style={pillStyle(dependency.enabled ? theme.enabled : theme.disabled, true)}>
+              <div
+                style={{
+                  alignItems: 'center',
+                  display: 'flex',
+                  gap: 8,
+                  justifyContent: 'space-between',
+                }}
+              >
+                <strong style={{ color: theme.fg, fontSize: 12 }}>
+                  {dependency.field}
+                </strong>
+                <span
+                  style={pillStyle(
+                    dependency.enabled ? theme.enabled : theme.disabled,
+                    true,
+                  )}
+                >
                   {dependency.enabled ? 'enabled' : 'disabled'}
                 </span>
               </div>
@@ -290,7 +358,9 @@ export function ChallengeDrawer({ field, onBack, trace }: Props) {
 
         {trace.oneOfResolution && (
           <>
-            <section style={{ borderBottom: `1px solid ${theme.border}`, padding: 14 }}>
+            <section
+              style={{ borderBottom: `1px solid ${theme.border}`, padding: 14 }}
+            >
               <h3 style={sectionHeadingStyle()}>oneOf Resolution</h3>
             </section>
             <div
@@ -302,34 +372,47 @@ export function ChallengeDrawer({ field, onBack, trace }: Props) {
               }}
             >
               <div style={{ color: theme.fgMuted, fontSize: 11 }}>
-                group: <span style={{ color: theme.fg }}>{trace.oneOfResolution.group}</span>
+                group:{' '}
+                <span style={{ color: theme.fg }}>
+                  {trace.oneOfResolution.group}
+                </span>
               </div>
               <div style={{ color: theme.fgMuted, fontSize: 11 }}>
-                active branch: <span style={{ color: theme.fg }}>{trace.oneOfResolution.activeBranch ?? 'none'}</span>
+                active branch:{' '}
+                <span style={{ color: theme.fg }}>
+                  {trace.oneOfResolution.activeBranch ?? 'none'}
+                </span>
               </div>
               <div style={{ color: theme.fgMuted, fontSize: 11 }}>
-                method: <span style={{ color: theme.fg }}>{trace.oneOfResolution.method}</span>
+                method:{' '}
+                <span style={{ color: theme.fg }}>
+                  {trace.oneOfResolution.method}
+                </span>
               </div>
 
-              {Object.entries(trace.oneOfResolution.branches).map(([branch, detail]) => (
-                <div
-                  key={branch}
-                  style={{
-                    borderTop: `1px solid ${theme.border}`,
-                    display: 'grid',
-                    gap: 6,
-                    paddingTop: 10,
-                  }}
-                >
-                  <strong style={{ color: theme.fg, fontSize: 12 }}>{branch}</strong>
-                  <div style={{ color: theme.fgMuted, fontSize: 11 }}>
-                    fields: {detail.fields.join(', ')}
+              {Object.entries(trace.oneOfResolution.branches).map(
+                ([branch, detail]) => (
+                  <div
+                    key={branch}
+                    style={{
+                      borderTop: `1px solid ${theme.border}`,
+                      display: 'grid',
+                      gap: 6,
+                      paddingTop: 10,
+                    }}
+                  >
+                    <strong style={{ color: theme.fg, fontSize: 12 }}>
+                      {branch}
+                    </strong>
+                    <div style={{ color: theme.fgMuted, fontSize: 11 }}>
+                      fields: {detail.fields.join(', ')}
+                    </div>
+                    <div style={{ color: theme.fgMuted, fontSize: 11 }}>
+                      any satisfied: {detail.anySatisfied ? 'yes' : 'no'}
+                    </div>
                   </div>
-                  <div style={{ color: theme.fgMuted, fontSize: 11 }}>
-                    any satisfied: {detail.anySatisfied ? 'yes' : 'no'}
-                  </div>
-                </div>
-              ))}
+                ),
+              )}
             </div>
           </>
         )}

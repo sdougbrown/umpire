@@ -31,12 +31,15 @@ describe('json + zod pipeline', () => {
     expect(toJson(parsed)).toEqual(schema)
 
     const runtime = umpire(parsed)
-    const guestAvailability = runtime.check({
-      accountType: 'guest',
-      displayName: 'Ada',
-      inviteCode: 'SHOULD-NOT-MATTER',
-      email: 'ada@example.com',
-    }, { accountType: 'guest' })
+    const guestAvailability = runtime.check(
+      {
+        accountType: 'guest',
+        displayName: 'Ada',
+        inviteCode: 'SHOULD-NOT-MATTER',
+        email: 'ada@example.com',
+      },
+      { accountType: 'guest' },
+    )
 
     expect(guestAvailability.inviteCode).toMatchObject({
       enabled: false,

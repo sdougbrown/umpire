@@ -34,7 +34,13 @@ export type {
   ValidationMap,
   FieldsOf,
 } from './types.js'
-export type { FieldBuilder, FieldInput, FieldRef, NormalizeField, NormalizeFields } from './field.js'
+export type {
+  FieldBuilder,
+  FieldInput,
+  FieldRef,
+  NormalizeField,
+  NormalizeFields,
+} from './field.js'
 export type {
   DefineRuleConfig,
   PredicateInspection,
@@ -42,7 +48,12 @@ export type {
   RuleInspection,
   RuleOperandInspection,
 } from './rules.js'
-export { isEmptyArray, isEmptyObject, isEmptyPresent, isEmptyString } from './emptiness.js'
+export {
+  isEmptyArray,
+  isEmptyObject,
+  isEmptyPresent,
+  isEmptyString,
+} from './emptiness.js'
 export { field } from './field.js'
 export { foulMap } from './foul-map.js'
 export { isSatisfied } from './satisfaction.js'

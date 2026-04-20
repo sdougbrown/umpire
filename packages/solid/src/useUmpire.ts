@@ -27,9 +27,16 @@ export function useUmpire<
   createComputed(() => {
     const currentValues = snapshotValue(values())
     const currentConditions = snapshotValue(conditions?.())
-    const nextCheck = ump.check(currentValues, currentConditions, previousSnapshot?.values)
+    const nextCheck = ump.check(
+      currentValues,
+      currentConditions,
+      previousSnapshot?.values,
+    )
     const nextFouls = previousSnapshot
-      ? ump.play(previousSnapshot, { values: currentValues, conditions: currentConditions })
+      ? ump.play(previousSnapshot, {
+          values: currentValues,
+          conditions: currentConditions,
+        })
       : []
 
     batch(() => {

@@ -21,7 +21,7 @@ function extractBranches(
     exclude?: string[]
     branchNames?: Record<string, string>
     forceRequired?: boolean
-  } = {}
+  } = {},
 ): ExtractedBranches {
   const discriminator: string =
     'discriminator' in schema
@@ -46,7 +46,7 @@ function extractBranches(
     if (rawValue == null) {
       throw new Error(
         `[@umpire/zod] Could not extract literal value from discriminator field "${discriminator}". ` +
-          `Expected a ZodLiteral with ._def.value (v3) or .value (v4).`
+          `Expected a ZodLiteral with ._def.value (v3) or .value (v4).`,
       )
     }
     const branchName = options.branchNames?.[rawValue] ?? rawValue
@@ -78,7 +78,7 @@ export function deriveOneOf<
   C extends Record<string, unknown> = Record<string, unknown>,
 >(
   schema: z.ZodDiscriminatedUnion<string, DiscriminatedUnionOption[]>,
-  options: DeriveOptions
+  options: DeriveOptions,
 ): Rule<F, C> {
   const { discriminator, branches } = extractBranches(schema, options)
   const branchNames = options.branchNames
@@ -98,7 +98,7 @@ export function deriveDiscriminatedFields<
   T extends z.ZodDiscriminatedUnion<string, DiscriminatedUnionOption[]>,
 >(
   schema: T,
-  options: DeriveOptions & { required?: boolean }
+  options: DeriveOptions & { required?: boolean },
 ): {
   fields: Record<string, FieldDef>
   rule: Rule<Record<string, FieldDef>, Record<string, unknown>>
@@ -113,7 +113,10 @@ export function deriveDiscriminatedFields<
     fields: fieldDefs,
     rule: oneOf(options.groupName, branches, {
       activeBranch: (values) => {
-        const raw = values[discriminator as keyof typeof values] as string | null | undefined
+        const raw = values[discriminator as keyof typeof values] as
+          | string
+          | null
+          | undefined
         if (raw == null) return null
         return branchNames?.[raw] ?? raw
       },

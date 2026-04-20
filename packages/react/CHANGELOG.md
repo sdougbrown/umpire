@@ -7,7 +7,6 @@
 - e570cac: Add browser/CDN builds via tsdown
 
   Both `@umpire/core` and `@umpire/react` now ship bundled browser artifacts alongside the existing ESM build:
-
   - `dist/index.browser.js` — minified ESM for `<script type="module">` and esm.sh
   - `dist/index.iife.js` — IIFE with `window.Umpire` / `window.UmpireReact` globals
 

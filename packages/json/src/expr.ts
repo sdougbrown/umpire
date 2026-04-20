@@ -3,9 +3,17 @@ import {
   getExprFieldRefs as getDslExprFieldRefs,
   type Expr,
 } from '@umpire/dsl'
-import { getNamedCheckMetadata, type FieldDef, type FieldValues, type NamedCheckMetadata } from '@umpire/core'
+import {
+  getNamedCheckMetadata,
+  type FieldDef,
+  type FieldValues,
+  type NamedCheckMetadata,
+} from '@umpire/core'
 
-import { assertValidValidatorSpec, createNamedValidatorFromSpec } from './check-ops.js'
+import {
+  assertValidValidatorSpec,
+  createNamedValidatorFromSpec,
+} from './check-ops.js'
 import type { JsonConditionDef, JsonExpr } from './schema.js'
 
 type ExprPredicate<
@@ -24,7 +32,9 @@ type CompileExprOptions = {
 
 function assertField(field: string, op: string, fieldNames: Set<string>) {
   if (!fieldNames.has(field)) {
-    throw new Error(`[@umpire/json] Unknown field "${field}" in "${op}" expression`)
+    throw new Error(
+      `[@umpire/json] Unknown field "${field}" in "${op}" expression`,
+    )
   }
 }
 
@@ -34,7 +44,9 @@ export function getExprFieldRefs(expression: JsonExpr): string[] {
   }
 
   if (expression.op === 'and' || expression.op === 'or') {
-    return [...new Set(expression.exprs.flatMap((entry) => getExprFieldRefs(entry)))]
+    return [
+      ...new Set(expression.exprs.flatMap((entry) => getExprFieldRefs(entry))),
+    ]
   }
 
   if (expression.op === 'not') {
@@ -79,14 +91,12 @@ function compileCheckExpr<
 export function compileExpr<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
->(
-  expression: JsonExpr,
-  options: CompileExprOptions,
-): ExprPredicate<F, C> {
+>(expression: JsonExpr, options: CompileExprOptions): ExprPredicate<F, C> {
   const compiled = compileInner<F, C>(expression, options)
 
   if (compiled.fieldRefs.size === 1) {
-    compiled.predicate._checkField = [...compiled.fieldRefs][0] as keyof F & string
+    compiled.predicate._checkField = [...compiled.fieldRefs][0] as keyof F &
+      string
   }
 
   return compiled.predicate
@@ -95,10 +105,7 @@ export function compileExpr<
 function compileInner<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
->(
-  expression: JsonExpr,
-  options: CompileExprOptions,
-): CompiledNode<F, C> {
+>(expression: JsonExpr, options: CompileExprOptions): CompiledNode<F, C> {
   if (expression.op === 'check') {
     return {
       predicate: compileCheckExpr<F, C>(expression, options),
@@ -111,12 +118,18 @@ function compileInner<
       throw new Error('[@umpire/json] "and" expression requires an exprs array')
     }
 
-    const compiledEntries = expression.exprs.map((entry) => compileInner<F, C>(entry, options))
+    const compiledEntries = expression.exprs.map((entry) =>
+      compileInner<F, C>(entry, options),
+    )
     const predicates = compiledEntries.map((entry) => entry.predicate)
     return {
-      predicate: (((values: FieldValues<F>, conditions: C) =>
-        predicates.every((entry) => entry(values, conditions))) as ExprPredicate<F, C>),
-      fieldRefs: new Set(compiledEntries.flatMap((entry) => [...entry.fieldRefs])),
+      predicate: ((values: FieldValues<F>, conditions: C) =>
+        predicates.every((entry) =>
+          entry(values, conditions),
+        )) as ExprPredicate<F, C>,
+      fieldRefs: new Set(
+        compiledEntries.flatMap((entry) => [...entry.fieldRefs]),
+      ),
     }
   }
 
@@ -125,20 +138,27 @@ function compileInner<
       throw new Error('[@umpire/json] "or" expression requires an exprs array')
     }
 
-    const compiledEntries = expression.exprs.map((entry) => compileInner<F, C>(entry, options))
+    const compiledEntries = expression.exprs.map((entry) =>
+      compileInner<F, C>(entry, options),
+    )
     const predicates = compiledEntries.map((entry) => entry.predicate)
     return {
-      predicate: (((values: FieldValues<F>, conditions: C) =>
-        predicates.some((entry) => entry(values, conditions))) as ExprPredicate<F, C>),
-      fieldRefs: new Set(compiledEntries.flatMap((entry) => [...entry.fieldRefs])),
+      predicate: ((values: FieldValues<F>, conditions: C) =>
+        predicates.some((entry) => entry(values, conditions))) as ExprPredicate<
+        F,
+        C
+      >,
+      fieldRefs: new Set(
+        compiledEntries.flatMap((entry) => [...entry.fieldRefs]),
+      ),
     }
   }
 
   if (expression.op === 'not') {
     const inner = compileInner<F, C>(expression.expr, options)
     return {
-      predicate: (((values: FieldValues<F>, conditions: C) =>
-        !inner.predicate(values, conditions)) as ExprPredicate<F, C>),
+      predicate: ((values: FieldValues<F>, conditions: C) =>
+        !inner.predicate(values, conditions)) as ExprPredicate<F, C>,
       fieldRefs: inner.fieldRefs,
     }
   }

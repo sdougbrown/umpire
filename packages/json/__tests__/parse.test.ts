@@ -1,6 +1,13 @@
 import { umpire } from '@umpire/core'
 
-import { fromJson, fromJsonSafe, getJsonDef, parseJsonSchema, toJson, validateSchema } from '../src/index.js'
+import {
+  fromJson,
+  fromJsonSafe,
+  getJsonDef,
+  parseJsonSchema,
+  toJson,
+  validateSchema,
+} from '../src/index.js'
 import type { UmpireJsonSchema } from '../src/index.js'
 
 describe('fromJson', () => {
@@ -195,25 +202,48 @@ describe('parseJsonSchema', () => {
 
     expect(parsed).toEqual({
       ok: false,
-      errors: ['[@umpire/json] Rule "requires" references unknown field "missing"'],
+      errors: [
+        '[@umpire/json] Rule "requires" references unknown field "missing"',
+      ],
     })
   })
 
   test.each([
     [null, '[@umpire/json] Schema must be an object'],
     [{ version: 1 }, '[@umpire/json] Schema must include a "fields" object'],
-    [{ version: 1, fields: [], rules: [] }, '[@umpire/json] Schema must include a "fields" object'],
-    [{ version: 1, fields: {}, rules: null }, '[@umpire/json] Schema must include a "rules" array'],
-    [{ version: 1, fields: {}, rules: [], validators: 'nope' }, '[@umpire/json] Schema "validators" must be an object when provided'],
-    [{ version: 1, fields: {}, rules: [], validators: [] }, '[@umpire/json] Schema "validators" must be an object when provided'],
-    [{ version: 2, fields: {}, rules: [] }, '[@umpire/json] Unsupported schema version "2"'],
-    [{ fields: {}, rules: [] }, '[@umpire/json] Schema must include a "version" field'],
-  ])('returns boundary errors for malformed raw schemas: %j', (raw, message) => {
-    expect(parseJsonSchema(raw)).toEqual({
-      ok: false,
-      errors: [message],
-    })
-  })
+    [
+      { version: 1, fields: [], rules: [] },
+      '[@umpire/json] Schema must include a "fields" object',
+    ],
+    [
+      { version: 1, fields: {}, rules: null },
+      '[@umpire/json] Schema must include a "rules" array',
+    ],
+    [
+      { version: 1, fields: {}, rules: [], validators: 'nope' },
+      '[@umpire/json] Schema "validators" must be an object when provided',
+    ],
+    [
+      { version: 1, fields: {}, rules: [], validators: [] },
+      '[@umpire/json] Schema "validators" must be an object when provided',
+    ],
+    [
+      { version: 2, fields: {}, rules: [] },
+      '[@umpire/json] Unsupported schema version "2"',
+    ],
+    [
+      { fields: {}, rules: [] },
+      '[@umpire/json] Schema must include a "version" field',
+    ],
+  ])(
+    'returns boundary errors for malformed raw schemas: %j',
+    (raw, message) => {
+      expect(parseJsonSchema(raw)).toEqual({
+        ok: false,
+        errors: [message],
+      })
+    },
+  )
 })
 
 describe('fromJsonSafe', () => {
@@ -237,7 +267,11 @@ describe('fromJsonSafe', () => {
       throw new Error('Expected fromJsonSafe to succeed')
     }
 
-    const runtime = umpire({ fields: parsed.fields, rules: parsed.rules, validators: parsed.validators })
+    const runtime = umpire({
+      fields: parsed.fields,
+      rules: parsed.rules,
+      validators: parsed.validators,
+    })
     expect(runtime.check({ email: 'invalid' }).email.valid).toBe(false)
     expect(parsed.schema).toEqual(raw)
   })
@@ -257,7 +291,9 @@ describe('fromJsonSafe', () => {
 
     expect(parsed).toEqual({
       ok: false,
-      errors: ['[@umpire/json] Rule "requires" references unknown field "missing"'],
+      errors: [
+        '[@umpire/json] Rule "requires" references unknown field "missing"',
+      ],
     })
   })
 
@@ -314,12 +350,15 @@ describe('fromJsonSafe', () => {
       },
       '[@umpire/json] Schema "excluded" must be an array when provided',
     ],
-  ])('returns boundary errors for malformed schema sections: %j', (raw, message) => {
-    expect(fromJsonSafe(raw)).toEqual({
-      ok: false,
-      errors: [message],
-    })
-  })
+  ])(
+    'returns boundary errors for malformed schema sections: %j',
+    (raw, message) => {
+      expect(fromJsonSafe(raw)).toEqual({
+        ok: false,
+        errors: [message],
+      })
+    },
+  )
 
   test('matches fromJson output shape and behavior for valid schemas', () => {
     const schema: UmpireJsonSchema = {
@@ -351,7 +390,11 @@ describe('fromJsonSafe', () => {
       throw new Error('Expected fromJsonSafe to succeed')
     }
 
-    const safeRuntime = umpire({ fields: safe.fields, rules: safe.rules, validators: safe.validators })
+    const safeRuntime = umpire({
+      fields: safe.fields,
+      rules: safe.rules,
+      validators: safe.validators,
+    })
     const typedRuntime = umpire(typed)
 
     const values = {
@@ -361,9 +404,13 @@ describe('fromJsonSafe', () => {
     }
 
     expect(Object.keys(safe.fields)).toEqual(Object.keys(typed.fields))
-    expect(toJson({ fields: safe.fields, rules: safe.rules, validators: safe.validators })).toEqual(
-      toJson(typed),
-    )
+    expect(
+      toJson({
+        fields: safe.fields,
+        rules: safe.rules,
+        validators: safe.validators,
+      }),
+    ).toEqual(toJson(typed))
     expect(safeRuntime.check(values)).toEqual(typedRuntime.check(values))
   })
 })

@@ -23,14 +23,17 @@ const adapter: SignalProtocol = {
   },
 }
 
-const form = reactiveUmp(umpire({
-  fields: {
-    count: { default: 0 },
-    label: { default: '' },
-    enabled: { default: true },
-  },
-  rules: [],
-}), adapter)
+const form = reactiveUmp(
+  umpire({
+    fields: {
+      count: { default: 0 },
+      label: { default: '' },
+      enabled: { default: true },
+    },
+    rules: [],
+  }),
+  adapter,
+)
 
 const conditionedUmp = umpire<
   {
@@ -46,32 +49,32 @@ const conditionedUmp = umpire<
     enabled: { default: true },
   },
   rules: [
-    enabledWhen('enabled', (_values, conditions) => conditions.plan === 'pro' && conditions.stage > 0),
+    enabledWhen(
+      'enabled',
+      (_values, conditions) =>
+        conditions.plan === 'pro' && conditions.stage > 0,
+    ),
   ],
 })
 
-const optionsForm = reactiveUmp(
-  conditionedUmp,
-  adapter,
-  {
-    signals: {
-      count: {
-        get: () => 1,
-        set: (_next) => {},
-      },
-      label: {
-        get: () => 'label',
-        // @ts-expect-error label signal set must accept string
-        set: (_next: number) => {},
-      },
+const optionsForm = reactiveUmp(conditionedUmp, adapter, {
+  signals: {
+    count: {
+      get: () => 1,
+      set: (_next) => {},
     },
-    conditions: {
-      plan: { get: () => 'free' },
-      // @ts-expect-error stage condition must return number
-      stage: { get: () => '1' },
+    label: {
+      get: () => 'label',
+      // @ts-expect-error label signal set must accept string
+      set: (_next: number) => {},
     },
   },
-)
+  conditions: {
+    plan: { get: () => 'free' },
+    // @ts-expect-error stage condition must return number
+    stage: { get: () => '1' },
+  },
+})
 
 void optionsForm
 

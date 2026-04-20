@@ -32,14 +32,21 @@ describe('evaluate', () => {
       delta: {},
     }
     const rules = [
-      enabledWhen<TestFields, TestConditions>('beta', (values) => values.alpha === 'on', {
-        reason: 'alpha must be on',
-      }),
+      enabledWhen<TestFields, TestConditions>(
+        'beta',
+        (values) => values.alpha === 'on',
+        {
+          reason: 'alpha must be on',
+        },
+      ),
     ]
 
     const topoOrder = createOrder(fields, rules)
 
-    expect(evaluate(fields, rules, topoOrder, { alpha: 'on' }, {} as TestConditions).beta).toEqual({
+    expect(
+      evaluate(fields, rules, topoOrder, { alpha: 'on' }, {} as TestConditions)
+        .beta,
+    ).toEqual({
       enabled: true,
       satisfied: false,
       fair: true,
@@ -48,7 +55,8 @@ describe('evaluate', () => {
       reasons: [],
     })
     expect(
-      evaluate(fields, rules, topoOrder, { alpha: 'off' }, {} as TestConditions).beta,
+      evaluate(fields, rules, topoOrder, { alpha: 'off' }, {} as TestConditions)
+        .beta,
     ).toEqual({
       enabled: false,
       satisfied: false,
@@ -195,18 +203,29 @@ describe('evaluate', () => {
           const matches = values.alpha === values.beta
 
           return new Map([
-            ['beta', {
-              enabled: true,
-              fair: matches,
-              reason: matches ? null : 'socket mismatch',
-            }],
+            [
+              'beta',
+              {
+                enabled: true,
+                fair: matches,
+                reason: matches ? null : 'socket mismatch',
+              },
+            ],
           ])
         },
       }),
     ]
     const topoOrder = createOrder(fields, rules)
 
-    expect(evaluate(fields, rules, topoOrder, { alpha: 'am5', beta: 'am5' }, {} as TestConditions).beta).toEqual({
+    expect(
+      evaluate(
+        fields,
+        rules,
+        topoOrder,
+        { alpha: 'am5', beta: 'am5' },
+        {} as TestConditions,
+      ).beta,
+    ).toEqual({
       enabled: true,
       satisfied: true,
       fair: true,
@@ -215,7 +234,13 @@ describe('evaluate', () => {
       reasons: [],
     })
     expect(
-      evaluate(fields, rules, topoOrder, { alpha: 'am5', beta: 'lga1700' }, {} as TestConditions).beta,
+      evaluate(
+        fields,
+        rules,
+        topoOrder,
+        { alpha: 'am5', beta: 'lga1700' },
+        {} as TestConditions,
+      ).beta,
     ).toEqual({
       enabled: true,
       satisfied: true,
@@ -237,17 +262,23 @@ describe('evaluate', () => {
       type: 'silent',
       targets: ['beta'],
       sources: [],
-      evaluate: () => new Map([
-        ['beta', {
-          enabled: false,
-          reason: null,
-        }],
-      ]),
+      evaluate: () =>
+        new Map([
+          [
+            'beta',
+            {
+              enabled: false,
+              reason: null,
+            },
+          ],
+        ]),
     }
     const rules = [anyOf(silentRule, silentRule)]
     const topoOrder = createOrder(fields, rules)
 
-    expect(evaluate(fields, rules, topoOrder, {}, {} as TestConditions).beta).toEqual({
+    expect(
+      evaluate(fields, rules, topoOrder, {}, {} as TestConditions).beta,
+    ).toEqual({
       enabled: false,
       satisfied: false,
       fair: true,
@@ -268,13 +299,17 @@ describe('evaluate', () => {
       type: 'silent-fair',
       targets: ['delta'],
       sources: [],
-      evaluate: () => new Map([
-        ['delta', {
-          enabled: true,
-          fair: false,
-          reason: null,
-        }],
-      ]),
+      evaluate: () =>
+        new Map([
+          [
+            'delta',
+            {
+              enabled: true,
+              fair: false,
+              reason: null,
+            },
+          ],
+        ]),
       _umpire: {
         kind: 'fairWhen' as const,
         predicate: (() => false) as never,
@@ -377,13 +412,17 @@ describe('evaluate', () => {
       type: 'empty-reasons',
       targets: ['alpha'],
       sources: [],
-      evaluate: () => new Map([
-        ['alpha', {
-          enabled: false,
-          reason: 'empty reasons',
-          reasons: [],
-        }],
-      ]),
+      evaluate: () =>
+        new Map([
+          [
+            'alpha',
+            {
+              enabled: false,
+              reason: 'empty reasons',
+              reasons: [],
+            },
+          ],
+        ]),
     }
 
     expect(
@@ -419,10 +458,38 @@ describe('evaluate', () => {
     const result = evaluate(fields, rules, topoOrder, {}, {} as TestConditions)
 
     expect(result).toEqual({
-      alpha: { enabled: true, satisfied: false, fair: true, required: true, reason: null, reasons: [] },
-      beta: { enabled: true, satisfied: false, fair: true, required: false, reason: null, reasons: [] },
-      gamma: { enabled: true, satisfied: false, fair: true, required: false, reason: null, reasons: [] },
-      delta: { enabled: true, satisfied: false, fair: true, required: true, reason: null, reasons: [] },
+      alpha: {
+        enabled: true,
+        satisfied: false,
+        fair: true,
+        required: true,
+        reason: null,
+        reasons: [],
+      },
+      beta: {
+        enabled: true,
+        satisfied: false,
+        fair: true,
+        required: false,
+        reason: null,
+        reasons: [],
+      },
+      gamma: {
+        enabled: true,
+        satisfied: false,
+        fair: true,
+        required: false,
+        reason: null,
+        reasons: [],
+      },
+      delta: {
+        enabled: true,
+        satisfied: false,
+        fair: true,
+        required: true,
+        reason: null,
+        reasons: [],
+      },
     })
   })
 })

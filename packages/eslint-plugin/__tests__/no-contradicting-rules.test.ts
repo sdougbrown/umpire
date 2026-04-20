@@ -141,10 +141,7 @@ tester.run('no-contradicting-rules', rule, {
           ],
         })
       `,
-      errors: [
-        { messageId: 'contradiction' },
-        { messageId: 'contradiction' },
-      ],
+      errors: [{ messageId: 'contradiction' }, { messageId: 'contradiction' }],
     },
   ],
 })

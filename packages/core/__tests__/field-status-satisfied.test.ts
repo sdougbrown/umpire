@@ -1,4 +1,9 @@
-import { isEmptyArray, isEmptyObject, isEmptyPresent, isEmptyString } from '../src/emptiness.js'
+import {
+  isEmptyArray,
+  isEmptyObject,
+  isEmptyPresent,
+  isEmptyString,
+} from '../src/emptiness.js'
 import { umpire } from '../src/umpire.js'
 
 describe('check() field status satisfied', () => {
@@ -9,7 +14,9 @@ describe('check() field status satisfied', () => {
         stringField: { isEmpty: isEmptyString },
         arrayField: { isEmpty: isEmptyArray },
         objectField: { isEmpty: isEmptyObject },
-        numberField: { isEmpty: (value) => typeof value !== 'number' || Number.isNaN(value) },
+        numberField: {
+          isEmpty: (value) => typeof value !== 'number' || Number.isNaN(value),
+        },
         booleanField: { isEmpty: (value) => typeof value !== 'boolean' },
       },
       rules: [],

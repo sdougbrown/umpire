@@ -20,7 +20,8 @@ export function FoulLog({ events }: Props) {
           textAlign: 'center',
         }}
       >
-        No fouls yet. This log fills when a field becomes disabled while still holding a value.
+        No fouls yet. This log fills when a field becomes disabled while still
+        holding a value.
       </div>
     )
   }
@@ -37,9 +38,20 @@ export function FoulLog({ events }: Props) {
             padding: 12,
           }}
         >
-          <div style={{ alignItems: 'center', display: 'flex', gap: 8, justifyContent: 'space-between' }}>
-            <strong style={{ color: theme.fg, fontSize: 12 }}>{event.field}</strong>
-            <span style={pillStyle(event.cascaded ? theme.fair : theme.disabled)}>
+          <div
+            style={{
+              alignItems: 'center',
+              display: 'flex',
+              gap: 8,
+              justifyContent: 'space-between',
+            }}
+          >
+            <strong style={{ color: theme.fg, fontSize: 12 }}>
+              {event.field}
+            </strong>
+            <span
+              style={pillStyle(event.cascaded ? theme.fair : theme.disabled)}
+            >
               {event.cascaded ? 'cascade' : 'direct'}
             </span>
           </div>

@@ -5,9 +5,7 @@ import type {
   Snapshot,
   Umpire,
 } from '@umpire/core'
-import type {
-  ReadTableInspection,
-} from '@umpire/reads'
+import type { ReadTableInspection } from '@umpire/reads'
 import type {
   AnyReadInspection,
   ResolvedDevtoolsExtension,
@@ -40,24 +38,29 @@ function notify() {
 
 function isReadInspection(
   value: unknown,
-): value is ReadTableInspection<Record<string, unknown>, Record<string, unknown>> {
-  return typeof value === 'object' &&
+): value is ReadTableInspection<
+  Record<string, unknown>,
+  Record<string, unknown>
+> {
+  return (
+    typeof value === 'object' &&
     value !== null &&
     'graph' in value &&
     'nodes' in value &&
     'values' in value
+  )
 }
 
-function hasReadInspect(
-  value: unknown,
-): value is {
+function hasReadInspect(value: unknown): value is {
   inspect(input: Record<string, unknown>): AnyReadInspection
 } {
-  return typeof value === 'function' ||
+  return (
+    typeof value === 'function' ||
     (typeof value === 'object' &&
       value !== null &&
       'inspect' in value &&
       typeof value.inspect === 'function')
+  )
 }
 
 function resolveReadsInspection<
@@ -165,7 +168,10 @@ export const register: RegisterFn = <
   conditions?: C,
   options?: RegisterOptions<F, C, ReadInput, Reads>,
 ) => {
-  if (process.env.NODE_ENV === 'production' && process.env.UMPIRE_INTERNAL !== 'true') {
+  if (
+    process.env.NODE_ENV === 'production' &&
+    process.env.UMPIRE_INTERNAL !== 'true'
+  ) {
     return
   }
 
@@ -218,7 +224,11 @@ export const register: RegisterFn = <
     updatedAt: Date.now(),
   }
 
-  nextEntry.foulLog = buildFoulLog(existing?.foulLog ?? [], nextEntry, renderIndex)
+  nextEntry.foulLog = buildFoulLog(
+    existing?.foulLog ?? [],
+    nextEntry,
+    renderIndex,
+  )
 
   registry.set(id, nextEntry)
   registryVersion += 1

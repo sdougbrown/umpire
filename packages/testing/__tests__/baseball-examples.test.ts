@@ -62,9 +62,13 @@ describe('baseball-flavored monkeyTest examples', () => {
         infieldWork: { default: '' },
       },
       rules: [
-        enabledWhen('tarpOnField', (_values, conditions) => conditions.weather === 'rain', {
-          reason: 'The tarp only matters during a rain delay',
-        }),
+        enabledWhen(
+          'tarpOnField',
+          (_values, conditions) => conditions.weather === 'rain',
+          {
+            reason: 'The tarp only matters during a rain delay',
+          },
+        ),
         disables('tarpOnField', ['battingPractice', 'infieldWork'], {
           reason: 'Pregame field work stops while the tarp is out',
         }),
@@ -88,12 +92,11 @@ describe('baseball-flavored monkeyTest examples', () => {
     // hand-authored assertions. This version is intentionally small and keeps
     // `tarpOnField` as a direct override only, so the sample stays focused on
     // the condition sweep rather than on deeper dependency chains.
-    expect(monkeyTest(ump, {
-      conditions: [
-        { weather: 'clear' },
-        { weather: 'rain' },
-      ],
-    })).toEqual({
+    expect(
+      monkeyTest(ump, {
+        conditions: [{ weather: 'clear' }, { weather: 'rain' }],
+      }),
+    ).toEqual({
       passed: true,
       violations: [],
       samplesChecked: 1024,

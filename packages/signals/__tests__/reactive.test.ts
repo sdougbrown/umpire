@@ -213,7 +213,9 @@ describe('reactiveUmp', () => {
     const ump = createTestUmpire()
     const reactive = reactiveUmp(ump, adapter)
 
-    expect(() => reactive.field('nonexistent' as never)).toThrow('Unknown field')
+    expect(() => reactive.field('nonexistent' as never)).toThrow(
+      'Unknown field',
+    )
   })
 
   test('set(name, value) updates the field signal and recomputes availability', () => {
@@ -344,8 +346,10 @@ describe('reactiveUmp', () => {
             Object.keys(conditions).includes('plan') &&
             valueDescriptor?.enumerable === true &&
             conditionDescriptor?.enumerable === true &&
-            Object.getOwnPropertyDescriptor(values as object, Symbol.iterator) ===
-              undefined &&
+            Object.getOwnPropertyDescriptor(
+              values as object,
+              Symbol.iterator,
+            ) === undefined &&
             Object.getOwnPropertyDescriptor(
               conditions as object,
               Symbol.iterator,
@@ -476,11 +480,9 @@ describe('reactiveUmp with disables rules', () => {
         endTime: { default: undefined, isEmpty: (v) => !v },
       },
       rules: [
-        disables(
-          'isAllDay',
-          ['startTime', 'endTime'],
-          { reason: 'All-day events do not have specific times' },
-        ),
+        disables('isAllDay', ['startTime', 'endTime'], {
+          reason: 'All-day events do not have specific times',
+        }),
       ],
     })
 
@@ -518,11 +520,9 @@ describe('reactiveUmp with disables rules', () => {
         startTime: { default: undefined, isEmpty: (v) => !v },
       },
       rules: [
-        disables(
-          'isAllDay',
-          ['startTime'],
-          { reason: 'All-day events do not have specific times' },
-        ),
+        disables('isAllDay', ['startTime'], {
+          reason: 'All-day events do not have specific times',
+        }),
       ],
     })
 
@@ -557,7 +557,10 @@ describe('reactiveUmp with disables rules', () => {
       },
       rules: [
         enabledWhen('note', (values) => {
-          return (values.settings as { allowNote: boolean } | undefined)?.allowNote === true
+          return (
+            (values.settings as { allowNote: boolean } | undefined)
+              ?.allowNote === true
+          )
         }),
       ],
     })

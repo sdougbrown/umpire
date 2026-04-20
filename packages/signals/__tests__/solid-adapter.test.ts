@@ -44,9 +44,9 @@ describe('solid adapter', () => {
       reason: 'condition not met',
       suggestedValue: '',
     })
-    expect(reactive!.fouls.map((foul: Foul<typeof fields>) => foul.field).sort()).toEqual([
-      'password',
-    ])
+    expect(
+      reactive!.fouls.map((foul: Foul<typeof fields>) => foul.field).sort(),
+    ).toEqual(['password'])
 
     reactive!.dispose()
     disposeRoot()

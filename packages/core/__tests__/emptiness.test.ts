@@ -41,7 +41,9 @@ describe('emptiness helpers', () => {
     expect(isEmptyObject([])).toBe(true)
     expect(isEmptyObject(undefined)).toBe(true)
     expect(isSatisfied({}, { isEmpty: isEmptyObject })).toBe(false)
-    expect(isSatisfied({ theme: 'dark' }, { isEmpty: isEmptyObject })).toBe(true)
+    expect(isSatisfied({ theme: 'dark' }, { isEmpty: isEmptyObject })).toBe(
+      true,
+    )
   })
 
   test('re-exports eitherOf from the public entrypoint', () => {

@@ -1,6 +1,11 @@
 import { defineConfig } from 'tsdown'
 
-const sharedNeverBundle = ['@umpire/core', '@umpire/reads', 'react', 'react/jsx-runtime']
+const sharedNeverBundle = [
+  '@umpire/core',
+  '@umpire/reads',
+  'react',
+  'react/jsx-runtime',
+]
 
 export default defineConfig([
   // Standalone bundle — Preact inlined. For users without Preact.

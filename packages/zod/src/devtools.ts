@@ -1,7 +1,4 @@
-import type {
-  AvailabilityMap,
-  FieldDef,
-} from '@umpire/core'
+import type { AvailabilityMap, FieldDef } from '@umpire/core'
 import type {
   DevtoolsExtension,
   DevtoolsExtensionInspectContext,
@@ -46,9 +43,7 @@ type ZodValidationStaticOptions<
 export type ZodValidationExtensionOptions<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown> = Record<string, unknown>,
-> =
-  | ZodValidationResolveOptions<F, C>
-  | ZodValidationStaticOptions<F, C>
+> = ZodValidationResolveOptions<F, C> | ZodValidationStaticOptions<F, C>
 
 function issueFieldLabel(field: string) {
   return field === '' ? '(form)' : field
@@ -62,7 +57,9 @@ function sectionRows<F extends Record<string, FieldDef>>(
     const state = availability[issue.field as keyof F & string]
     return state !== undefined && !state.enabled
   })
-  const unknownIssues = issues.filter((issue) => availability[issue.field as keyof F & string] === undefined)
+  const unknownIssues = issues.filter(
+    (issue) => availability[issue.field as keyof F & string] === undefined,
+  )
 
   return {
     suppressedIssues,
@@ -82,59 +79,60 @@ function hasResolve<
 export function zodValidationExtension<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown> = Record<string, unknown>,
->(
-  options: ZodValidationExtensionOptions<F, C>,
-): DevtoolsExtension<F, C> {
-  const {
-    id = 'validation',
-    label = 'validation',
-  } = options
+>(options: ZodValidationExtensionOptions<F, C>): DevtoolsExtension<F, C> {
+  const { id = 'validation', label = 'validation' } = options
 
   return {
     id,
     label,
     inspect(context) {
-      const resolved = hasResolve(options)
-        ? options.resolve(context)
-        : options
+      const resolved = hasResolve(options) ? options.resolve(context) : options
 
       if (!resolved) {
         return null
       }
 
       const availability = resolved.availability ?? context.scorecard.check
-      const normalizedErrors = resolved.normalizedErrors ??
+      const normalizedErrors =
+        resolved.normalizedErrors ??
         (resolved.result.success ? [] : zodErrors(resolved.result.error))
       const derivedErrorMap = deriveErrors(availability, normalizedErrors)
-      const enabledFieldCount = Object.values(availability).filter((field) => field.enabled).length
+      const enabledFieldCount = Object.values(availability).filter(
+        (field) => field.enabled,
+      ).length
       const derivedErrorCount = Object.keys(derivedErrorMap).length
-      const { suppressedIssues, unknownIssues } = sectionRows(availability, normalizedErrors)
-      const sections: DevtoolsExtensionSection[] = [{
-        kind: 'badges',
-        title: 'Summary',
-        badges: [
-          {
-            tone: resolved.result.success ? 'enabled' : 'disabled',
-            value: resolved.result.success ? 'valid' : 'invalid',
-          },
-          {
-            tone: 'accent',
-            value: `errors ${derivedErrorCount}`,
-          },
-          {
-            tone: 'muted',
-            value: `suppressed ${suppressedIssues.length}`,
-          },
-          {
-            tone: 'fair',
-            value: `unmapped ${unknownIssues.length}`,
-          },
-          {
-            tone: 'fair',
-            value: `fields ${enabledFieldCount}`,
-          },
-        ],
-      }]
+      const { suppressedIssues, unknownIssues } = sectionRows(
+        availability,
+        normalizedErrors,
+      )
+      const sections: DevtoolsExtensionSection[] = [
+        {
+          kind: 'badges',
+          title: 'Summary',
+          badges: [
+            {
+              tone: resolved.result.success ? 'enabled' : 'disabled',
+              value: resolved.result.success ? 'valid' : 'invalid',
+            },
+            {
+              tone: 'accent',
+              value: `errors ${derivedErrorCount}`,
+            },
+            {
+              tone: 'muted',
+              value: `suppressed ${suppressedIssues.length}`,
+            },
+            {
+              tone: 'fair',
+              value: `unmapped ${unknownIssues.length}`,
+            },
+            {
+              tone: 'fair',
+              value: `fields ${enabledFieldCount}`,
+            },
+          ],
+        },
+      ]
 
       if (Object.keys(derivedErrorMap).length > 0) {
         sections.push({

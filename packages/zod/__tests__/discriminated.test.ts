@@ -79,7 +79,7 @@ describe('deriveDiscriminatedFields', () => {
     })
 
     expect(Object.keys(fields).sort()).toEqual(
-      ['accountNumber', 'cardNumber', 'cvv', 'method', 'routingNumber'].sort()
+      ['accountNumber', 'cardNumber', 'cvv', 'method', 'routingNumber'].sort(),
     )
     expect(fields.method.required).toBe(true)
   })
@@ -234,9 +234,9 @@ describe('deriveDiscriminatedFields', () => {
       }),
     ])
 
-    expect(() => deriveDiscriminatedFields(schema, { groupName: 'overlap' })).toThrow(
-      'field "shared" appears in multiple branches'
-    )
+    expect(() =>
+      deriveDiscriminatedFields(schema, { groupName: 'overlap' }),
+    ).toThrow('field "shared" appears in multiple branches')
   })
 })
 
@@ -251,13 +251,21 @@ describe('zod v4 compatibility', () => {
       options: [
         {
           shape: {
-            method: { _def: { values: ['card'] }, value: 'card', isOptional: () => false },
+            method: {
+              _def: { values: ['card'] },
+              value: 'card',
+              isOptional: () => false,
+            },
             cardNumber: { isOptional: () => false },
           },
         },
         {
           shape: {
-            method: { _def: { values: ['bank'] }, value: 'bank', isOptional: () => false },
+            method: {
+              _def: { values: ['bank'] },
+              value: 'bank',
+              isOptional: () => false,
+            },
             routingNumber: { isOptional: () => false },
           },
         },
@@ -274,7 +282,11 @@ describe('zod v4 compatibility', () => {
     expect(fields.method).toEqual({ required: true })
     expect(fields.cardNumber).toEqual({ required: true })
     expect(fields.routingNumber).toEqual({ required: true })
-    expect(Object.keys(fields).sort()).toEqual(['cardNumber', 'method', 'routingNumber'])
+    expect(Object.keys(fields).sort()).toEqual([
+      'cardNumber',
+      'method',
+      'routingNumber',
+    ])
 
     // Verify the rule works end-to-end with umpire
     const u = umpire({

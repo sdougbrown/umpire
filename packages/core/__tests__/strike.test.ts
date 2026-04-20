@@ -17,8 +17,16 @@ describe('strike', () => {
     }
 
     const next = strike(values, [
-      { field: 'companyName', reason: 'business plan required', suggestedValue: undefined },
-      { field: 'companySize', reason: 'business plan required', suggestedValue: '' },
+      {
+        field: 'companyName',
+        reason: 'business plan required',
+        suggestedValue: undefined,
+      },
+      {
+        field: 'companySize',
+        reason: 'business plan required',
+        suggestedValue: '',
+      },
     ])
 
     expect(next).toEqual({
@@ -41,7 +49,11 @@ describe('strike', () => {
     }
 
     const next = strike(values, [
-      { field: 'companyName', reason: 'business plan required', suggestedValue: undefined },
+      {
+        field: 'companyName',
+        reason: 'business plan required',
+        suggestedValue: undefined,
+      },
     ])
 
     expect(next).toBe(values)

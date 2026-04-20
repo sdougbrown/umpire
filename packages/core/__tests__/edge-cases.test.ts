@@ -1,5 +1,12 @@
 import { field } from '../src/field.js'
-import { anyOf, check, disables, enabledWhen, oneOf, requires } from '../src/rules.js'
+import {
+  anyOf,
+  check,
+  disables,
+  enabledWhen,
+  oneOf,
+  requires,
+} from '../src/rules.js'
 import { umpire } from '../src/umpire.js'
 
 type TestFields = {
@@ -22,10 +29,38 @@ describe('edge cases', () => {
     })
 
     expect(ump.check({})).toEqual({
-      alpha: { enabled: true, satisfied: false, fair: true, required: true, reason: null, reasons: [] },
-      beta: { enabled: true, satisfied: false, fair: true, required: false, reason: null, reasons: [] },
-      gamma: { enabled: true, satisfied: false, fair: true, required: false, reason: null, reasons: [] },
-      delta: { enabled: true, satisfied: false, fair: true, required: false, reason: null, reasons: [] },
+      alpha: {
+        enabled: true,
+        satisfied: false,
+        fair: true,
+        required: true,
+        reason: null,
+        reasons: [],
+      },
+      beta: {
+        enabled: true,
+        satisfied: false,
+        fair: true,
+        required: false,
+        reason: null,
+        reasons: [],
+      },
+      gamma: {
+        enabled: true,
+        satisfied: false,
+        fair: true,
+        required: false,
+        reason: null,
+        reasons: [],
+      },
+      delta: {
+        enabled: true,
+        satisfied: false,
+        fair: true,
+        required: false,
+        reason: null,
+        reasons: [],
+      },
     })
   })
 
@@ -40,8 +75,12 @@ describe('edge cases', () => {
       rules: [
         enabledWhen<TestFields>('beta', (values) => values.alpha === 'ready'),
         anyOf<TestFields>(
-          enabledWhen<TestFields>('gamma', () => true, { reason: 'first failed' }),
-          enabledWhen<TestFields>('gamma', () => false, { reason: 'second failed' }),
+          enabledWhen<TestFields>('gamma', () => true, {
+            reason: 'first failed',
+          }),
+          enabledWhen<TestFields>('gamma', () => false, {
+            reason: 'second failed',
+          }),
         ),
         requires<TestFields>('delta', 'beta'),
       ],
@@ -63,7 +102,9 @@ describe('edge cases', () => {
         delta: {},
       },
       rules: [
-        enabledWhen<TestFields>('delta', () => false, { reason: 'first failure' }),
+        enabledWhen<TestFields>('delta', () => false, {
+          reason: 'first failure',
+        }),
         requires<TestFields>('delta', 'beta', { reason: 'second failure' }),
       ],
     })
@@ -109,7 +150,10 @@ describe('edge cases', () => {
           delta: {},
         },
         rules: [
-          enabledWhen<TestFields>('alpha', check('missing' as keyof TestFields & string, () => true)),
+          enabledWhen<TestFields>(
+            'alpha',
+            check('missing' as keyof TestFields & string, () => true),
+          ),
         ],
       }),
     ).toThrow('Unknown field "missing" referenced by enabledWhen rule')
@@ -167,10 +211,7 @@ describe('edge cases', () => {
           gamma: field<string>('gamma'),
           delta,
         },
-        rules: [
-          disables(beta, [delta]),
-          requires(delta, beta),
-        ],
+        rules: [disables(beta, [delta]), requires(delta, beta)],
       }),
     ).toThrow(
       'Contradictory rules: "delta" can never be enabled because it requires "beta", but is disabled whenever "beta" is satisfied',
@@ -191,7 +232,10 @@ describe('edge cases', () => {
             first: ['alpha'],
             second: ['beta'],
           }),
-          requires<TestFields>('alpha', check('beta', (value) => value === 'ready')),
+          requires<TestFields>(
+            'alpha',
+            check('beta', (value) => value === 'ready'),
+          ),
         ],
       }),
     ).toThrow(
@@ -234,13 +278,17 @@ describe('edge cases', () => {
           delta: {},
         },
         rules: [
-          oneOf<TestFields, { mode: string }>('strategy', {
-            first: ['alpha'],
-            second: ['beta'],
-          }, {
-            activeBranch: (_values, conditions) =>
-              conditions.mode === 'all-open' ? null : 'first',
-          }),
+          oneOf<TestFields, { mode: string }>(
+            'strategy',
+            {
+              first: ['alpha'],
+              second: ['beta'],
+            },
+            {
+              activeBranch: (_values, conditions) =>
+                conditions.mode === 'all-open' ? null : 'first',
+            },
+          ),
           requires<TestFields, { mode: string }>('alpha', 'beta'),
         ],
       }),
@@ -249,15 +297,18 @@ describe('edge cases', () => {
 
   test('precomputes rule target lookups at construction time', () => {
     let targetReads = 0
-    const countedRule = new Proxy(enabledWhen<TestFields>('alpha', () => true), {
-      get(target, prop, receiver) {
-        if (prop === 'targets') {
-          targetReads += 1
-        }
+    const countedRule = new Proxy(
+      enabledWhen<TestFields>('alpha', () => true),
+      {
+        get(target, prop, receiver) {
+          if (prop === 'targets') {
+            targetReads += 1
+          }
 
-        return Reflect.get(target, prop, receiver)
+          return Reflect.get(target, prop, receiver)
+        },
       },
-    })
+    )
 
     const ump = umpire<TestFields>({
       fields: {

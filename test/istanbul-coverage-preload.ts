@@ -9,7 +9,8 @@ const { createInstrumenter } = require('istanbul-lib-instrument')
 const { defaults } = require('@istanbuljs/schema')
 
 const rootDir = path.resolve(import.meta.dir, '..')
-const coverageDir = process.env.UMPIRE_ISTANBUL_COVERAGE_DIR ??
+const coverageDir =
+  process.env.UMPIRE_ISTANBUL_COVERAGE_DIR ??
   path.join(process.cwd(), 'coverage-istanbul', 'raw')
 
 const instrumenter = createInstrumenter({
@@ -60,7 +61,11 @@ function loaderForPath(filePath: string) {
     return 'tsx'
   }
 
-  if (filePath.endsWith('.ts') || filePath.endsWith('.mts') || filePath.endsWith('.cts')) {
+  if (
+    filePath.endsWith('.ts') ||
+    filePath.endsWith('.mts') ||
+    filePath.endsWith('.cts')
+  ) {
     return 'ts'
   }
 
@@ -74,16 +79,19 @@ function loaderForPath(filePath: string) {
 plugin({
   name: 'umpire-istanbul-coverage',
   setup(build) {
-    build.onLoad({ filter: /\/packages\/.*\.[cm]?[jt]sx?$/u, namespace: 'file' }, ({ path: filePath }) => {
-      const source = readFileSync(filePath, 'utf8')
+    build.onLoad(
+      { filter: /\/packages\/.*\.[cm]?[jt]sx?$/u, namespace: 'file' },
+      ({ path: filePath }) => {
+        const source = readFileSync(filePath, 'utf8')
 
-      return {
-        contents: shouldInstrument(filePath)
-          ? instrumenter.instrumentSync(source, filePath)
-          : source,
-        loader: loaderForPath(filePath),
-      }
-    })
+        return {
+          contents: shouldInstrument(filePath)
+            ? instrumenter.instrumentSync(source, filePath)
+            : source,
+          loader: loaderForPath(filePath),
+        }
+      },
+    )
   },
 })
 

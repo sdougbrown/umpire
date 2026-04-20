@@ -1,4 +1,10 @@
-import { isEmptyArray, isEmptyObject, isEmptyPresent, isEmptyString, type FieldDef } from '@umpire/core'
+import {
+  isEmptyArray,
+  isEmptyObject,
+  isEmptyPresent,
+  isEmptyString,
+  type FieldDef,
+} from '@umpire/core'
 
 import type { JsonIsEmptyStrategy } from './schema.js'
 
@@ -14,7 +20,9 @@ const IS_EMPTY_STRATEGIES: Record<
   present: isEmptyPresent,
 }
 
-export function isJsonIsEmptyStrategy(value: unknown): value is JsonIsEmptyStrategy {
+export function isJsonIsEmptyStrategy(
+  value: unknown,
+): value is JsonIsEmptyStrategy {
   return typeof value === 'string' && value in IS_EMPTY_STRATEGIES
 }
 
@@ -26,7 +34,9 @@ export function hydrateIsEmptyStrategy(
   }
 
   if (!isJsonIsEmptyStrategy(strategy)) {
-    throw new Error(`[@umpire/json] Unknown isEmpty strategy "${String(strategy)}"`)
+    throw new Error(
+      `[@umpire/json] Unknown isEmpty strategy "${String(strategy)}"`,
+    )
   }
 
   return IS_EMPTY_STRATEGIES[strategy]
@@ -39,6 +49,7 @@ export function getJsonIsEmptyStrategy(
     return undefined
   }
 
-  return (Object.entries(IS_EMPTY_STRATEGIES).find(([, candidate]) => candidate === strategy)?.[0] ??
-    undefined) as JsonIsEmptyStrategy | undefined
+  return (Object.entries(IS_EMPTY_STRATEGIES).find(
+    ([, candidate]) => candidate === strategy,
+  )?.[0] ?? undefined) as JsonIsEmptyStrategy | undefined
 }

@@ -344,9 +344,9 @@ describe('validateSchema', () => {
       'Validator for field "email" must use a string error when provided',
     ],
   ])('%s', (_label, schema, expectedMessage) => {
-    expect(() =>
-      validateSchema(schema as unknown as UmpireJsonSchema),
-    ).toThrow(expectedMessage)
+    expect(() => validateSchema(schema as unknown as UmpireJsonSchema)).toThrow(
+      expectedMessage,
+    )
   })
 
   test('accepts nested anyOf/eitherOf composites with matching targets and constraints', () => {

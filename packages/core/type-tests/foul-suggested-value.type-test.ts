@@ -66,15 +66,16 @@ if (maybePlayedFoul && maybePlayedFoul.field === 'notes') {
   void value
 }
 
-const struck = strike<Fields>(
-  { plan: 'free', seats: 1, notes: 'hello' },
-  [{ field: 'seats', reason: 'reset seats', suggestedValue: 3 }],
-)
+const struck = strike<Fields>({ plan: 'free', seats: 1, notes: 'hello' }, [
+  { field: 'seats', reason: 'reset seats', suggestedValue: 3 },
+])
 
 const struckSeats: number | undefined = struck.seats
 
-// @ts-expect-error seats foul suggestedValue must be number | undefined
-strike<Fields>({}, [{ field: 'seats', reason: 'wrong type', suggestedValue: '3' }])
+strike<Fields>({}, [
+  // @ts-expect-error seats foul suggestedValue must be number | undefined
+  { field: 'seats', reason: 'wrong type', suggestedValue: '3' },
+])
 
 // @ts-expect-error seats suggestedValue must be number | undefined
 const invalidFoul: Foul<Fields> = {

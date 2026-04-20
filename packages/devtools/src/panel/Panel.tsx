@@ -13,7 +13,13 @@ import { ExtensionTab } from './tabs/ExtensionTab.js'
 import { FoulLog } from './tabs/FoulLog.js'
 import { FieldMatrix } from './tabs/FieldMatrix.js'
 import { GraphTab } from './tabs/GraphTab.js'
-import { fontFamily, scrollPaneStyle, sectionHeadingStyle, tabStyle, theme } from './theme.js'
+import {
+  fontFamily,
+  scrollPaneStyle,
+  sectionHeadingStyle,
+  tabStyle,
+  theme,
+} from './theme.js'
 import { ReadsTab } from './tabs/ReadsTab.js'
 
 type Props = {
@@ -35,7 +41,10 @@ function useRegistryEntries() {
   return entries
 }
 
-function panelAnchor(position: Required<MountOptions>['position'], offset: Required<MountOptions>['offset']) {
+function panelAnchor(
+  position: Required<MountOptions>['position'],
+  offset: Required<MountOptions>['offset'],
+) {
   const anchor: Record<string, string | number> = {}
 
   if (position.startsWith('top')) {
@@ -98,8 +107,13 @@ function EmptyState() {
       }}
     >
       <div>
-        <div style={{ color: theme.fg, marginBottom: 8 }}>No Umpire instances registered.</div>
-        <div>Call register(id, ump, values, conditions) from your app to populate the panel.</div>
+        <div style={{ color: theme.fg, marginBottom: 8 }}>
+          No Umpire instances registered.
+        </div>
+        <div>
+          Call register(id, ump, values, conditions) from your app to populate
+          the panel.
+        </div>
       </div>
     </div>
   )
@@ -109,24 +123,32 @@ export function Panel({ options }: Props) {
   const entries = useRegistryEntries()
   const entryList = useMemo(() => [...entries.values()], [entries])
   const [open, setOpen] = useState(false)
-  const [preferredActiveId, setPreferredActiveId] = useState<string | null>(null)
+  const [preferredActiveId, setPreferredActiveId] = useState<string | null>(
+    null,
+  )
   const [selectedFieldState, setSelectedFieldState] = useState<{
     entryId: string
     field: string
   } | null>(null)
-  const [preferredTab, setPreferredTab] = useState<DevtoolsTab>(options.defaultTab)
+  const [preferredTab, setPreferredTab] = useState<DevtoolsTab>(
+    options.defaultTab,
+  )
 
-  const activeId = preferredActiveId && entries.has(preferredActiveId)
-    ? preferredActiveId
-    : entryList[0]?.id ?? null
-  const activeEntry = activeId ? entries.get(activeId) ?? null : null
+  const activeId =
+    preferredActiveId && entries.has(preferredActiveId)
+      ? preferredActiveId
+      : (entryList[0]?.id ?? null)
+  const activeEntry = activeId ? (entries.get(activeId) ?? null) : null
   const activeTabs = resolveTabs(activeEntry)
   const activeScorecard = activeEntry?.scorecard ?? null
-  const tab = activeTabs.some((entryTab) => entryTab.id === preferredTab) ? preferredTab : 'matrix'
-  const selectedField = selectedFieldState?.entryId === activeId &&
-      selectedFieldState.field in (activeScorecard?.fields ?? {})
-    ? selectedFieldState.field
-    : null
+  const tab = activeTabs.some((entryTab) => entryTab.id === preferredTab)
+    ? preferredTab
+    : 'matrix'
+  const selectedField =
+    selectedFieldState?.entryId === activeId &&
+    selectedFieldState.field in (activeScorecard?.fields ?? {})
+      ? selectedFieldState.field
+      : null
 
   const challenge = useMemo(() => {
     if (!activeEntry || !selectedField) {
@@ -142,8 +164,12 @@ export function Panel({ options }: Props) {
   }, [activeEntry, selectedField])
 
   const anchor = panelAnchor(options.position, options.offset)
-  const stackDirection = options.position.startsWith('bottom') ? 'column-reverse' : 'column'
-  const alignItems = options.position.endsWith('left') ? 'flex-start' : 'flex-end'
+  const stackDirection = options.position.startsWith('bottom')
+    ? 'column-reverse'
+    : 'column'
+  const alignItems = options.position.endsWith('left')
+    ? 'flex-start'
+    : 'flex-end'
 
   return (
     <div
@@ -214,9 +240,12 @@ export function Panel({ options }: Props) {
             }}
           >
             <div style={{ display: 'grid', gap: 5 }}>
-              <strong style={{ color: theme.fg, fontSize: 13 }}>Umpire DevTools</strong>
+              <strong style={{ color: theme.fg, fontSize: 13 }}>
+                Umpire DevTools
+              </strong>
               <span style={{ color: theme.fgMuted, fontSize: 11 }}>
-                {entryList.length} registered {entryList.length === 1 ? 'instance' : 'instances'}
+                {entryList.length} registered{' '}
+                {entryList.length === 1 ? 'instance' : 'instances'}
               </span>
             </div>
 
@@ -235,7 +264,10 @@ export function Panel({ options }: Props) {
               padding: 12,
             }}
           >
-            <label htmlFor="umpire-devtools-instance" style={sectionHeadingStyle()}>
+            <label
+              htmlFor="umpire-devtools-instance"
+              style={sectionHeadingStyle()}
+            >
               Instance
             </label>
             <select
@@ -342,12 +374,7 @@ function PanelBody({
   }
 
   if (tab === 'conditions') {
-    return (
-      <ConditionsTab
-        current={entry.snapshot}
-        previous={entry.previous}
-      />
-    )
+    return <ConditionsTab current={entry.snapshot} previous={entry.previous} />
   }
 
   if (tab === 'graph') {
@@ -364,7 +391,8 @@ function PanelBody({
     return <ReadsTab inspection={entry.reads} />
   }
 
-  const extension = entry.extensions.find((candidate) => candidate.id === tab) ?? null
+  const extension =
+    entry.extensions.find((candidate) => candidate.id === tab) ?? null
 
   if (extension) {
     return <ExtensionTab extension={extension} />

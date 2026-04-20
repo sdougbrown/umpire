@@ -30,9 +30,14 @@ export type GameConditions = {
 // ── Helpers ────────────────────────────────────────────────────────────
 
 const OFFSETS = [
-  [-1, -1], [0, -1], [1, -1],
-  [-1,  0],          [1,  0],
-  [-1,  1], [0,  1], [1,  1],
+  [-1, -1],
+  [0, -1],
+  [1, -1],
+  [-1, 0],
+  [1, 0],
+  [-1, 1],
+  [0, 1],
+  [1, 1],
 ] as const
 
 export function cellKey(x: number, y: number): string {
@@ -161,7 +166,9 @@ export function checkWin(board: Board, values: Values): boolean {
 
 // ── Umpire integration ────────────────────────────────────────────────
 
-export function createMinesweeperUmpire(board: Board): Umpire<Record<string, FieldDef>, GameConditions> {
+export function createMinesweeperUmpire(
+  board: Board,
+): Umpire<Record<string, FieldDef>, GameConditions> {
   const keys = Object.keys(board)
 
   const fields: Record<string, FieldDef> = {}
@@ -169,11 +176,15 @@ export function createMinesweeperUmpire(board: Board): Umpire<Record<string, Fie
     fields[key] = { default: undefined }
   }
 
-  const rules = keys.flatMap(key => [
+  const rules = keys.flatMap((key) => [
     // Gate 1: game must be in play
-    enabledWhen(key, (_: unknown, c: GameConditions) => c.gameStatus === 'playing', {
-      reason: 'GAME_OVER',
-    }),
+    enabledWhen(
+      key,
+      (_: unknown, c: GameConditions) => c.gameStatus === 'playing',
+      {
+        reason: 'GAME_OVER',
+      },
+    ),
 
     // Gate 2: cell not already revealed
     enabledWhen(key, (values: Values) => values[key] !== 'revealed', {
@@ -181,15 +192,22 @@ export function createMinesweeperUmpire(board: Board): Umpire<Record<string, Fie
     }),
 
     // Gate 3: flag interaction gating
-    enabledWhen(key, (values: Values, c: GameConditions) => {
-      if (c.flagMode) return true       // flag mode: can always interact (unflag)
-      return values[key] !== 'flagged'  // reveal mode: blocked by flag
-    }, {
-      reason: 'FLAGGED',
-    }),
+    enabledWhen(
+      key,
+      (values: Values, c: GameConditions) => {
+        if (c.flagMode) return true // flag mode: can always interact (unflag)
+        return values[key] !== 'flagged' // reveal mode: blocked by flag
+      },
+      {
+        reason: 'FLAGGED',
+      },
+    ),
   ])
 
-  return umpire({ fields, rules }) as Umpire<Record<string, FieldDef>, GameConditions>
+  return umpire({ fields, rules }) as Umpire<
+    Record<string, FieldDef>,
+    GameConditions
+  >
 }
 
 // ── Convenience: build a ready-to-play board ──────────────────────────

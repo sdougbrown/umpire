@@ -26,9 +26,7 @@ describe('fromSolidStore', () => {
   it('derives field availability from shared reactive values', () => {
     const ump = umpire({
       fields,
-      rules: [
-        enabledWhen('phone', (values) => !!values.name),
-      ],
+      rules: [enabledWhen('phone', (values) => !!values.name)],
     })
 
     const { value, dispose } = withRoot(() => {
@@ -83,9 +81,7 @@ describe('fromSolidStore', () => {
   it('tracks foul transitions from shared reactive values', () => {
     const ump = umpire({
       fields,
-      rules: [
-        enabledWhen('phone', (values) => !!values.name),
-      ],
+      rules: [enabledWhen('phone', (values) => !!values.name)],
     })
 
     const { value, dispose } = withRoot(() => {
@@ -149,9 +145,7 @@ describe('fromSolidStore', () => {
   it('writes back through set() and update()', () => {
     const ump = umpire({
       fields,
-      rules: [
-        enabledWhen('phone', (values) => !!values.name),
-      ],
+      rules: [enabledWhen('phone', (values) => !!values.name)],
     })
 
     const { value, dispose } = withRoot(() => {
@@ -305,7 +299,10 @@ describe('fromSolidStore', () => {
         },
       }
 
-      const set = (field: keyof typeof premiumFields & string, next: unknown) => {
+      const set = (
+        field: keyof typeof premiumFields & string,
+        next: unknown,
+      ) => {
         switch (field) {
           case 'advanced':
             setAdvanced(String(next))
@@ -343,9 +340,7 @@ describe('fromSolidStore', () => {
   it('dispose() cleans up Solid effect tracking once', () => {
     const ump = umpire({
       fields,
-      rules: [
-        enabledWhen('phone', (values) => !!values.name),
-      ],
+      rules: [enabledWhen('phone', (values) => !!values.name)],
     })
 
     const originalEffect = solidAdapter.effect

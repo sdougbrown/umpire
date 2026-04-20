@@ -6,7 +6,9 @@ describe('fairWhen', () => {
   test('marks a present value as fouled without disabling the field', () => {
     const ump = umpire({
       fields: {
-        cpu: field<string>().required().isEmpty((value) => !value),
+        cpu: field<string>()
+          .required()
+          .isEmpty((value) => !value),
         motherboard: field<string>()
           .required()
           .isEmpty((value) => !value)
@@ -115,7 +117,9 @@ describe('fairWhen', () => {
         fairWhen('motherboard', (value, values) => value === values.cpu, {
           reason: 'Motherboard no longer matches the selected CPU',
         }),
-        requires('ram', 'motherboard', { reason: 'Pick a valid motherboard first' }),
+        requires('ram', 'motherboard', {
+          reason: 'Pick a valid motherboard first',
+        }),
       ],
     })
 
@@ -158,8 +162,12 @@ describe('fairWhen', () => {
       },
       rules: [
         anyOf(
-          fairWhen('selection', (value) => value === 'alpha', { reason: 'Must be alpha' }),
-          fairWhen('selection', (value) => value === 'omega', { reason: 'Must be omega' }),
+          fairWhen('selection', (value) => value === 'alpha', {
+            reason: 'Must be alpha',
+          }),
+          fairWhen('selection', (value) => value === 'omega', {
+            reason: 'Must be omega',
+          }),
         ),
       ],
     })
@@ -214,7 +222,9 @@ describe('field()', () => {
       toggle: false,
       details: 'auto',
     })
-    expect(ump.init({ details: 'manual', missing: 'ignored' } as never)).toEqual({
+    expect(
+      ump.init({ details: 'manual', missing: 'ignored' } as never),
+    ).toEqual({
       toggle: false,
       details: 'manual',
     })
@@ -229,8 +239,12 @@ describe('field()', () => {
   })
 
   test('lets named builders target top-level rules', () => {
-    const cpu = field<string>('cpu').required().isEmpty((value) => !value)
-    const motherboard = field<string>('motherboard').required().isEmpty((value) => !value)
+    const cpu = field<string>('cpu')
+      .required()
+      .isEmpty((value) => !value)
+    const motherboard = field<string>('motherboard')
+      .required()
+      .isEmpty((value) => !value)
 
     const ump = umpire({
       fields: {
@@ -261,7 +275,9 @@ describe('field()', () => {
   })
 
   test('supports named builders in attached requires() rules', () => {
-    const cpu = field<string>('cpu').required().isEmpty((value) => !value)
+    const cpu = field<string>('cpu')
+      .required()
+      .isEmpty((value) => !value)
     const motherboard = field<string>('motherboard')
       .required()
       .isEmpty((value) => !value)
@@ -295,18 +311,22 @@ describe('field()', () => {
         },
         rules: [],
       }),
-    ).toThrow('Named field builder "motherboard" does not match field key "board"')
+    ).toThrow(
+      'Named field builder "motherboard" does not match field key "board"',
+    )
   })
 
   test('throws when an unnamed builder is passed directly to a top-level rule', () => {
-    expect(() =>
-      requires(field<string>(), 'cpu'),
-    ).toThrow('Named field builder required when passing a field() value to a rule')
+    expect(() => requires(field<string>(), 'cpu')).toThrow(
+      'Named field builder required when passing a field() value to a rule',
+    )
   })
 
   test('throws when an unnamed builder is used in an attached requires() rule', () => {
     expect(() =>
       field<string>('motherboard').requires(field<string>()),
-    ).toThrow('Named field builder required when passing a field() value to a rule')
+    ).toThrow(
+      'Named field builder required when passing a field() value to a rule',
+    )
   })
 })

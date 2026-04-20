@@ -27,7 +27,9 @@ export function formatValue(value: unknown, maxLength = 44): string {
   }
 
   if (typeof value === 'string') {
-    return value.length > maxLength ? `${value.slice(0, maxLength - 1)}…` : value
+    return value.length > maxLength
+      ? `${value.slice(0, maxLength - 1)}…`
+      : value
   }
 
   if (typeof value === 'number' || typeof value === 'boolean') {
@@ -37,7 +39,9 @@ export function formatValue(value: unknown, maxLength = 44): string {
   if (Array.isArray(value)) {
     const compact = `[${value.map((entry) => formatValue(entry, 20)).join(', ')}]`
 
-    return compact.length > maxLength ? `${compact.slice(0, maxLength - 1)}…` : compact
+    return compact.length > maxLength
+      ? `${compact.slice(0, maxLength - 1)}…`
+      : compact
   }
 
   try {
@@ -47,7 +51,9 @@ export function formatValue(value: unknown, maxLength = 44): string {
       return String(value)
     }
 
-    return compact.length > maxLength ? `${compact.slice(0, maxLength - 1)}…` : compact
+    return compact.length > maxLength
+      ? `${compact.slice(0, maxLength - 1)}…`
+      : compact
   } catch {
     return String(value)
   }
@@ -62,21 +68,21 @@ export function formatTimestamp(value: number) {
 }
 
 export function getReasonMeta(reason: ReasonLike) {
-  return Object.entries(reason)
-    .filter(([key, value]) => (
+  return Object.entries(reason).filter(
+    ([key, value]) =>
       !skippedReasonKeys.has(key) &&
       value !== undefined &&
-      (typeof value !== 'object' || value === null || Array.isArray(value))
-    ))
+      (typeof value !== 'object' || value === null || Array.isArray(value)),
+  )
 }
 
 export function getTraceMeta(trace: ChallengeTraceAttachment) {
-  return Object.entries(trace)
-    .filter(([key, value]) => (
+  return Object.entries(trace).filter(
+    ([key, value]) =>
       key !== 'dependencies' &&
       key !== 'id' &&
       key !== 'kind' &&
       value !== undefined &&
-      (typeof value !== 'object' || value === null || Array.isArray(value))
-    ))
+      (typeof value !== 'object' || value === null || Array.isArray(value)),
+  )
 }

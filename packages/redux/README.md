@@ -29,13 +29,15 @@ const ump = umpire({
   ],
 })
 
-const store = legacy_createStore((state = { password: '', confirmPassword: '' }, action) => {
-  if (action.type === 'patch') {
-    return { ...state, ...action.payload }
-  }
+const store = legacy_createStore(
+  (state = { password: '', confirmPassword: '' }, action) => {
+    if (action.type === 'patch') {
+      return { ...state, ...action.payload }
+    }
 
-  return state
-})
+    return state
+  },
+)
 
 const umpStore = fromReduxStore(ump, store, {
   select: (state) => ({

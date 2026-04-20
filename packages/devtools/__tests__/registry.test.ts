@@ -105,7 +105,10 @@ describe('registry', () => {
   })
 
   it('stores precomputed read inspections from register options', () => {
-    const inspection: ReadTableInspection<Record<string, unknown>, Record<string, unknown>> = {
+    const inspection: ReadTableInspection<
+      Record<string, unknown>,
+      Record<string, unknown>
+    > = {
       bridges: [],
       graph: {
         edges: [],
@@ -181,16 +184,20 @@ describe('registry', () => {
       { from: 'status', to: 'summary', type: 'read' },
       { from: 'status', to: 'target', type: 'bridge' },
     ])
-    expect(readsInspection?.nodes.status).toEqual(expect.objectContaining({
-      dependsOnFields: ['gate'],
-      dependsOnReads: [],
-      value: 'open',
-    }))
-    expect(readsInspection?.nodes.summary).toEqual(expect.objectContaining({
-      dependsOnFields: [],
-      dependsOnReads: ['status'],
-      value: 'open::open',
-    }))
+    expect(readsInspection?.nodes.status).toEqual(
+      expect.objectContaining({
+        dependsOnFields: ['gate'],
+        dependsOnReads: [],
+        value: 'open',
+      }),
+    )
+    expect(readsInspection?.nodes.summary).toEqual(
+      expect.objectContaining({
+        dependsOnFields: [],
+        dependsOnReads: ['status'],
+        value: 'open::open',
+      }),
+    )
     expect(readsInspection?.values).toEqual({
       status: 'open',
       summary: 'open::open',
@@ -232,7 +239,9 @@ describe('registry', () => {
     )
 
     expect(inspect).toHaveBeenCalledWith({ externalGate: 'override' })
-    expect(snapshot().get('demo')?.reads?.values).toEqual({ status: 'override' })
+    expect(snapshot().get('demo')?.reads?.values).toEqual({
+      status: 'override',
+    })
     expect(snapshot().get('demo')?.extensions).toEqual([])
   })
 
@@ -319,14 +328,16 @@ describe('registry', () => {
 
   it('stores resolved custom extensions from register options', () => {
     const inspect = mock(() => ({
-      sections: [{
-        kind: 'rows' as const,
-        title: 'Summary',
-        rows: [
-          { label: 'status', value: 'blocked' },
-          { label: 'reason', value: 'gate required' },
-        ],
-      }],
+      sections: [
+        {
+          kind: 'rows' as const,
+          title: 'Summary',
+          rows: [
+            { label: 'status', value: 'blocked' },
+            { label: 'reason', value: 'gate required' },
+          ],
+        },
+      ],
     }))
 
     register(
@@ -338,34 +349,40 @@ describe('registry', () => {
       },
       { flow: 'signup' },
       {
-        extensions: [{
-          id: 'validation',
-          label: 'validation',
-          inspect,
-        }],
+        extensions: [
+          {
+            id: 'validation',
+            label: 'validation',
+            inspect,
+          },
+        ],
       },
     )
 
-    expect(inspect).toHaveBeenCalledWith(expect.objectContaining({
-      conditions: { flow: 'signup' },
-      previous: null,
-      values: {
-        gate: '',
-        target: 'kept',
-      },
-    }))
+    expect(inspect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conditions: { flow: 'signup' },
+        previous: null,
+        values: {
+          gate: '',
+          target: 'kept',
+        },
+      }),
+    )
     expect(snapshot().get('demo')?.extensions).toContainEqual({
       id: 'validation',
       label: 'validation',
       view: {
-        sections: [{
-          kind: 'rows',
-          title: 'Summary',
-          rows: [
-            { label: 'status', value: 'blocked' },
-            { label: 'reason', value: 'gate required' },
-          ],
-        }],
+        sections: [
+          {
+            kind: 'rows',
+            title: 'Summary',
+            rows: [
+              { label: 'status', value: 'blocked' },
+              { label: 'reason', value: 'gate required' },
+            ],
+          },
+        ],
       },
     })
   })

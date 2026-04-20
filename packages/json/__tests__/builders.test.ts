@@ -51,9 +51,13 @@ describe('portable JSON builders', () => {
           reason: 'Needs a curveball call',
         }),
       ),
-      fairWhenExpr('starter', expr.fieldInCond('starter', 'availableStarters'), {
-        reason: 'Starter must be on tonight\'s card',
-      }),
+      fairWhenExpr(
+        'starter',
+        expr.fieldInCond('starter', 'availableStarters'),
+        {
+          reason: "Starter must be on tonight's card",
+        },
+      ),
       requiresJson(
         'bullpenCart',
         'pitchType',
@@ -70,13 +74,11 @@ describe('portable JSON builders', () => {
         },
       ),
       disablesExpr(
-        expr.or(
-          expr.condEq('weatherBand', 'windy'),
-          expr.truthy('walkSignal'),
-        ),
+        expr.or(expr.condEq('weatherBand', 'windy'), expr.truthy('walkSignal')),
         ['dugoutTablet'],
         {
-          reason: 'Review board locked during windy or intentional-walk moments',
+          reason:
+            'Review board locked during windy or intentional-walk moments',
         },
       ),
     ]
@@ -113,8 +115,12 @@ describe('portable JSON builders', () => {
         {
           type: 'fairWhen',
           field: 'starter',
-          when: { op: 'fieldInCond', field: 'starter', condition: 'availableStarters' },
-          reason: 'Starter must be on tonight\'s card',
+          when: {
+            op: 'fieldInCond',
+            field: 'starter',
+            condition: 'availableStarters',
+          },
+          reason: "Starter must be on tonight's card",
         },
         {
           type: 'requires',
@@ -132,7 +138,11 @@ describe('portable JSON builders', () => {
         {
           type: 'requires',
           field: 'bullpenCart',
-          when: { op: 'fieldInCond', field: 'starter', condition: 'availableStarters' },
+          when: {
+            op: 'fieldInCond',
+            field: 'starter',
+            condition: 'availableStarters',
+          },
           reason: 'Bullpen cart waits for an available starter',
         },
         {
@@ -145,7 +155,8 @@ describe('portable JSON builders', () => {
             ],
           },
           targets: ['dugoutTablet'],
-          reason: 'Review board locked during windy or intentional-walk moments',
+          reason:
+            'Review board locked during windy or intentional-walk moments',
         },
       ],
     }
@@ -187,9 +198,13 @@ describe('portable JSON builders', () => {
           reason: 'Needs a curveball call',
         }),
       ),
-      fairWhenExpr('starter', expr.fieldInCond('starter', 'availableStarters'), {
-        reason: 'Starter must be on tonight\'s card',
-      }),
+      fairWhenExpr(
+        'starter',
+        expr.fieldInCond('starter', 'availableStarters'),
+        {
+          reason: "Starter must be on tonight's card",
+        },
+      ),
       requiresJson(
         'bullpenCart',
         'pitchType',
@@ -206,13 +221,11 @@ describe('portable JSON builders', () => {
         },
       ),
       disablesExpr(
-        expr.or(
-          expr.condEq('weatherBand', 'windy'),
-          expr.truthy('walkSignal'),
-        ),
+        expr.or(expr.condEq('weatherBand', 'windy'), expr.truthy('walkSignal')),
         ['dugoutTablet'],
         {
-          reason: 'Review board locked during windy or intentional-walk moments',
+          reason:
+            'Review board locked during windy or intentional-walk moments',
         },
       ),
     ]
@@ -222,36 +235,40 @@ describe('portable JSON builders', () => {
       rules,
     })
 
-    expect(runtime.check(
-      {
-        pitchType: 'slider',
-        starter: 'Cole',
-        walkSignal: false,
-      },
-      {
-        weatherBand: 'cold',
-        availableStarters: ['Cole'],
-      },
-    )).toMatchObject({
+    expect(
+      runtime.check(
+        {
+          pitchType: 'slider',
+          starter: 'Cole',
+          walkSignal: false,
+        },
+        {
+          weatherBand: 'cold',
+          availableStarters: ['Cole'],
+        },
+      ),
+    ).toMatchObject({
       warmupNotice: { enabled: true, reason: null },
       starter: { fair: true, reason: null },
       bullpenCart: { enabled: true, reason: null },
       dugoutTablet: { enabled: true, reason: null },
     })
 
-    expect(runtime.check(
-      {
-        pitchType: 'fastball',
-        starter: 'Cole',
-        walkSignal: true,
-      },
-      {
-        weatherBand: 'windy',
-        availableStarters: ['Holmes'],
-      },
-    )).toMatchObject({
+    expect(
+      runtime.check(
+        {
+          pitchType: 'fastball',
+          starter: 'Cole',
+          walkSignal: true,
+        },
+        {
+          weatherBand: 'windy',
+          availableStarters: ['Holmes'],
+        },
+      ),
+    ).toMatchObject({
       warmupNotice: { enabled: false, reason: 'Needs a slider call' },
-      starter: { fair: false, reason: 'Starter must be on tonight\'s card' },
+      starter: { fair: false, reason: "Starter must be on tonight's card" },
       bullpenCart: {
         enabled: false,
         reason: 'Bullpen cart waits for an available starter',
@@ -271,7 +288,10 @@ describe('portable JSON builders', () => {
 
     type Conditions = Record<string, unknown>
 
-    const { expr, enabledWhenExpr } = createJsonRules<typeof fields, Conditions>()
+    const { expr, enabledWhenExpr } = createJsonRules<
+      typeof fields,
+      Conditions
+    >()
 
     expect(() =>
       anyOfJson(
@@ -299,10 +319,12 @@ describe('portable JSON builders', () => {
       },
     )
 
-    expect(toJson({
-      fields,
-      rules: [rule],
-    })).toEqual({
+    expect(
+      toJson({
+        fields,
+        rules: [rule],
+      }),
+    ).toEqual({
       version: 1,
       fields: {
         email: {},
@@ -335,14 +357,20 @@ describe('portable JSON builders', () => {
 
     const { expr, fairWhenExpr } = createJsonRules<typeof fields>()
 
-    const rule = fairWhenExpr('submit', expr.check('email', namedValidators.email()), {
-      reason: 'Submit stays foul until the scorer email is valid',
-    })
+    const rule = fairWhenExpr(
+      'submit',
+      expr.check('email', namedValidators.email()),
+      {
+        reason: 'Submit stays foul until the scorer email is valid',
+      },
+    )
 
-    expect(toJson({
-      fields,
-      rules: [rule],
-    })).toEqual({
+    expect(
+      toJson({
+        fields,
+        rules: [rule],
+      }),
+    ).toEqual({
       version: 1,
       fields: {
         email: {},
@@ -368,7 +396,11 @@ describe('portable JSON builders', () => {
     const allowedLeagues = ['al', 'nl']
     const weatherBands = ['clear', 'windy']
     const slider = { op: 'eq', field: 'pitchType', value: 'slider' } as const
-    const curveball = { op: 'eq', field: 'pitchType', value: 'curveball' } as const
+    const curveball = {
+      op: 'eq',
+      field: 'pitchType',
+      value: 'curveball',
+    } as const
 
     const built = {
       neq: expr.neq('pitchType', 'sinker'),
@@ -405,8 +437,16 @@ describe('portable JSON builders', () => {
       notIn: { op: 'notIn', field: 'league', values: ['al', 'nl'] },
       cond: { op: 'cond', condition: 'isPlayoffs' },
       condEq: { op: 'condEq', condition: 'weatherBand', value: 'windy' },
-      condIn: { op: 'condIn', condition: 'weatherBand', values: ['clear', 'windy'] },
-      fieldInCond: { op: 'fieldInCond', field: 'starter', condition: 'availableStarters' },
+      condIn: {
+        op: 'condIn',
+        condition: 'weatherBand',
+        values: ['clear', 'windy'],
+      },
+      fieldInCond: {
+        op: 'fieldInCond',
+        field: 'starter',
+        condition: 'availableStarters',
+      },
       and: {
         op: 'and',
         exprs: [
@@ -456,9 +496,9 @@ describe('portable JSON builders', () => {
   test('requiresJson requires at least one dependency', () => {
     const { requiresJson } = createJsonRules<Record<string, {}>>()
 
-    expect(() =>
-      requiresJson('bullpenCart'),
-    ).toThrow('requiresJson("bullpenCart") requires at least one dependency')
+    expect(() => requiresJson('bullpenCart')).toThrow(
+      'requiresJson("bullpenCart") requires at least one dependency',
+    )
   })
 
   test('eitherOfJson serializes to exact JSON shape', () => {
@@ -479,19 +519,30 @@ describe('portable JSON builders', () => {
       magicLinkEnabled: { type: 'boolean' as const },
     }
 
-    const { expr, enabledWhenExpr, eitherOfJson } = createJsonRules<typeof fields, Conditions>()
+    const { expr, enabledWhenExpr, eitherOfJson } = createJsonRules<
+      typeof fields,
+      Conditions
+    >()
 
     const rules = [
       eitherOfJson('authPath', {
         password: [
-          enabledWhenExpr('submit', expr.present('email'), { reason: 'Enter your email' }),
+          enabledWhenExpr('submit', expr.present('email'), {
+            reason: 'Enter your email',
+          }),
         ],
         sso: [
-          enabledWhenExpr('submit', expr.cond('ssoAvailable'), { reason: 'SSO not available for this account' }),
+          enabledWhenExpr('submit', expr.cond('ssoAvailable'), {
+            reason: 'SSO not available for this account',
+          }),
         ],
         magicLink: [
-          enabledWhenExpr('submit', expr.present('email'), { reason: 'Enter your email' }),
-          enabledWhenExpr('submit', expr.cond('magicLinkEnabled'), { reason: 'Magic link not enabled' }),
+          enabledWhenExpr('submit', expr.present('email'), {
+            reason: 'Enter your email',
+          }),
+          enabledWhenExpr('submit', expr.cond('magicLinkEnabled'), {
+            reason: 'Magic link not enabled',
+          }),
         ],
       }),
     ]
@@ -511,14 +562,34 @@ describe('portable JSON builders', () => {
           group: 'authPath',
           branches: {
             password: [
-              { type: 'enabledWhen', field: 'submit', when: { op: 'present', field: 'email' }, reason: 'Enter your email' },
+              {
+                type: 'enabledWhen',
+                field: 'submit',
+                when: { op: 'present', field: 'email' },
+                reason: 'Enter your email',
+              },
             ],
             sso: [
-              { type: 'enabledWhen', field: 'submit', when: { op: 'cond', condition: 'ssoAvailable' }, reason: 'SSO not available for this account' },
+              {
+                type: 'enabledWhen',
+                field: 'submit',
+                when: { op: 'cond', condition: 'ssoAvailable' },
+                reason: 'SSO not available for this account',
+              },
             ],
             magicLink: [
-              { type: 'enabledWhen', field: 'submit', when: { op: 'present', field: 'email' }, reason: 'Enter your email' },
-              { type: 'enabledWhen', field: 'submit', when: { op: 'cond', condition: 'magicLinkEnabled' }, reason: 'Magic link not enabled' },
+              {
+                type: 'enabledWhen',
+                field: 'submit',
+                when: { op: 'present', field: 'email' },
+                reason: 'Enter your email',
+              },
+              {
+                type: 'enabledWhen',
+                field: 'submit',
+                when: { op: 'cond', condition: 'magicLinkEnabled' },
+                reason: 'Magic link not enabled',
+              },
             ],
           },
         },
@@ -541,15 +612,22 @@ describe('portable JSON builders', () => {
       ssoAvailable: { type: 'boolean' as const },
     }
 
-    const { expr, enabledWhenExpr, eitherOfJson } = createJsonRules<typeof fields, Conditions>()
+    const { expr, enabledWhenExpr, eitherOfJson } = createJsonRules<
+      typeof fields,
+      Conditions
+    >()
 
     const rules = [
       eitherOfJson('authPath', {
         password: [
-          enabledWhenExpr('submit', expr.present('email'), { reason: 'Enter your email' }),
+          enabledWhenExpr('submit', expr.present('email'), {
+            reason: 'Enter your email',
+          }),
         ],
         sso: [
-          enabledWhenExpr('submit', expr.cond('ssoAvailable'), { reason: 'SSO not available' }),
+          enabledWhenExpr('submit', expr.cond('ssoAvailable'), {
+            reason: 'SSO not available',
+          }),
         ],
       }),
     ]
@@ -561,8 +639,22 @@ describe('portable JSON builders', () => {
       type: 'eitherOf',
       group: 'authPath',
       branches: {
-        password: [{ type: 'enabledWhen', field: 'submit', when: { op: 'present', field: 'email' }, reason: 'Enter your email' }],
-        sso: [{ type: 'enabledWhen', field: 'submit', when: { op: 'cond', condition: 'ssoAvailable' }, reason: 'SSO not available' }],
+        password: [
+          {
+            type: 'enabledWhen',
+            field: 'submit',
+            when: { op: 'present', field: 'email' },
+            reason: 'Enter your email',
+          },
+        ],
+        sso: [
+          {
+            type: 'enabledWhen',
+            field: 'submit',
+            when: { op: 'cond', condition: 'ssoAvailable' },
+            reason: 'SSO not available',
+          },
+        ],
       },
     })
 
@@ -570,22 +662,22 @@ describe('portable JSON builders', () => {
     const runtime = umpire({ fields: parsed.fields, rules: parsed.rules })
 
     // sso branch passes → submit enabled
-    expect(runtime.check(
-      { email: '', ssoToken: '' },
-      { ssoAvailable: true },
-    ).submit).toMatchObject({ enabled: true, reason: null })
+    expect(
+      runtime.check({ email: '', ssoToken: '' }, { ssoAvailable: true }).submit,
+    ).toMatchObject({ enabled: true, reason: null })
 
     // password branch passes → submit enabled
-    expect(runtime.check(
-      { email: 'user@example.com', ssoToken: '' },
-      { ssoAvailable: false },
-    ).submit).toMatchObject({ enabled: true, reason: null })
+    expect(
+      runtime.check(
+        { email: 'user@example.com', ssoToken: '' },
+        { ssoAvailable: false },
+      ).submit,
+    ).toMatchObject({ enabled: true, reason: null })
 
     // both branches fail → submit disabled
-    expect(runtime.check(
-      {},
-      { ssoAvailable: false },
-    ).submit).toMatchObject({ enabled: false })
+    expect(runtime.check({}, { ssoAvailable: false }).submit).toMatchObject({
+      enabled: false,
+    })
   })
 
   test('eitherOfJson requires every inner rule to carry JSON metadata', () => {

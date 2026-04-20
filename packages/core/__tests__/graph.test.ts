@@ -1,5 +1,18 @@
-import { check, defineRule, disables, eitherOf, enabledWhen, oneOf, requires } from '../src/rules.js'
-import { buildGraph, detectCycles, exportGraph, topologicalSort } from '../src/graph.js'
+import {
+  check,
+  defineRule,
+  disables,
+  eitherOf,
+  enabledWhen,
+  oneOf,
+  requires,
+} from '../src/rules.js'
+import {
+  buildGraph,
+  detectCycles,
+  exportGraph,
+  topologicalSort,
+} from '../src/graph.js'
 
 type TestFields = {
   alpha: {}
@@ -23,7 +36,9 @@ describe('graph utilities', () => {
       requires<TestFields>('beta', 'alpha'),
     ])
 
-    expect(() => detectCycles(graph)).toThrow(/Cycle detected: (alpha → beta → alpha|beta → alpha → beta)/)
+    expect(() => detectCycles(graph)).toThrow(
+      /Cycle detected: (alpha → beta → alpha|beta → alpha → beta)/,
+    )
   })
 
   test('detects a transitive cycle', () => {
@@ -117,7 +132,10 @@ describe('graph utilities', () => {
       epsilon: {},
     }
     const graph = buildGraph(fields, [
-      enabledWhen<TestFields>('beta', check('alpha', (value) => value === 'ready')),
+      enabledWhen<TestFields>(
+        'beta',
+        check('alpha', (value) => value === 'ready'),
+      ),
       requires<TestFields>('alpha', 'beta'),
     ])
 
@@ -151,11 +169,14 @@ describe('graph utilities', () => {
         constraint: 'fair',
         evaluate(values) {
           return new Map([
-            ['beta', {
-              enabled: true,
-              fair: values.alpha === values.beta,
-              reason: values.alpha === values.beta ? null : 'socket mismatch',
-            }],
+            [
+              'beta',
+              {
+                enabled: true,
+                fair: values.alpha === values.beta,
+                reason: values.alpha === values.beta ? null : 'socket mismatch',
+              },
+            ],
           ])
         },
       }),
@@ -213,11 +234,12 @@ describe('graph utilities', () => {
     }
     const graph = buildGraph(fields, [
       eitherOf<TestFields>('betaPaths', {
-        dependency: [
-          requires('beta', 'alpha'),
-        ],
+        dependency: [requires('beta', 'alpha')],
         conditional: [
-          enabledWhen('beta', check('gamma', (value) => value === 'ready')),
+          enabledWhen(
+            'beta',
+            check('gamma', (value) => value === 'ready'),
+          ),
         ],
       }),
     ])
@@ -250,9 +272,18 @@ describe('graph utilities', () => {
       requires<TestFields>('beta', 'alpha'),
       requires<TestFields>('beta', 'alpha'),
       requires<TestFields>('alpha', 'alpha'),
-      enabledWhen<TestFields>('beta', check('alpha', (value) => value === 'ready')),
-      enabledWhen<TestFields>('beta', check('alpha', (value) => value === 'ready')),
-      enabledWhen<TestFields>('alpha', check('alpha', (value) => value === 'ready')),
+      enabledWhen<TestFields>(
+        'beta',
+        check('alpha', (value) => value === 'ready'),
+      ),
+      enabledWhen<TestFields>(
+        'beta',
+        check('alpha', (value) => value === 'ready'),
+      ),
+      enabledWhen<TestFields>(
+        'alpha',
+        check('alpha', (value) => value === 'ready'),
+      ),
     ])
 
     expect(graph.edges).toEqual([
@@ -316,7 +347,9 @@ describe('graph utilities', () => {
 
     graph.edges = new Proxy(graph.edges, {
       get(_target, prop) {
-        throw new Error(`graph.edges should not be accessed during ordering work (${String(prop)})`)
+        throw new Error(
+          `graph.edges should not be accessed during ordering work (${String(prop)})`,
+        )
       },
     })
 

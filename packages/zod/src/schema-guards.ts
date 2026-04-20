@@ -11,7 +11,7 @@ export function assertFieldSchemas(
   if (isZodObjectSchema(schemas)) {
     throw new Error(
       `[umpire/zod] ${caller}() expects per-field schemas, not a z.object(). ` +
-      'Pass formSchema.shape instead of formSchema.',
+        'Pass formSchema.shape instead of formSchema.',
     )
   }
 
