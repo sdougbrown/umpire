@@ -37,7 +37,7 @@ function createMockAdapter(): SignalProtocol & {
   }> = []
 
   // Track which signal is being read during computed/effect evaluation
-  let activeSubscribers: Set<Subscriber> | null = null
+  const activeSubscribers: Set<Subscriber> | null = null
 
   function recompute() {
     // Re-evaluate all computeds
