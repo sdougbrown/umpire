@@ -1,3 +1,4 @@
 docs/
+.changeset/
 **/dist/
 **/node_modules/

@@ -23,7 +23,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@changesets/cli": "^2.30.0",
@@ -32,6 +33,7 @@
     "@umpire/eslint-plugin": "workspace:^",
     "eslint": "^10.2.1",
     "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
     "istanbul-lib-coverage": "^3.2.2",
     "istanbul-lib-instrument": "^6.0.3",
     "istanbul-lib-report": "^3.0.1",
