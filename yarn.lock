@@ -1076,6 +1076,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/bun@npm:^1.3.12":
+  version: 1.3.12
+  resolution: "@types/bun@npm:1.3.12"
+  dependencies:
+    bun-types: "npm:1.3.12"
+  checksum: 10c0/dacc8c77819f1d851657c5d80b1b2928dd7752016c53ae6a406f4f9a8291a5fea0799e77da99a511f4d9080e31bb97106be57f9b1a5f2a35dd235f5854953e4e
+  languageName: node
+  linkType: hard
+
 "@types/esrecurse@npm:^4.3.1":
   version: 4.3.1
   resolution: "@types/esrecurse@npm:4.3.1"
@@ -1928,7 +1937,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bun-types@npm:^1.3.12":
+"bun-types@npm:1.3.12, bun-types@npm:^1.3.12":
   version: 1.3.12
   resolution: "bun-types@npm:1.3.12"
   dependencies:
@@ -4393,6 +4402,7 @@ __metadata:
   dependencies:
     "@changesets/cli": "npm:^2.30.0"
     "@happy-dom/global-registrator": "npm:^20.0.10"
+    "@types/bun": "npm:^1.3.12"
     "@umpire/eslint-plugin": "workspace:^"
     eslint: "npm:^10.2.1"
     eslint-config-prettier: "npm:^10.1.8"
