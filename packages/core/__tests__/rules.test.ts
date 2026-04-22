@@ -907,9 +907,13 @@ describe('check', () => {
       validate: () => true,
     })
 
-    expect(getNamedCheckMetadata(predicate)).toEqual({
+    const metadata = getNamedCheckMetadata(predicate)
+
+    expect(metadata).toEqual({
       __check: 'required',
     })
+    expect(metadata).toBeDefined()
+    expect(Object.hasOwn(metadata as object, 'params')).toBe(false)
   })
 
   test('returns false for unsupported validators', () => {

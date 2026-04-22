@@ -333,11 +333,12 @@ describe('field()', () => {
   test('stores the declared name on named builders only', () => {
     const named = field<string>('cpu')
     const unnamed = field<string>()
+    const namedDescriptor = Object.getOwnPropertyDescriptor(named, '__umpfield')
 
     expect(named.__umpfield).toBe('cpu')
-    expect(
-      Object.getOwnPropertyDescriptor(named, '__umpfield')?.enumerable,
-    ).toBe(false)
+    expect(namedDescriptor?.enumerable).toBe(false)
+    expect(namedDescriptor?.writable).toBe(false)
+    expect(namedDescriptor?.configurable).toBe(false)
     expect('__umpfield' in unnamed).toBe(false)
     expect((unnamed as { __umpfield?: string }).__umpfield).toBeUndefined()
   })

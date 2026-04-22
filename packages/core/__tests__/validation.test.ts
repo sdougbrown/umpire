@@ -385,4 +385,25 @@ describe('surface validation metadata', () => {
       }),
     ).toThrow('Invalid validator configured for field "alpha"')
   })
+
+  test('rejects validation entry objects with non-string error metadata', () => {
+    expect(
+      normalizeValidationEntry({
+        validator: (value: string) => value.length > 0,
+        error: 123,
+      }),
+    ).toBeNull()
+  })
+
+  test('treats invalid object results as invalid and falls back to wrapped error', () => {
+    expect(
+      runValidationEntry(
+        {
+          validate: () => ({ valid: false, error: 123 }) as never,
+          error: 'Fallback',
+        },
+        'bad',
+      ),
+    ).toEqual({ valid: false, error: 'Fallback' })
+  })
 })

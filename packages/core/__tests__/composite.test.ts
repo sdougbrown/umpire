@@ -27,6 +27,16 @@ describe('composite helpers', () => {
     ).toEqual([])
   })
 
+  test('falls back to the scalar reason when reasons is an empty array', () => {
+    expect(
+      getCompositeFailureReasons({
+        enabled: false,
+        reason: 'blocked',
+        reasons: [],
+      }),
+    ).toEqual(['blocked'])
+  })
+
   test('combines failing fair results without fabricating reasons', () => {
     expect(
       combineCompositeResults('fair', 'and', [
@@ -35,6 +45,17 @@ describe('composite helpers', () => {
     ).toEqual({
       enabled: true,
       fair: false,
+      reason: null,
+    })
+  })
+
+  test('does not include a reasons array for silent enabled failures', () => {
+    expect(
+      combineCompositeResults('enabled', 'and', [
+        { enabled: false, reason: null, reasons: [] },
+      ]),
+    ).toEqual({
+      enabled: false,
       reason: null,
     })
   })

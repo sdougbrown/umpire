@@ -164,4 +164,34 @@ describe('scorecard', () => {
     expect(card.fields.bio.valid).toBeUndefined()
     expect(card.fields.bio.error).toBeUndefined()
   })
+
+  test('returns a defensive graph copy and null transition.before by default', () => {
+    const ump = umpire({
+      fields: {
+        alpha: {},
+        beta: {},
+      },
+      rules: [requires('beta', 'alpha')],
+    })
+
+    const graph = ump.graph()
+    graph.nodes.push('mutated')
+    graph.edges[0]!.from = 'mutated'
+
+    expect(ump.graph()).toEqual({
+      nodes: ['alpha', 'beta'],
+      edges: [{ from: 'alpha', to: 'beta', type: 'requires' }],
+    })
+
+    const card = ump.scorecard({ values: { alpha: 'set' } })
+    expect(card.transition.before).toBeNull()
+
+    card.graph.nodes.push('mutated-again')
+    card.graph.edges[0]!.to = 'mutated-again'
+
+    expect(ump.graph()).toEqual({
+      nodes: ['alpha', 'beta'],
+      edges: [{ from: 'alpha', to: 'beta', type: 'requires' }],
+    })
+  })
 })

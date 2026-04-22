@@ -1,6 +1,12 @@
 import { evaluate, evaluateRuleForField } from '../src/evaluator.js'
 import { buildGraph, topologicalSort } from '../src/graph.js'
-import { anyOf, defineRule, enabledWhen, requires } from '../src/rules.js'
+import {
+  anyOf,
+  defineRule,
+  eitherOf,
+  enabledWhen,
+  requires,
+} from '../src/rules.js'
 import type { AvailabilityMap, Rule } from '../src/types.js'
 
 type TestFields = {
@@ -533,6 +539,59 @@ describe('evaluate', () => {
         reason: null,
         reasons: [],
       },
+    })
+  })
+
+  test('evaluates eitherOf by ORing branch-level AND results', () => {
+    const fields: TestFields = {
+      alpha: {},
+      beta: {},
+      gamma: {},
+      delta: {},
+    }
+    const passingRule = eitherOf<TestFields, TestConditions>('auth', {
+      primary: [enabledWhen('beta', () => false, { reason: 'primary failed' })],
+      fallback: [enabledWhen('beta', () => true)],
+    })
+    const failingRule = eitherOf<TestFields, TestConditions>('auth', {
+      primary: [enabledWhen('beta', () => false, { reason: 'primary failed' })],
+      fallback: [
+        enabledWhen('beta', () => false, { reason: 'fallback failed' }),
+      ],
+    })
+
+    expect(
+      evaluateRuleForField(
+        passingRule,
+        'beta',
+        fields,
+        {},
+        {} as TestConditions,
+        undefined,
+        {},
+        new Map(),
+      ),
+    ).toEqual({
+      enabled: true,
+      reason: null,
+      reasons: undefined,
+    })
+
+    expect(
+      evaluateRuleForField(
+        failingRule,
+        'beta',
+        fields,
+        {},
+        {} as TestConditions,
+        undefined,
+        {},
+        new Map(),
+      ),
+    ).toEqual({
+      enabled: false,
+      reason: 'primary failed',
+      reasons: ['primary failed', 'fallback failed'],
     })
   })
 })

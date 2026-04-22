@@ -362,6 +362,22 @@ describe('graph utilities', () => {
     ).toThrow('Unable to produce topological order')
   })
 
+  test('detectCycles and topologicalSort tolerate sparse adjacency maps', () => {
+    const graph = {
+      nodes: ['alpha', 'beta'],
+      edges: [],
+      adjacency: new Map<string, string[]>([['alpha', ['beta']]]),
+      incomingCounts: new Map<string, number>([
+        ['alpha', 0],
+        ['beta', 1],
+      ]),
+      deferredEdgeGroups: [],
+    }
+
+    expect(() => detectCycles(graph)).not.toThrow()
+    expect(topologicalSort(graph, ['alpha', 'beta'])).toEqual(['alpha', 'beta'])
+  })
+
   test('exportGraph deduplicates repeated raw edges', () => {
     expect(
       exportGraph({
