@@ -603,6 +603,21 @@ describe('oneOf', () => {
     expect(resolution.activeBranch).toBe('first')
     expect(resolution.method).toBe('fallback: first branch')
   })
+
+  test('resolveOneOfState treats missing current values as unsatisfied branches', () => {
+    const resolution = resolveOneOfState<TestFields, TestConditions>(
+      'strategy',
+      { first: ['alpha'], second: ['beta'] },
+      undefined as never,
+      undefined,
+      undefined,
+    )
+
+    expect(resolution.activeBranch).toBeNull()
+    expect(resolution.method).toBe('auto-detected')
+    expect(resolution.branches.first.anySatisfied).toBe(false)
+    expect(resolution.branches.second.anySatisfied).toBe(false)
+  })
 })
 
 describe('anyOf', () => {

@@ -490,6 +490,27 @@ describe('graph utilities', () => {
     ).toThrow('Unable to produce topological order')
   })
 
+  test('detectCycles still explores later adjacency entries for listed roots', () => {
+    const graph = {
+      nodes: ['alpha', 'beta'],
+      edges: [],
+      adjacency: new Map<string, string[]>([
+        ['alpha', ['beta', 'gamma']],
+        ['beta', []],
+        ['gamma', ['gamma']],
+      ]),
+      incomingCounts: new Map<string, number>([
+        ['alpha', 0],
+        ['beta', 1],
+      ]),
+      deferredEdgeGroups: [],
+    }
+
+    expect(() => detectCycles(graph)).toThrow(
+      '[@umpire/core] Cycle detected: gamma → gamma',
+    )
+  })
+
   test('topologicalSort throws a fallback error for malformed acyclic graphs', () => {
     expect(() =>
       topologicalSort(
