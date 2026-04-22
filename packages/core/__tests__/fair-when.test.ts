@@ -79,6 +79,25 @@ describe('fairWhen', () => {
     expect(calls).toBe(0)
   })
 
+  test('fairWhen evaluate always reports enabled: true', () => {
+    const rule = fairWhen('motherboard', (value) => value === 'ok', {
+      reason: 'invalid motherboard',
+    })
+
+    expect(rule.evaluate({}, {}).get('motherboard')).toEqual({
+      enabled: true,
+      fair: true,
+      reason: null,
+    })
+    expect(rule.evaluate({ motherboard: 'ok' }, {}).get('motherboard')).toEqual(
+      {
+        enabled: true,
+        fair: true,
+        reason: null,
+      },
+    )
+  })
+
   test('play recommends clearing a value when it becomes fouled', () => {
     const ump = umpire({
       fields: {

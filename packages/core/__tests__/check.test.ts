@@ -5,6 +5,7 @@ import {
   defineRule,
   eitherOf,
   enabledWhen,
+  fairWhen,
   requires,
 } from '../src/rules.js'
 import type { AvailabilityMap, Rule } from '../src/types.js'
@@ -348,6 +349,55 @@ describe('evaluate', () => {
     })
   })
 
+  test('evaluates every anyOf inner rule before OR-combining results', () => {
+    const fields: TestFields = {
+      alpha: {},
+      beta: {},
+      gamma: {},
+      delta: {},
+    }
+    let firstCalls = 0
+    let secondCalls = 0
+    const firstRule: Rule<TestFields, TestConditions> = {
+      type: 'first',
+      targets: ['beta'],
+      sources: [],
+      evaluate: () => {
+        firstCalls += 1
+        return new Map([['beta', { enabled: true, reason: null }]])
+      },
+    }
+    const secondRule: Rule<TestFields, TestConditions> = {
+      type: 'second',
+      targets: ['beta'],
+      sources: [],
+      evaluate: () => {
+        secondCalls += 1
+        return new Map([['beta', { enabled: false, reason: 'second failed' }]])
+      },
+    }
+    const rule = anyOf(firstRule, secondRule)
+
+    expect(
+      evaluateRuleForField(
+        rule,
+        'beta',
+        fields,
+        {},
+        {} as TestConditions,
+        undefined,
+        {},
+        new Map(),
+      ),
+    ).toEqual({
+      enabled: true,
+      reason: null,
+      reasons: undefined,
+    })
+    expect(firstCalls).toBe(1)
+    expect(secondCalls).toBe(1)
+  })
+
   test('keeps fair rules out of the gate phase when a field is already disabled', () => {
     const fields: TestFields = {
       alpha: {},
@@ -592,6 +642,210 @@ describe('evaluate', () => {
       enabled: false,
       reason: 'primary failed',
       reasons: ['primary failed', 'fallback failed'],
+    })
+  })
+
+  test('ANDs rules within a branch — partial branch pass is not enough', () => {
+    const fields: TestFields = {
+      alpha: {},
+      beta: {},
+      gamma: {},
+      delta: {},
+    }
+    // primary branch requires both alpha AND gamma to be present
+    // secondary branch always fails
+    // with only alpha present, primary partially passes — should still fail overall
+    const rule = eitherOf<TestFields, TestConditions>('auth', {
+      primary: [
+        enabledWhen('beta', (v) => v.alpha !== undefined, {
+          reason: 'needs alpha',
+        }),
+        enabledWhen('beta', (v) => v.gamma !== undefined, {
+          reason: 'needs gamma',
+        }),
+      ],
+      secondary: [
+        enabledWhen('beta', () => false, { reason: 'secondary failed' }),
+      ],
+    })
+
+    expect(
+      evaluateRuleForField(
+        rule,
+        'beta',
+        fields,
+        { alpha: 'present' } as unknown as Record<keyof TestFields, unknown>,
+        {} as TestConditions,
+        undefined,
+        {},
+        new Map(),
+      ),
+    ).toEqual({
+      enabled: false,
+      reason: 'needs gamma',
+      reasons: ['needs gamma', 'secondary failed'],
+    })
+  })
+
+  test('keeps the first gate failure reason when later gate rules also fail', () => {
+    const fields: TestFields = {
+      alpha: {},
+      beta: {},
+      gamma: {},
+      delta: {},
+    }
+    const rules = [
+      enabledWhen<TestFields, TestConditions>('beta', () => false, {
+        reason: 'first gate reason',
+      }),
+      enabledWhen<TestFields, TestConditions>('beta', () => false, {
+        reason: 'second gate reason',
+      }),
+    ]
+    const topoOrder = createOrder(fields, rules)
+
+    expect(
+      evaluate(fields, rules, topoOrder, {}, {} as TestConditions).beta,
+    ).toEqual({
+      enabled: false,
+      satisfied: false,
+      fair: true,
+      required: false,
+      reason: 'first gate reason',
+      reasons: ['first gate reason', 'second gate reason'],
+    })
+  })
+
+  test('keeps the first fair failure reason when multiple fair rules fail', () => {
+    const fields: TestFields = {
+      alpha: {},
+      beta: {},
+      gamma: {},
+      delta: {},
+    }
+    const rules = [
+      defineRule<TestFields, TestConditions>({
+        type: 'custom-fair',
+        targets: ['beta'],
+        sources: [],
+        constraint: 'fair',
+        evaluate: () =>
+          new Map([
+            [
+              'beta',
+              { enabled: true, fair: false, reason: 'first fair reason' },
+            ],
+          ]),
+      }),
+      defineRule<TestFields, TestConditions>({
+        type: 'custom-fair',
+        targets: ['beta'],
+        sources: [],
+        constraint: 'fair',
+        evaluate: () =>
+          new Map([
+            [
+              'beta',
+              { enabled: true, fair: false, reason: 'second fair reason' },
+            ],
+          ]),
+      }),
+    ]
+    const topoOrder = createOrder(fields, rules)
+
+    expect(
+      evaluate(fields, rules, topoOrder, {}, {} as TestConditions).beta,
+    ).toEqual({
+      enabled: true,
+      satisfied: false,
+      fair: false,
+      required: false,
+      reason: 'first fair reason',
+      reasons: ['first fair reason', 'second fair reason'],
+    })
+  })
+
+  test('preserves non-empty reasons array from a base rule evaluation', () => {
+    const fields: TestFields = {
+      alpha: {},
+      beta: {},
+      gamma: {},
+      delta: {},
+    }
+    const ruleWithReasons: Rule<TestFields, TestConditions> = {
+      type: 'custom',
+      targets: ['beta'],
+      sources: [],
+      evaluate: () =>
+        new Map([
+          [
+            'beta',
+            {
+              enabled: false,
+              reason: 'main reason',
+              reasons: ['detail one', 'detail two'],
+            },
+          ],
+        ]),
+    }
+
+    expect(
+      evaluateRuleForField(
+        ruleWithReasons,
+        'beta',
+        fields,
+        {},
+        {} as TestConditions,
+        undefined,
+        {},
+        new Map(),
+      ),
+    ).toEqual({
+      enabled: false,
+      reason: 'main reason',
+      reasons: ['detail one', 'detail two'],
+    })
+  })
+
+  test('omits reasons when the base rule returns an empty reasons array', () => {
+    const fields: TestFields = {
+      alpha: {},
+      beta: {},
+      gamma: {},
+      delta: {},
+    }
+    const ruleWithEmptyReasons: Rule<TestFields, TestConditions> = {
+      type: 'custom',
+      targets: ['beta'],
+      sources: [],
+      evaluate: () =>
+        new Map([
+          [
+            'beta',
+            {
+              enabled: false,
+              reason: 'main reason',
+              reasons: [],
+            },
+          ],
+        ]),
+    }
+
+    expect(
+      evaluateRuleForField(
+        ruleWithEmptyReasons,
+        'beta',
+        fields,
+        {},
+        {} as TestConditions,
+        undefined,
+        {},
+        new Map(),
+      ),
+    ).toEqual({
+      enabled: false,
+      reason: 'main reason',
+      reasons: undefined,
     })
   })
 })

@@ -480,6 +480,56 @@ describe('anyOf', () => {
     ).toThrow('must target the same fields')
   })
 
+  test('accepts matching anyOf targets regardless of declaration order', () => {
+    const left = defineRule<TestFields, TestConditions>({
+      type: 'left',
+      targets: ['beta', 'alpha'],
+      sources: [],
+      evaluate: () =>
+        new Map([
+          ['alpha', { enabled: true, reason: null }],
+          ['beta', { enabled: true, reason: null }],
+        ]),
+    })
+    const right = defineRule<TestFields, TestConditions>({
+      type: 'right',
+      targets: ['alpha', 'beta'],
+      sources: [],
+      evaluate: () =>
+        new Map([
+          ['alpha', { enabled: true, reason: null }],
+          ['beta', { enabled: true, reason: null }],
+        ]),
+    })
+
+    expect(() => anyOf(left, right)).not.toThrow()
+  })
+
+  test('rejects anyOf rules when one target differs in a matching-length list', () => {
+    const left = defineRule<TestFields, TestConditions>({
+      type: 'left',
+      targets: ['alpha', 'beta'],
+      sources: [],
+      evaluate: () =>
+        new Map([
+          ['alpha', { enabled: true, reason: null }],
+          ['beta', { enabled: true, reason: null }],
+        ]),
+    })
+    const right = defineRule<TestFields, TestConditions>({
+      type: 'right',
+      targets: ['alpha', 'gamma'],
+      sources: [],
+      evaluate: () =>
+        new Map([
+          ['alpha', { enabled: true, reason: null }],
+          ['gamma', { enabled: true, reason: null }],
+        ]),
+    })
+
+    expect(() => anyOf(left, right)).toThrow('must target the same fields')
+  })
+
   test('passes if any inner rule passes', () => {
     const rule = anyOf<TestFields, TestConditions>(
       enabledWhen('alpha', () => false, { reason: 'first failed' }),
@@ -575,6 +625,17 @@ describe('eitherOf', () => {
       eitherOf<TestFields, TestConditions>('auth', {
         sso: [enabledWhen('alpha', () => true)],
         password: [fairWhen('alpha', () => true)],
+      }),
+    ).toThrow(
+      'eitherOf("auth") cannot mix fairWhen rules with availability rules',
+    )
+  })
+
+  test('also rejects mixed constraints when the first eitherOf rule is fair', () => {
+    expect(() =>
+      eitherOf<TestFields, TestConditions>('auth', {
+        fairness: [fairWhen('alpha', () => true)],
+        enabled: [enabledWhen('alpha', () => true)],
       }),
     ).toThrow(
       'eitherOf("auth") cannot mix fairWhen rules with availability rules',
@@ -901,6 +962,25 @@ describe('check', () => {
     })
   })
 
+  test('inspectPredicate does not fabricate field/namedCheck when one side is missing', () => {
+    const fieldOnly = check<TestFields, TestConditions>('alpha', () => true)
+    const metadataOnly = check<TestFields, TestConditions>('beta', () => true)
+    delete metadataOnly._checkField
+    metadataOnly._namedCheck = { __check: 'required' }
+
+    const inspectedFieldOnly = inspectPredicate(fieldOnly)
+    const inspectedMetadataOnly = inspectPredicate(metadataOnly)
+
+    expect(inspectedFieldOnly).toEqual({ field: 'alpha' })
+    expect(Object.hasOwn(inspectedFieldOnly as object, 'namedCheck')).toBe(
+      false,
+    )
+    expect(inspectedMetadataOnly).toEqual({
+      namedCheck: { __check: 'required' },
+    })
+    expect(Object.hasOwn(inspectedMetadataOnly as object, 'field')).toBe(false)
+  })
+
   test('returns copied named check metadata without params', () => {
     const predicate = check<TestFields, TestConditions>('alpha', {
       __check: 'required',
@@ -1126,6 +1206,28 @@ describe('inspectRule', () => {
     })
   })
 
+  test('inspectRule omits namedCheck metadata for plain check() predicates', () => {
+    const rule = enabledWhen<TestFields, TestConditions>(
+      'alpha',
+      check('beta', (value) => value === 'ok'),
+    )
+
+    const inspected = inspectRule(rule)
+
+    expect(inspected).toEqual({
+      kind: 'enabledWhen',
+      target: 'alpha',
+      predicate: { field: 'beta' },
+      hasDynamicReason: false,
+    })
+    expect(
+      Object.hasOwn(
+        (inspected as { predicate?: unknown }).predicate as object,
+        'namedCheck',
+      ),
+    ).toBe(false)
+  })
+
   test('collapses anyOf graph sources into ordering branches', () => {
     const orderingRule = defineRule<TestFields, TestConditions>({
       type: 'orderingRule',
@@ -1206,6 +1308,24 @@ describe('inspectRule', () => {
     ).toBeUndefined()
   })
 
+  test('returns undefined when anyOf mixes inspectable and uninspectable inner rules', () => {
+    const opaqueRule: Rule<TestFields, TestConditions> = {
+      type: 'opaque',
+      targets: ['alpha'],
+      sources: ['beta'],
+      evaluate: () => new Map([['alpha', { enabled: true, reason: null }]]),
+    }
+
+    expect(
+      inspectRule(
+        anyOf<TestFields, TestConditions>(
+          enabledWhen('alpha', () => true),
+          opaqueRule,
+        ),
+      ),
+    ).toBeUndefined()
+  })
+
   test('collapses eitherOf graph sources into informational branches', () => {
     const fairRule = fairWhen<TestFields, TestConditions>(
       'alpha',
@@ -1273,6 +1393,22 @@ describe('inspectRule', () => {
     const rule = eitherOf<TestFields, TestConditions>('auth', {
       password: [enabledWhen('alpha', () => true)],
       opaque: [opaqueRule],
+    })
+
+    expect(inspectRule(rule)).toBeUndefined()
+  })
+
+  test('returns undefined when eitherOf has a mixed inspectable/uninspectable branch', () => {
+    const opaqueRule: Rule<TestFields, TestConditions> = {
+      type: 'opaque',
+      targets: ['alpha'],
+      sources: ['beta'],
+      evaluate: () => new Map([['alpha', { enabled: true, reason: null }]]),
+    }
+
+    const rule = eitherOf<TestFields, TestConditions>('auth', {
+      password: [enabledWhen('alpha', () => true), opaqueRule],
+      backup: [enabledWhen('alpha', () => true)],
     })
 
     expect(inspectRule(rule)).toBeUndefined()
