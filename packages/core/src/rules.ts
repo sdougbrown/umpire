@@ -4,6 +4,7 @@ import {
 } from './composite.js'
 import { shouldWarnInDev } from './dev.js'
 import { getFieldNameOrThrow, type FieldSelector } from './field.js'
+import { isObjectLike } from './guards.js'
 import { isSatisfied } from './satisfaction.js'
 import {
   isNamedCheck as isNamedCheckValidator,
@@ -415,9 +416,7 @@ function cloneNamedCheckMetadata(
 function isNamedCheckMetadataCarrier(
   value: unknown,
 ): value is NamedCheckMetadataCarrier {
-  return (
-    (typeof value === 'function' || typeof value === 'object') && value !== null
-  )
+  return isObjectLike(value)
 }
 
 function hasNamedCheckMetadata(
@@ -441,10 +440,7 @@ export function getNamedCheckMetadata(
 }
 
 function getPredicateField(value: unknown): string | undefined {
-  if (
-    (typeof value !== 'function' && typeof value !== 'object') ||
-    value === null
-  ) {
+  if (!isObjectLike(value)) {
     return undefined
   }
 
@@ -540,6 +536,7 @@ function resolveCompositeRuleShape<
 } {
   const expectedTargets = uniqueFields([...rules[0].targets]).sort()
 
+  // Stryker disable next-line MethodExpression: equivalent mutant — rules[0] always matches itself so including it in self-comparison cannot produce a mismatch
   for (const rule of rules.slice(1)) {
     const currentTargets = uniqueFields([...rule.targets]).sort()
 
@@ -555,6 +552,7 @@ function resolveCompositeRuleShape<
 
   const constraint = getRuleConstraint(rules[0])
 
+  // Stryker disable next-line MethodExpression: equivalent mutant — rules[0] always matches its own constraint so including it cannot produce a mismatch
   for (const innerRule of rules.slice(1)) {
     if (getRuleConstraint(innerRule) !== constraint) {
       throw new Error(
@@ -797,6 +795,7 @@ function getSourceLabel<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
 >(source: Source<F, C>): string {
+  // Stryker disable next-line ConditionalExpression,StringLiteral,BlockStatement: equivalent mutant — getSourceLabel is only called for non-string sources (disables() guards string sources at the call site); this branch is never reachable for string inputs
   if (typeof source === 'string') {
     return source
   }
@@ -953,6 +952,13 @@ function warnAmbiguousOneOf(groupName: string, branchNames: string[]): void {
   )
 }
 
+const ONE_OF_METHOD = {
+  explicitActiveBranch: 'explicit activeBranch',
+  autoDetected: 'auto-detected',
+  autoDetectedFromPrev: 'auto-detected from prev',
+  fallbackFirstBranch: 'fallback: first branch',
+} as const
+
 export function resolveOneOfState<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
@@ -984,7 +990,7 @@ export function resolveOneOfState<
   if (typeof activeBranch === 'string') {
     return {
       activeBranch,
-      method: 'explicit activeBranch',
+      method: ONE_OF_METHOD.explicitActiveBranch,
       branches: branchStates,
     }
   }
@@ -994,7 +1000,7 @@ export function resolveOneOfState<
     if (resolvedBranch == null) {
       return {
         activeBranch: null,
-        method: 'explicit activeBranch',
+        method: ONE_OF_METHOD.explicitActiveBranch,
         branches: branchStates,
       }
     }
@@ -1005,7 +1011,7 @@ export function resolveOneOfState<
     }
     return {
       activeBranch: resolvedBranch,
-      method: 'explicit activeBranch',
+      method: ONE_OF_METHOD.explicitActiveBranch,
       branches: branchStates,
     }
   }
@@ -1017,7 +1023,7 @@ export function resolveOneOfState<
   if (satisfiedBranches.length === 0) {
     return {
       activeBranch: null,
-      method: 'auto-detected',
+      method: ONE_OF_METHOD.autoDetected,
       branches: branchStates,
     }
   }
@@ -1025,11 +1031,12 @@ export function resolveOneOfState<
   if (satisfiedBranches.length === 1) {
     return {
       activeBranch: satisfiedBranches[0],
-      method: 'auto-detected',
+      method: ONE_OF_METHOD.autoDetected,
       branches: branchStates,
     }
   }
 
+  // Stryker disable next-line ConditionalExpression: equivalent mutant — when prev is undefined, branchHasSatisfiedField returns false for all branches so newlySatisfiedBranches equals satisfiedBranches and both paths reach the same fallback
   if (prev) {
     const previouslySatisfiedBranches = new Set(
       branchNames.filter((branchName) =>
@@ -1043,16 +1050,17 @@ export function resolveOneOfState<
     if (newlySatisfiedBranches.length === 1) {
       return {
         activeBranch: newlySatisfiedBranches[0],
-        method: 'auto-detected from prev',
+        method: ONE_OF_METHOD.autoDetectedFromPrev,
         branches: branchStates,
       }
     }
 
+    // Stryker disable next-line ConditionalExpression,EqualityOperator,BlockStatement: equivalent mutant — the >1 block body and the post-block fallback are identical (same warn + same return shape with satisfiedBranches[0])
     if (newlySatisfiedBranches.length > 1) {
       warnAmbiguousOneOf(groupName, satisfiedBranches)
       return {
         activeBranch: satisfiedBranches[0],
-        method: 'fallback: first branch',
+        method: ONE_OF_METHOD.fallbackFirstBranch,
         branches: branchStates,
       }
     }
@@ -1061,7 +1069,7 @@ export function resolveOneOfState<
   warnAmbiguousOneOf(groupName, satisfiedBranches)
   return {
     activeBranch: satisfiedBranches[0],
-    method: 'fallback: first branch',
+    method: ONE_OF_METHOD.fallbackFirstBranch,
     branches: branchStates,
   }
 }
@@ -1168,6 +1176,7 @@ export function disables<
 ): Rule<F, C> {
   const resolvedSource = normalizeSource(source)
   const resolvedTargets = targets.map((target) => getFieldNameOrThrow(target))
+  // Stryker disable next-line ConditionalExpression,StringLiteral: equivalent mutant — getSourceLabel returns the same string for string inputs, so both branches produce identical output when resolvedSource is a string
   const defaultReason =
     typeof resolvedSource === 'string'
       ? `overridden by ${resolvedSource}`
@@ -1402,6 +1411,7 @@ export function anyOf<
           getCompositeTargetEvaluation(evaluation, target),
         )
 
+        // Stryker disable next-line StringLiteral: equivalent mutant — combineCompositeResults only checks mode === 'and'; any other value including '' follows the OR path
         return combineCompositeResults(constraint, 'or', targetResults)
       })
     },
@@ -1466,6 +1476,7 @@ export function eitherOf<
           return combineCompositeResults(constraint, 'and', targetResults)
         })
 
+        // Stryker disable next-line StringLiteral: equivalent mutant — combineCompositeResults only checks mode === 'and'; any other value including '' follows the OR path
         return combineCompositeResults(constraint, 'or', branchResults)
       })
     },

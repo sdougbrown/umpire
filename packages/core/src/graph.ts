@@ -25,6 +25,16 @@ function uniqueNodes(fieldNames: string[]): string[] {
   return [...new Set(fieldNames)]
 }
 
+function getOrInit<K, V>(map: Map<K, V>, key: K, init: () => V): V {
+  if (map.has(key)) {
+    return map.get(key) as V
+  }
+
+  const value = init()
+  map.set(key, value)
+  return value
+}
+
 export function buildGraph<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
@@ -42,7 +52,7 @@ export function buildGraph<
     type: string,
     ordering: boolean,
   ): void {
-    const edgeKey = `${from}:${to}:${type}:${ordering ? 'ordering' : 'informational'}`
+    const edgeKey = `${from}:${to}:${type}:${ordering}`
     if (seenEdges.has(edgeKey)) {
       return
     }
@@ -54,21 +64,10 @@ export function buildGraph<
       return
     }
 
-    if (!adjacency.has(from)) {
-      adjacency.set(from, [])
-    }
-    if (!adjacency.has(to)) {
-      adjacency.set(to, [])
-    }
-    if (!incomingCounts.has(from)) {
-      incomingCounts.set(from, 0)
-    }
-    if (!incomingCounts.has(to)) {
-      incomingCounts.set(to, 0)
-    }
-
-    adjacency.get(from)?.push(to)
-    incomingCounts.set(to, (incomingCounts.get(to) ?? 0) + 1)
+    getOrInit(adjacency, from, () => []).push(to)
+    getOrInit(adjacency, to, () => [])
+    getOrInit(incomingCounts, from, () => 0)
+    incomingCounts.set(to, getOrInit(incomingCounts, to, () => 0) + 1)
   }
 
   for (const node of nodes) {
@@ -125,12 +124,13 @@ export function buildGraph<
 export function detectCycles(graph: DependencyGraph): void {
   const visited = new Set<string>()
   const active = new Set<string>()
-  const stack: string[] = []
+  // Stryker disable next-line ArrayDeclaration: equivalent mutant — any prefix entry is before cycleStart and is excluded by path.slice(cycleStart)
+  const path: string[] = []
 
   const visit = (node: string): string[] | null => {
     visited.add(node)
     active.add(node)
-    stack.push(node)
+    path.push(node)
 
     for (const next of graph.adjacency.get(node) ?? []) {
       if (!visited.has(next)) {
@@ -145,16 +145,17 @@ export function detectCycles(graph: DependencyGraph): void {
         continue
       }
 
-      const cycleStart = stack.indexOf(next)
-      return [...stack.slice(cycleStart), next]
+      const cycleStart = path.indexOf(next)
+      return path.slice(cycleStart).concat(next)
     }
 
-    stack.pop()
+    path.pop()
     active.delete(node)
     return null
   }
 
   for (const node of graph.nodes) {
+    // Stryker disable next-line ConditionalExpression,BlockStatement: equivalent mutant — re-walking an already-visited root only causes redundant DFS; active is always empty between outer iterations so no false cycle is produced
     if (visited.has(node)) {
       continue
     }

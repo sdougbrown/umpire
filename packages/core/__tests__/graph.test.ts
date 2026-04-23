@@ -273,6 +273,42 @@ describe('graph utilities', () => {
     })
   })
 
+  test('initializes graph bookkeeping for unseen edge endpoints', () => {
+    const fields: TestFields = {
+      alpha: {},
+      beta: {},
+      gamma: {},
+      delta: {},
+      epsilon: {},
+    }
+
+    const graph = buildGraph(fields, [
+      defineRule<TestFields>({
+        type: 'externalSource',
+        targets: ['alpha'],
+        sources: ['zeta' as keyof TestFields & string],
+        evaluate: () => new Map([['alpha', { enabled: true, reason: null }]]),
+      }),
+      defineRule<TestFields>({
+        type: 'externalTarget',
+        targets: ['omega' as keyof TestFields & string],
+        sources: ['beta'],
+        evaluate: () => new Map([['omega', { enabled: true, reason: null }]]),
+      }),
+    ])
+
+    expect(graph.adjacency.get('zeta')).toEqual(['alpha'])
+    expect(graph.adjacency.get('omega')).toEqual([])
+    expect(graph.incomingCounts.get('zeta')).toBe(0)
+    expect(graph.incomingCounts.get('omega')).toBe(1)
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        { from: 'zeta', to: 'alpha', type: 'externalSource', ordering: true },
+        { from: 'beta', to: 'omega', type: 'externalTarget', ordering: true },
+      ]),
+    )
+  })
+
   test('unions eitherOf branch sources into ordering and informational edges', () => {
     const fields: TestFields = {
       alpha: {},
@@ -339,6 +375,140 @@ describe('graph utilities', () => {
       { from: 'alpha', to: 'beta', type: 'requires', ordering: true },
       { from: 'alpha', to: 'beta', type: 'enabledWhen', ordering: false },
     ])
+  })
+
+  test('buildGraph handles rules without internal metadata', () => {
+    const fields: TestFields = {
+      alpha: {},
+      beta: {},
+      gamma: {},
+      delta: {},
+      epsilon: {},
+    }
+    const opaqueRule = {
+      type: 'opaque',
+      targets: ['beta'],
+      sources: ['alpha'],
+      evaluate: () => new Map([['beta', { enabled: true, reason: null }]]),
+    }
+
+    expect(() => buildGraph(fields, [opaqueRule as never])).not.toThrow()
+    expect(exportGraph(buildGraph(fields, [opaqueRule as never]))).toEqual({
+      nodes: ['alpha', 'beta', 'gamma', 'delta', 'epsilon'],
+      edges: [{ from: 'alpha', to: 'beta', type: 'opaque' }],
+    })
+  })
+
+  test('detectCycles ignores converging paths that revisit an inactive node', () => {
+    const graph = {
+      nodes: ['alpha', 'beta', 'gamma', 'delta'],
+      edges: [],
+      adjacency: new Map<string, string[]>([
+        ['alpha', ['beta', 'gamma']],
+        ['beta', ['delta']],
+        ['gamma', ['delta']],
+        ['delta', []],
+      ]),
+      incomingCounts: new Map<string, number>([
+        ['alpha', 0],
+        ['beta', 1],
+        ['gamma', 1],
+        ['delta', 2],
+      ]),
+      deferredEdgeGroups: [],
+    }
+
+    expect(() => detectCycles(graph)).not.toThrow()
+  })
+
+  test('detectCycles reports only the cycle segment, not the leading path', () => {
+    const graph = {
+      nodes: ['root', 'alpha', 'beta', 'gamma'],
+      edges: [],
+      adjacency: new Map<string, string[]>([
+        ['root', ['alpha']],
+        ['alpha', ['beta']],
+        ['beta', ['gamma']],
+        ['gamma', ['beta']],
+      ]),
+      incomingCounts: new Map<string, number>([
+        ['root', 0],
+        ['alpha', 1],
+        ['beta', 2],
+        ['gamma', 1],
+      ]),
+      deferredEdgeGroups: [],
+    }
+
+    expect(() => detectCycles(graph)).toThrow(
+      '[@umpire/core] Cycle detected: beta → gamma → beta',
+    )
+  })
+
+  test('detectCycles keeps searching sibling paths after a non-cyclic branch', () => {
+    const graph = {
+      nodes: ['alpha', 'beta', 'gamma', 'delta', 'epsilon'],
+      edges: [],
+      adjacency: new Map<string, string[]>([
+        ['alpha', ['beta', 'gamma']],
+        ['beta', []],
+        ['gamma', ['delta']],
+        ['delta', ['gamma']],
+        ['epsilon', []],
+      ]),
+      incomingCounts: new Map<string, number>([
+        ['alpha', 0],
+        ['beta', 1],
+        ['gamma', 2],
+        ['delta', 1],
+        ['epsilon', 0],
+      ]),
+      deferredEdgeGroups: [],
+    }
+
+    expect(() => detectCycles(graph)).toThrow(
+      '[@umpire/core] Cycle detected: gamma → delta → gamma',
+    )
+  })
+
+  test('topologicalSort does not invent edges for sparse adjacency entries', () => {
+    expect(() =>
+      topologicalSort(
+        {
+          nodes: ['alpha', 'beta', 'Stryker was here'],
+          edges: [],
+          adjacency: new Map([['alpha', ['beta']]]),
+          incomingCounts: new Map([
+            ['alpha', 0],
+            ['beta', 1],
+            ['Stryker was here', 1],
+          ]),
+          deferredEdgeGroups: [],
+        },
+        ['alpha', 'beta', 'Stryker was here'],
+      ),
+    ).toThrow('Unable to produce topological order')
+  })
+
+  test('detectCycles still explores later adjacency entries for listed roots', () => {
+    const graph = {
+      nodes: ['alpha', 'beta'],
+      edges: [],
+      adjacency: new Map<string, string[]>([
+        ['alpha', ['beta', 'gamma']],
+        ['beta', []],
+        ['gamma', ['gamma']],
+      ]),
+      incomingCounts: new Map<string, number>([
+        ['alpha', 0],
+        ['beta', 1],
+      ]),
+      deferredEdgeGroups: [],
+    }
+
+    expect(() => detectCycles(graph)).toThrow(
+      '[@umpire/core] Cycle detected: gamma → gamma',
+    )
   })
 
   test('topologicalSort throws a fallback error for malformed acyclic graphs', () => {
