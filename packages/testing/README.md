@@ -93,3 +93,34 @@ monkeyTest(ump, {
 ```
 
 Each conditions entry is tested against every sampled value combination.
+
+## `checkAssert(result)`
+
+Readable scenario assertions over `ump.check(values)` results.
+
+```typescript
+import { checkAssert } from '@umpire/testing'
+
+checkAssert(ump.check({ gate: 'open' }))
+  .enabled('gate')
+  .optional('gate')
+```
+
+Methods: `.enabled()`, `.disabled()`, `.fair()`, `.foul()`, `.required()`, `.optional()`, `.satisfied()`, `.unsatisfied()`.
+
+## `scorecardAssert(result)`
+
+Readable transition assertions over `ump.scorecard(snapshot, { before })` results.
+
+```typescript
+import { scorecardAssert } from '@umpire/testing'
+
+scorecardAssert(ump.scorecard(after, { before }))
+  .changed('cardType')
+  .cascaded('cardNumber', 'expiryDate')
+  .fouled('cardNumber', 'expiryDate')
+  .check()
+  .disabled('cardNumber', 'expiryDate')
+```
+
+Methods: `.changed()`, `.notChanged()`, `.cascaded()`, `.fouled()`, `.notFouled()`, `.onlyChanged()`, `.onlyFouled()`, `.check()`.

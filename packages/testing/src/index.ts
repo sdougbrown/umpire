@@ -1,4 +1,9 @@
-import type { FieldDef, FieldStatus, Umpire } from '@umpire/core'
+import type {
+  FieldDef,
+  FieldStatus,
+  ScorecardResult,
+  Umpire,
+} from '@umpire/core'
 
 export type CheckAssertChain<K extends string> = {
   enabled(...fields: K[]): CheckAssertChain<K>
@@ -11,16 +16,28 @@ export type CheckAssertChain<K extends string> = {
   unsatisfied(...fields: K[]): CheckAssertChain<K>
 }
 
+export type ScorecardAssertChain<K extends string> = {
+  changed(...fields: K[]): ScorecardAssertChain<K>
+  notChanged(...fields: K[]): ScorecardAssertChain<K>
+  cascaded(...fields: K[]): ScorecardAssertChain<K>
+  fouled(...fields: K[]): ScorecardAssertChain<K>
+  notFouled(...fields: K[]): ScorecardAssertChain<K>
+  onlyChanged(...fields: K[]): ScorecardAssertChain<K>
+  onlyFouled(...fields: K[]): ScorecardAssertChain<K>
+  check(): CheckAssertChain<K>
+}
+
 function buildFailMessage(
+  prefix: string,
   label: string,
   failures: Array<{ field: string; detail: string }>,
 ): string {
   if (failures.length === 1) {
-    return `checkAssert: expected "${failures[0].field}" to be ${label} — ${failures[0].detail}`
+    return `${prefix}: expected "${failures[0].field}" to be ${label} — ${failures[0].detail}`
   }
 
   return [
-    `checkAssert: expected the following field(s) to be ${label}:`,
+    `${prefix}: expected the following field(s) to be ${label}:`,
     ...failures.map((f) => `  "${f.field}" — ${f.detail}`),
   ].join('\n')
 }
@@ -47,7 +64,99 @@ function runAssert<K extends string>(
   }
 
   if (failures.length > 0) {
-    throw new Error(buildFailMessage(label, failures))
+    throw new Error(buildFailMessage('checkAssert', label, failures))
+  }
+}
+
+function buildSetFailMessage<K extends string>(
+  label: string,
+  actualFields: K[],
+  expectedFields: K[],
+): string {
+  const actual = new Set(actualFields)
+  const expected = new Set(expectedFields)
+  const missing = [...expected].filter((field) => !actual.has(field))
+  const unexpected = [...actual].filter((field) => !expected.has(field))
+  const details: string[] = []
+
+  if (missing.length > 0) {
+    details.push(`missing ${JSON.stringify(missing)}`)
+  }
+
+  if (unexpected.length > 0) {
+    details.push(`unexpected ${JSON.stringify(unexpected)}`)
+  }
+
+  return `scorecardAssert: expected only ${label} to be ${JSON.stringify(expectedFields)} — ${details.join('; ')}`
+}
+
+function assertKnownScorecardFields<K extends string>(
+  result: ScorecardResult<Record<K, FieldDef>, Record<string, unknown>>,
+  fields: K[],
+): void {
+  for (const field of fields) {
+    if (result.fields[field] === undefined) {
+      throw new Error(`scorecardAssert: unknown field "${field}"`)
+    }
+  }
+}
+
+function runScorecardFieldAssert<K extends string>(
+  result: ScorecardResult<Record<K, FieldDef>, Record<string, unknown>>,
+  fields: K[],
+  predicate: (
+    field: ScorecardResult<
+      Record<K, FieldDef>,
+      Record<string, unknown>
+    >['fields'][K],
+  ) => boolean,
+  label: string,
+  detail: (
+    field: K,
+    scorecardField: ScorecardResult<
+      Record<K, FieldDef>,
+      Record<string, unknown>
+    >['fields'][K],
+  ) => string,
+): void {
+  const failures: Array<{ field: string; detail: string }> = []
+
+  for (const field of fields) {
+    const scorecardField = result.fields[field]
+
+    if (scorecardField === undefined) {
+      throw new Error(`scorecardAssert: unknown field "${field}"`)
+    }
+
+    if (!predicate(scorecardField)) {
+      failures.push({ field, detail: detail(field, scorecardField) })
+    }
+  }
+
+  if (failures.length > 0) {
+    throw new Error(buildFailMessage('scorecardAssert', label, failures))
+  }
+}
+
+function runExactSetAssert<K extends string>(
+  result: ScorecardResult<Record<K, FieldDef>, Record<string, unknown>>,
+  actualFields: K[],
+  expectedFields: K[],
+  label: string,
+): void {
+  assertKnownScorecardFields(result, expectedFields)
+
+  const actual = new Set(actualFields)
+  const expected = new Set(expectedFields)
+
+  if (actual.size !== expected.size) {
+    throw new Error(buildSetFailMessage(label, actualFields, expectedFields))
+  }
+
+  for (const field of expected) {
+    if (!actual.has(field)) {
+      throw new Error(buildSetFailMessage(label, actualFields, expectedFields))
+    }
   }
 }
 
@@ -136,6 +245,90 @@ export function checkAssert<K extends string>(
         () => 'was satisfied (has a value)',
       )
       return chain
+    },
+  }
+
+  return chain
+}
+
+export function scorecardAssert<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(result: ScorecardResult<F, C>): ScorecardAssertChain<keyof F & string> {
+  type K = keyof F & string
+
+  const chain: ScorecardAssertChain<K> = {
+    changed(...fields) {
+      runScorecardFieldAssert(
+        result as ScorecardResult<Record<K, FieldDef>, Record<string, unknown>>,
+        fields,
+        (scorecardField) => scorecardField.changed,
+        'changed',
+        () => 'did not change',
+      )
+      return chain
+    },
+    notChanged(...fields) {
+      runScorecardFieldAssert(
+        result as ScorecardResult<Record<K, FieldDef>, Record<string, unknown>>,
+        fields,
+        (scorecardField) => !scorecardField.changed,
+        'unchanged',
+        () => 'changed',
+      )
+      return chain
+    },
+    cascaded(...fields) {
+      runScorecardFieldAssert(
+        result as ScorecardResult<Record<K, FieldDef>, Record<string, unknown>>,
+        fields,
+        (scorecardField) => scorecardField.cascaded,
+        'cascaded',
+        () => 'did not cascade',
+      )
+      return chain
+    },
+    fouled(...fields) {
+      runScorecardFieldAssert(
+        result as ScorecardResult<Record<K, FieldDef>, Record<string, unknown>>,
+        fields,
+        (scorecardField) => scorecardField.foul !== null,
+        'fouled',
+        () => 'had no foul recommendation',
+      )
+      return chain
+    },
+    notFouled(...fields) {
+      runScorecardFieldAssert(
+        result as ScorecardResult<Record<K, FieldDef>, Record<string, unknown>>,
+        fields,
+        (scorecardField) => scorecardField.foul === null,
+        'not fouled',
+        (_field, scorecardField) =>
+          `had foul recommendation${scorecardField.foul?.reason ? ` (reason: ${JSON.stringify(scorecardField.foul.reason)})` : ''}`,
+      )
+      return chain
+    },
+    onlyChanged(...fields) {
+      runExactSetAssert(
+        result as ScorecardResult<Record<K, FieldDef>, Record<string, unknown>>,
+        result.transition.changedFields as K[],
+        fields,
+        'changed fields',
+      )
+      return chain
+    },
+    onlyFouled(...fields) {
+      runExactSetAssert(
+        result as ScorecardResult<Record<K, FieldDef>, Record<string, unknown>>,
+        result.transition.fouledFields as K[],
+        fields,
+        'fouled fields',
+      )
+      return chain
+    },
+    check() {
+      return checkAssert(result.check)
     },
   }
 

@@ -14,3 +14,9 @@
 - All methods accept variadic field names and return the chain for further assertions.
 - Disabled fields always have `fair: true`; `.foul()` therefore only fires for enabled fields with invalid values.
 - Throws `Error` with a descriptive message listing all failing fields — compatible with any test framework.
+
+## scorecardAssert
+
+- Use `scorecardAssert(ump.scorecard(after, { before }))` for readable transition assertions.
+- Methods: `.changed()`, `.notChanged()`, `.cascaded()`, `.fouled()`, `.notFouled()`, `.onlyChanged()`, `.onlyFouled()`, `.check()`.
+- `.check()` delegates to `checkAssert(result.check)` for availability assertions on the same scorecard.
