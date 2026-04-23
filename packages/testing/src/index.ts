@@ -1,4 +1,146 @@
-import type { FieldDef, Umpire } from '@umpire/core'
+import type { FieldDef, FieldStatus, Umpire } from '@umpire/core'
+
+export type CheckAssertChain<K extends string> = {
+  enabled(...fields: K[]): CheckAssertChain<K>
+  disabled(...fields: K[]): CheckAssertChain<K>
+  fair(...fields: K[]): CheckAssertChain<K>
+  foul(...fields: K[]): CheckAssertChain<K>
+  required(...fields: K[]): CheckAssertChain<K>
+  optional(...fields: K[]): CheckAssertChain<K>
+  satisfied(...fields: K[]): CheckAssertChain<K>
+  unsatisfied(...fields: K[]): CheckAssertChain<K>
+}
+
+function buildFailMessage(
+  label: string,
+  failures: Array<{ field: string; detail: string }>,
+): string {
+  if (failures.length === 1) {
+    return `checkAssert: expected "${failures[0].field}" to be ${label} — ${failures[0].detail}`
+  }
+
+  return [
+    `checkAssert: expected the following field(s) to be ${label}:`,
+    ...failures.map((f) => `  "${f.field}" — ${f.detail}`),
+  ].join('\n')
+}
+
+function runAssert<K extends string>(
+  result: Record<K, FieldStatus>,
+  fields: K[],
+  predicate: (status: FieldStatus) => boolean,
+  label: string,
+  detail: (field: K, status: FieldStatus) => string,
+): void {
+  const failures: Array<{ field: string; detail: string }> = []
+
+  for (const field of fields) {
+    const status = result[field]
+
+    if (status === undefined) {
+      throw new Error(`checkAssert: unknown field "${field}"`)
+    }
+
+    if (!predicate(status)) {
+      failures.push({ field, detail: detail(field, status) })
+    }
+  }
+
+  if (failures.length > 0) {
+    throw new Error(buildFailMessage(label, failures))
+  }
+}
+
+export function checkAssert<K extends string>(
+  result: Record<K, FieldStatus>,
+): CheckAssertChain<K> {
+  const chain: CheckAssertChain<K> = {
+    enabled(...fields) {
+      runAssert(
+        result,
+        fields,
+        (s) => s.enabled,
+        'enabled',
+        (_f, s) =>
+          `was disabled${s.reason ? ` (reason: ${JSON.stringify(s.reason)})` : ''}`,
+      )
+      return chain
+    },
+    disabled(...fields) {
+      runAssert(
+        result,
+        fields,
+        (s) => !s.enabled,
+        'disabled',
+        () => 'was enabled',
+      )
+      return chain
+    },
+    fair(...fields) {
+      runAssert(
+        result,
+        fields,
+        (s) => s.fair,
+        'fair',
+        (_f, s) =>
+          `was foul${s.reason ? ` (reason: ${JSON.stringify(s.reason)})` : ''}`,
+      )
+      return chain
+    },
+    foul(...fields) {
+      runAssert(
+        result,
+        fields,
+        (s) => !s.fair,
+        'foul',
+        (_f, s) => `was fair (enabled: ${s.enabled})`,
+      )
+      return chain
+    },
+    required(...fields) {
+      runAssert(
+        result,
+        fields,
+        (s) => s.required,
+        'required',
+        () => 'was optional',
+      )
+      return chain
+    },
+    optional(...fields) {
+      runAssert(
+        result,
+        fields,
+        (s) => !s.required,
+        'optional',
+        () => 'was required',
+      )
+      return chain
+    },
+    satisfied(...fields) {
+      runAssert(
+        result,
+        fields,
+        (s) => s.satisfied,
+        'satisfied',
+        () => 'was unsatisfied (no value)',
+      )
+      return chain
+    },
+    unsatisfied(...fields) {
+      runAssert(
+        result,
+        fields,
+        (s) => !s.satisfied,
+        'unsatisfied',
+        () => 'was satisfied (has a value)',
+      )
+      return chain
+    },
+  }
+
+  return chain
+}
 
 const VALUE_PROBES = [null, undefined, '', 'a', 0, 1, true, false] as const
 const MAX_VIOLATIONS = 50
