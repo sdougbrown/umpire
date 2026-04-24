@@ -228,21 +228,6 @@ function didRulePass<
   return isFairRule(rule) ? evaluation.fair !== false : evaluation.enabled
 }
 
-function stableStringify(value: unknown): string {
-  if (Array.isArray(value)) {
-    return `[${value.map(stableStringify).join(',')}]`
-  }
-
-  if (value && typeof value === 'object') {
-    return `{${Object.entries(value)
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([key, entry]) => `${JSON.stringify(key)}:${stableStringify(entry)}`)
-      .join(',')}}`
-  }
-
-  return JSON.stringify(value)
-}
-
 function buildRuleEntries<
   F extends Record<string, FieldDef>,
   C extends Record<string, unknown>,
@@ -252,7 +237,9 @@ function buildRuleEntries<
   return rules.map((rule, index) => {
     const inspection = inspectRule(rule)
     const baseId = inspection
-      ? `${inspection.kind}:${stableStringify(inspection)}`
+      ? [inspection.kind, rule.targets.join(','), rule.sources.join(',')].join(
+          ':',
+        )
       : `uninspectable:${index}`
     const seenCount = seenIds.get(baseId) ?? 0
 
