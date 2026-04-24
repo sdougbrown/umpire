@@ -26,6 +26,8 @@ import {
   getInternalRuleMetadata,
   getInternalRuleOptions,
   isFairRule,
+  cloneRuleInspection,
+  inspectRule,
   type InternalRuleMetadata,
   getSourceField,
   requires,
@@ -47,6 +49,7 @@ import type {
   Foul,
   InputValues,
   Rule,
+  RuleEntry,
   RuleEvaluation,
   RuleTraceAttachment,
   ScorecardOptions,
@@ -226,6 +229,55 @@ function didRulePass<
   return isFairRule(rule) ? evaluation.fair !== false : evaluation.enabled
 }
 
+function buildRuleEntries<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(
+  rules: Rule<F, C>[],
+): {
+  entries: Array<RuleEntry<F, C>>
+  entryByRule: Map<Rule<F, C>, RuleEntry<F, C>>
+} {
+  const seenIds = new Map<string, number>()
+  const entryByRule = new Map<Rule<F, C>, RuleEntry<F, C>>()
+
+  const entries = rules.map((rule, index) => {
+    const inspection = inspectRule(rule)
+    const baseId = inspection
+      ? [inspection.kind, rule.targets.join(','), rule.sources.join(',')].join(
+          ':',
+        )
+      : `uninspectable:${index}`
+    const seenCount = seenIds.get(baseId) ?? 0
+
+    seenIds.set(baseId, seenCount + 1)
+
+    const entry = {
+      index,
+      id: seenCount === 0 ? baseId : `${baseId}#${seenCount + 1}`,
+      inspection,
+    }
+
+    entryByRule.set(rule, entry)
+    return entry
+  })
+
+  return { entries, entryByRule }
+}
+
+function cloneRuleEntry<
+  F extends Record<string, FieldDef>,
+  C extends Record<string, unknown>,
+>(entry: RuleEntry<F, C>): RuleEntry<F, C> {
+  return {
+    ...entry,
+    inspection:
+      entry.inspection === undefined
+        ? undefined
+        : cloneRuleInspection(entry.inspection),
+  }
+}
+
 function normalizeConfig<
   F extends Record<string, FieldInput>,
   C extends Record<string, unknown>,
@@ -290,14 +342,16 @@ function normalizeConfig<
         continue
       }
 
+      const dependency = attachedRule.dependency as keyof NormalizeFields<F> &
+        string
+      const options = attachedRule.options as
+        | Parameters<typeof requires<NormalizeFields<F>, C>>[2]
+        | undefined
+
       attachedRules.push(
-        requires<NormalizeFields<F>, C>(
-          fieldKey,
-          attachedRule.dependency as keyof NormalizeFields<F> & string,
-          attachedRule.options as Parameters<
-            typeof requires<NormalizeFields<F>, C>
-          >[2],
-        ),
+        options
+          ? requires<NormalizeFields<F>, C>(fieldKey, dependency, options)
+          : requires<NormalizeFields<F>, C>(fieldKey, dependency),
       )
     }
   }
@@ -320,6 +374,7 @@ function describeRuleForField<
   prev: FieldValues<F> | undefined,
   availability: AvailabilityMap<F>,
   baseRuleCache: Map<Rule<F, C>, Map<string, RuleEvaluation>>,
+  ruleEntry?: RuleEntry<F, C>,
 ): ChallengeTrace['directReasons'][number] {
   const metadata = getInternalRuleMetadata(rule)
   const evaluation = evaluateRuleForField(
@@ -339,6 +394,8 @@ function describeRuleForField<
     return withRuleTrace(
       {
         rule: 'enabledWhen',
+        ruleIndex: ruleEntry?.index,
+        ruleId: ruleEntry?.id,
         passed: evaluation.enabled,
         reason: evaluation.reason,
         predicate: metadata.predicate.toString(),
@@ -363,6 +420,8 @@ function describeRuleForField<
     return withRuleTrace(
       {
         rule: 'disables',
+        ruleIndex: ruleEntry?.index,
+        ruleId: ruleEntry?.id,
         passed: evaluation.enabled,
         reason: evaluation.reason,
         source,
@@ -380,6 +439,8 @@ function describeRuleForField<
     return withRuleTrace(
       {
         rule: 'fair',
+        ruleIndex: ruleEntry?.index,
+        ruleId: ruleEntry?.id,
         passed: evaluation.fair !== false,
         reason: evaluation.reason,
         predicate: metadata.predicate.toString(),
@@ -417,6 +478,8 @@ function describeRuleForField<
     return withRuleTrace(
       {
         rule: 'requires',
+        ruleIndex: ruleEntry?.index,
+        ruleId: ruleEntry?.id,
         passed: evaluation.enabled,
         reason: evaluation.reason,
         dependency: dependencies[0]?.dependency,
@@ -451,6 +514,8 @@ function describeRuleForField<
     return withRuleTrace(
       {
         rule: 'oneOf',
+        ruleIndex: ruleEntry?.index,
+        ruleId: ruleEntry?.id,
         passed: evaluation.enabled,
         reason: evaluation.reason,
         group: metadata.groupName,
@@ -476,11 +541,14 @@ function describeRuleForField<
           prev,
           availability,
           baseRuleCache,
+          ruleEntry,
         ),
     )
 
     return {
       rule: 'anyOf',
+      ruleIndex: ruleEntry?.index,
+      ruleId: ruleEntry?.id,
       passed: didRulePass(rule, evaluation),
       reason: evaluation.reason,
       inner,
@@ -500,6 +568,7 @@ function describeRuleForField<
             prev,
             availability,
             baseRuleCache,
+            ruleEntry,
           ),
         )
 
@@ -522,6 +591,8 @@ function describeRuleForField<
 
     return {
       rule: 'eitherOf',
+      ruleIndex: ruleEntry?.index,
+      ruleId: ruleEntry?.id,
       passed: didRulePass(rule, evaluation),
       reason: evaluation.reason,
       group: metadata.groupName,
@@ -534,6 +605,8 @@ function describeRuleForField<
   return withRuleTrace(
     {
       rule: rule.type,
+      ruleIndex: ruleEntry?.index,
+      ruleId: ruleEntry?.id,
       passed: didRulePass(rule, evaluation),
       reason: evaluation.reason,
     },
@@ -693,6 +766,7 @@ function describeCausedBy<
   prev: FieldValues<F> | undefined,
   availability: AvailabilityMap<F>,
   baseRuleCache: Map<Rule<F, C>, Map<string, RuleEvaluation>>,
+  ruleEntryByRule: Map<Rule<F, C>, RuleEntry<F, C>>,
 ): ChallengeTrace['transitiveDeps'][number]['causedBy'] {
   const causedBy: ChallengeTrace['transitiveDeps'][number]['causedBy'] = []
 
@@ -706,6 +780,7 @@ function describeCausedBy<
       prev,
       availability,
       baseRuleCache,
+      ruleEntryByRule.get(rule),
     )
 
     if (entry.passed) {
@@ -734,6 +809,7 @@ function buildTransitiveDeps<
   prev: FieldValues<F> | undefined,
   availability: AvailabilityMap<F>,
   baseRuleCache: Map<Rule<F, C>, Map<string, RuleEvaluation>>,
+  ruleEntryByRule: Map<Rule<F, C>, RuleEntry<F, C>>,
 ) {
   const visited = new Set<string>()
   const result: ChallengeTrace['transitiveDeps'] = []
@@ -771,6 +847,7 @@ function buildTransitiveDeps<
             prev,
             availability,
             baseRuleCache,
+            ruleEntryByRule,
           ),
         })
 
@@ -1014,6 +1091,8 @@ export function umpire<
   detectCycles(graph)
   const topoOrder = topologicalSort(graph, fieldNames)
   const rulesByTarget = indexRulesByTarget(rules)
+  const { entries: ruleEntries, entryByRule: ruleEntryByRule } =
+    buildRuleEntries(rules)
   const rulesByTargetPhase = indexRulesByTargetPhase(rulesByTarget)
   const exportedGraph = exportGraph(graph)
   const { incomingByField, outgoingByField } = buildFieldEdgeLookup(
@@ -1188,6 +1267,7 @@ export function umpire<
         typedPrev,
         availability,
         baseRuleCache,
+        ruleEntryByRule.get(rule),
       ),
     )
 
@@ -1228,6 +1308,7 @@ export function umpire<
         typedPrev,
         availability,
         baseRuleCache,
+        ruleEntryByRule,
       ),
       oneOfResolution,
     }
@@ -1386,6 +1467,10 @@ export function umpire<
 
     graph() {
       return exportCompiledGraph()
+    },
+
+    rules() {
+      return ruleEntries.map((entry) => cloneRuleEntry(entry))
     },
   }
 }
