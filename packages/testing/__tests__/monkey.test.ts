@@ -30,31 +30,7 @@ const createChallenge = (field: string, enabled: boolean, fair: boolean) => ({
 })
 
 describe('monkeyTest', () => {
-  test('passes a well-formed umpire', () => {
-    const ump = umpire({
-      fields: {
-        mode: {},
-        details: { default: '' },
-        submit: {},
-      },
-      rules: [
-        enabledWhen('details', (values) => values.mode === 'a', {
-          reason: 'Choose advanced mode first',
-        }),
-        requires('submit', 'mode', {
-          reason: 'Pick a mode first',
-        }),
-      ],
-    })
-
-    expect(monkeyTest(ump)).toEqual({
-      passed: true,
-      violations: [],
-      samplesChecked: 512,
-    })
-  })
-
-  test('passes a stable umpire with reads-backed rules', () => {
+  test('passes stable umpires for core and reads-backed rules', () => {
     const reads = createReads({
       motherboardFair: ({ input }) =>
         !input.motherboard || input.cpu === input.motherboard,
@@ -62,27 +38,46 @@ describe('monkeyTest', () => {
         Boolean(input.cpu) && Boolean(input.motherboard),
     })
 
-    const ump = umpire({
-      fields: {
-        cpu: {},
-        motherboard: {},
-        submit: {},
-      },
-      rules: [
-        fairWhenRead('motherboard', 'motherboardFair', reads, {
-          reason: 'Selected motherboard no longer matches the CPU socket',
-        }),
-        enabledWhenRead('submit', 'canSubmit', reads, {
-          reason: 'Pick a CPU and motherboard first',
-        }),
-      ],
-    })
+    const umps = [
+      umpire({
+        fields: {
+          mode: {},
+          details: { default: '' },
+          submit: {},
+        },
+        rules: [
+          enabledWhen('details', (values) => values.mode === 'a', {
+            reason: 'Choose advanced mode first',
+          }),
+          requires('submit', 'mode', {
+            reason: 'Pick a mode first',
+          }),
+        ],
+      }),
+      umpire({
+        fields: {
+          cpu: {},
+          motherboard: {},
+          submit: {},
+        },
+        rules: [
+          fairWhenRead('motherboard', 'motherboardFair', reads, {
+            reason: 'Selected motherboard no longer matches the CPU socket',
+          }),
+          enabledWhenRead('submit', 'canSubmit', reads, {
+            reason: 'Pick a CPU and motherboard first',
+          }),
+        ],
+      }),
+    ]
 
-    expect(monkeyTest(ump)).toEqual({
-      passed: true,
-      violations: [],
-      samplesChecked: 512,
-    })
+    for (const ump of umps) {
+      expect(monkeyTest(ump)).toEqual({
+        passed: true,
+        violations: [],
+        samplesChecked: 512,
+      })
+    }
   })
 
   test('reports determinism violations for impure predicates', () => {
