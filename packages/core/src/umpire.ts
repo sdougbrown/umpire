@@ -33,7 +33,7 @@ import {
   requires,
   resolveOneOfState,
 } from './rules.js'
-import { valuesEqual } from './equality.js'
+import { isEqual } from './equality.js'
 import { isSatisfied } from './satisfaction.js'
 import {
   normalizeValidationEntry,
@@ -82,7 +82,7 @@ function getChangedFields<F extends Record<string, FieldDef>>(
   }
 
   return fieldNames.filter(
-    (field) => !valuesEqual(before.values[field], after.values[field]),
+    (field) => !isEqual(before.values[field], after.values[field]),
   )
 }
 
@@ -1200,7 +1200,7 @@ export function umpire<
         continue
       }
 
-      if (valuesEqual(currentValue, suggestedValue)) {
+      if (isEqual(currentValue, suggestedValue)) {
         continue
       }
 
