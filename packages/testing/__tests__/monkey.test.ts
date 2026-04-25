@@ -30,31 +30,7 @@ const createChallenge = (field: string, enabled: boolean, fair: boolean) => ({
 })
 
 describe('monkeyTest', () => {
-  test('passes a well-formed umpire', () => {
-    const ump = umpire({
-      fields: {
-        mode: {},
-        details: { default: '' },
-        submit: {},
-      },
-      rules: [
-        enabledWhen('details', (values) => values.mode === 'a', {
-          reason: 'Choose advanced mode first',
-        }),
-        requires('submit', 'mode', {
-          reason: 'Pick a mode first',
-        }),
-      ],
-    })
-
-    expect(monkeyTest(ump)).toEqual({
-      passed: true,
-      violations: [],
-      samplesChecked: 512,
-    })
-  })
-
-  test('passes a stable umpire with reads-backed rules', () => {
+  test('passes stable umpires for core and reads-backed rules', () => {
     const reads = createReads({
       motherboardFair: ({ input }) =>
         !input.motherboard || input.cpu === input.motherboard,
@@ -62,27 +38,46 @@ describe('monkeyTest', () => {
         Boolean(input.cpu) && Boolean(input.motherboard),
     })
 
-    const ump = umpire({
-      fields: {
-        cpu: {},
-        motherboard: {},
-        submit: {},
-      },
-      rules: [
-        fairWhenRead('motherboard', 'motherboardFair', reads, {
-          reason: 'Selected motherboard no longer matches the CPU socket',
-        }),
-        enabledWhenRead('submit', 'canSubmit', reads, {
-          reason: 'Pick a CPU and motherboard first',
-        }),
-      ],
-    })
+    const umps = [
+      umpire({
+        fields: {
+          mode: {},
+          details: { default: '' },
+          submit: {},
+        },
+        rules: [
+          enabledWhen('details', (values) => values.mode === 'a', {
+            reason: 'Choose advanced mode first',
+          }),
+          requires('submit', 'mode', {
+            reason: 'Pick a mode first',
+          }),
+        ],
+      }),
+      umpire({
+        fields: {
+          cpu: {},
+          motherboard: {},
+          submit: {},
+        },
+        rules: [
+          fairWhenRead('motherboard', 'motherboardFair', reads, {
+            reason: 'Selected motherboard no longer matches the CPU socket',
+          }),
+          enabledWhenRead('submit', 'canSubmit', reads, {
+            reason: 'Pick a CPU and motherboard first',
+          }),
+        ],
+      }),
+    ]
 
-    expect(monkeyTest(ump)).toEqual({
-      passed: true,
-      violations: [],
-      samplesChecked: 512,
-    })
+    for (const ump of umps) {
+      expect(monkeyTest(ump)).toEqual({
+        passed: true,
+        violations: [],
+        samplesChecked: 512,
+      })
+    }
   })
 
   test('reports determinism violations for impure predicates', () => {
@@ -137,9 +132,6 @@ describe('monkeyTest', () => {
       violations: [],
       samplesChecked: 12,
     })
-    expect(typeof result.passed).toBe('boolean')
-    expect(Array.isArray(result.violations)).toBe(true)
-    expect(typeof result.samplesChecked).toBe('number')
   })
 
   test('reports init-clean, self-play, convergence, challenge, and disabled-field violations', () => {
@@ -193,80 +185,54 @@ describe('monkeyTest', () => {
     ).toBe(true)
   })
 
-  test('stops after the first exhaustive sample once max violations are reached', () => {
-    const fieldNames = ['a', 'b', 'c', 'd', 'e', 'f']
-    let checkCalls = 0
+  test('stops after the first sample once max violations are reached', () => {
+    const scenarios = [
+      {
+        fieldNames: ['a', 'b', 'c', 'd', 'e', 'f'],
+        edges: [{ from: 'ghost', to: 'phantom', type: 'test' }],
+        options: undefined,
+      },
+      {
+        fieldNames: ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+        edges: [],
+        options: { samples: 25, seed: 7 },
+      },
+    ]
 
-    const ump = {
-      graph() {
-        return {
-          nodes: fieldNames,
-          edges: [{ from: 'ghost', to: 'phantom', type: 'test' }],
-        }
-      },
-      init() {
-        return {}
-      },
-      play() {
-        return []
-      },
-      check() {
-        checkCalls += 1
+    for (const scenario of scenarios) {
+      let checkCalls = 0
 
-        return createAvailability(fieldNames, () => ({
-          enabled: checkCalls > 1,
-          fair: true,
-        }))
-      },
-      challenge(field: string) {
-        return createChallenge(field, false, true)
-      },
-      scorecard() {
-        throw new Error('scorecard() is not used by monkeyTest')
-      },
-    } as Parameters<typeof monkeyTest>[0]
+      const ump = {
+        graph() {
+          return { nodes: scenario.fieldNames, edges: scenario.edges }
+        },
+        init() {
+          return {}
+        },
+        play() {
+          return []
+        },
+        check() {
+          checkCalls += 1
 
-    const result = monkeyTest(ump)
+          return createAvailability(scenario.fieldNames, () => ({
+            enabled: checkCalls > 1,
+            fair: true,
+          }))
+        },
+        challenge(field: string) {
+          return createChallenge(field, false, true)
+        },
+        scorecard() {
+          throw new Error('scorecard() is not used by monkeyTest')
+        },
+      } as Parameters<typeof monkeyTest>[0]
 
-    expect(result.passed).toBe(false)
-    expect(result.samplesChecked).toBe(1)
-    expect(result.violations).toHaveLength(50)
-  })
+      const result = monkeyTest(ump, scenario.options)
 
-  test('stops after the first random sample once max violations are reached', () => {
-    const fieldNames = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
-    let checkCalls = 0
-
-    const ump = {
-      graph() {
-        return { nodes: fieldNames, edges: [] }
-      },
-      init() {
-        return {}
-      },
-      play() {
-        return []
-      },
-      check() {
-        checkCalls += 1
-
-        return createAvailability(fieldNames, () => ({
-          enabled: checkCalls > 1,
-          fair: true,
-        }))
-      },
-      challenge(field: string) {
-        return createChallenge(field, false, true)
-      },
-      scorecard() {
-        throw new Error('scorecard() is not used by monkeyTest')
-      },
-    } as Parameters<typeof monkeyTest>[0]
-
-    const result = monkeyTest(ump, { samples: 25, seed: 7 })
-
-    expect(result.passed).toBe(false)
-    expect(result.samplesChecked).toBe(1)
-    expect(result.violations).toHaveLength(50)
+      expect(result.passed).toBe(false)
+      expect(result.samplesChecked).toBe(1)
+      expect(result.violations).toHaveLength(50)
+    }
   })
 })
