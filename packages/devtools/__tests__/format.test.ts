@@ -1,12 +1,132 @@
-import type { RuleInspection, RuleOperandInspection } from '@umpire/core'
+import type {
+  ChallengeTraceAttachment,
+  RuleInspection,
+  RuleOperandInspection,
+} from '@umpire/core'
 import type { AnyRuleEntry } from '../src/types.js'
 import {
   describeEntry,
   describeInspection,
   describeOperand,
+  formatTimestamp,
+  formatValue,
+  getReasonMeta,
+  getTraceMeta,
 } from '../src/panel/format.js'
 
 describe('format helpers', () => {
+  it('formats primitive values', () => {
+    expect(formatValue(undefined)).toBe('undefined')
+    expect(formatValue(null)).toBe('null')
+    expect(formatValue(42)).toBe('42')
+    expect(formatValue(true)).toBe('true')
+    expect(formatValue('short')).toBe('short')
+    expect(formatValue('abcdef', 4)).toBe('abc…')
+  })
+
+  it('formats arrays', () => {
+    expect(formatValue([1, 'two', false])).toBe('[1, two, false]')
+    expect(formatValue([['nested'], 'value'], 10)).toBe('[[nested]…')
+    expect(formatValue(['x'.repeat(60)], 20)).toBe('[xxxxxxxxxxxxxxxxxx…')
+  })
+
+  it('formats serializable objects', () => {
+    expect(formatValue({ a: 1, b: true })).toBe('{"a":1,"b":true}')
+  })
+
+  it('truncates long json objects deterministically', () => {
+    expect(formatValue({ a: 'x'.repeat(60) }, 20)).toBe('{"a":"xxxxxxxxxxxxx…')
+  })
+
+  it('falls back to String when json serialization yields no value', () => {
+    const fn = () => undefined
+
+    expect(formatValue(fn)).toBe(String(fn))
+    expect(formatValue(Symbol('fallback'))).toBe(String(Symbol('fallback')))
+  })
+
+  it('falls back to String for circular values', () => {
+    const circular: Record<string, unknown> = {}
+    circular.self = circular
+    expect(formatValue(circular)).toBe('[object Object]')
+  })
+
+  it('formats timestamps with a stable time shape', () => {
+    const toLocaleTimeString = vi
+      .spyOn(Date.prototype, 'toLocaleTimeString')
+      .mockImplementation(function (locales, options) {
+        expect(locales).toEqual([])
+        expect(options).toEqual({
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        })
+
+        return `mocked-${this.getTime()}`
+      })
+
+    const morning = Date.UTC(2024, 0, 1, 13, 5, 9)
+    const evening = Date.UTC(2024, 0, 1, 23, 45, 1)
+
+    try {
+      expect(formatTimestamp(morning)).toBe(`mocked-${morning}`)
+      expect(formatTimestamp(evening)).toBe(`mocked-${evening}`)
+      expect(morning).not.toBe(evening)
+    } finally {
+      toLocaleTimeString.mockRestore()
+    }
+  })
+
+  it('filters reason metadata fields', () => {
+    expect(
+      getReasonMeta({
+        inner: [{ rule: 'ignored', reason: 'ignored' }],
+        passed: true,
+        reason: 'ignored',
+        rule: 'ignored',
+        ruleId: 'ignored',
+        ruleIndex: 3,
+        trace: [{ id: 'ignored' }],
+        undefinedValue: undefined,
+        nullValue: null,
+        stringValue: 'ok',
+        numberValue: 7,
+        booleanValue: false,
+        arrayValue: ['ok'],
+        objectValue: { nested: true },
+      }),
+    ).toEqual([
+      ['nullValue', null],
+      ['stringValue', 'ok'],
+      ['numberValue', 7],
+      ['booleanValue', false],
+      ['arrayValue', ['ok']],
+    ])
+  })
+
+  it('filters trace metadata fields', () => {
+    const trace: ChallengeTraceAttachment = {
+      dependencies: ['ignored'],
+      id: 'ignored',
+      kind: 'ignored',
+      undefinedValue: undefined,
+      nullValue: null,
+      stringValue: 'ok',
+      numberValue: 7,
+      booleanValue: true,
+      arrayValue: ['ok'],
+      objectValue: { nested: true },
+    }
+
+    expect(getTraceMeta(trace)).toEqual([
+      ['nullValue', null],
+      ['stringValue', 'ok'],
+      ['numberValue', 7],
+      ['booleanValue', true],
+      ['arrayValue', ['ok']],
+    ])
+  })
+
   it('matches the operand matrix', () => {
     expect(describeOperand({ kind: 'field', field: 'email' })).toBe('email')
     expect(describeOperand({ kind: 'predicate', predicate: undefined })).toBe(
