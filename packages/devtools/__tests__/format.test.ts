@@ -1,8 +1,4 @@
-import type {
-  ChallengeTraceAttachment,
-  RuleInspection,
-  RuleOperandInspection,
-} from '@umpire/core'
+import type { ChallengeTraceAttachment, RuleInspection } from '@umpire/core'
 import type { AnyRuleEntry } from '../src/types.js'
 import {
   describeEntry,
