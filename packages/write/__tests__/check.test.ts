@@ -7,10 +7,12 @@ import {
   fairWhen,
   oneOf,
   umpire,
+  type FieldDef,
 } from '@umpire/core'
 import * as write from '@umpire/write'
 import { checkCreate, checkPatch } from '@umpire/write'
 import type {
+  WriteCandidate,
   WriteCheckResult,
   WriteIssue,
   WriteIssueKind,
@@ -19,22 +21,14 @@ import { deriveSchema } from '@umpire/zod'
 import { z } from 'zod'
 
 type WriteFields = {
-  name: {
-    required?: boolean
-    default?: unknown
-    isEmpty?: (value: unknown) => boolean
-  }
-  toggle: { default?: unknown }
-  dependent: {
-    required?: boolean
-    default?: unknown
-    isEmpty?: (value: unknown) => boolean
-  }
-  optional: { required?: boolean; isEmpty?: (value: unknown) => boolean }
-  guarded: { required?: boolean }
-  forbidden: {}
-  alpha: {}
-  beta: {}
+  name: FieldDef
+  toggle: FieldDef
+  dependent: FieldDef
+  optional: FieldDef
+  guarded: FieldDef
+  forbidden: FieldDef
+  alpha: FieldDef
+  beta: FieldDef
 }
 
 describe('checkCreate', () => {
@@ -186,7 +180,10 @@ describe('checkPatch', () => {
         suggestedValue: undefined,
       },
     ])
-    expect(result.errors).toEqual(['condition not met', 'condition not met'])
+    expect(result.issues).toEqual([
+      { kind: 'disabled', field: 'dependent', message: 'condition not met' },
+    ])
+    expect(result.errors).toEqual(['condition not met'])
   })
 
   test('passes prev through to ump.check semantics', () => {
@@ -216,12 +213,12 @@ describe('checkPatch', () => {
     ])
   })
 
-  test('orders errors as issues first, then fouls', () => {
+  test('keeps transition foul reasons out of errors', () => {
     const ump = umpire<Pick<WriteFields, 'name' | 'toggle' | 'dependent'>>({
       fields: { name: { required: true }, toggle: {}, dependent: {} },
       rules: [
-        fairWhen('dependent', (values) => values.toggle === true, {
-          reason: 'dependent is stale',
+        enabledWhen('dependent', (values) => values.toggle === true, {
+          reason: 'dependent disabled',
         }),
       ],
     })
@@ -234,9 +231,16 @@ describe('checkPatch', () => {
 
     expect(result.issues).toEqual([
       { kind: 'required', field: 'name', message: 'name is required' },
-      { kind: 'foul', field: 'dependent', message: 'dependent is stale' },
+      { kind: 'disabled', field: 'dependent', message: 'dependent disabled' },
     ])
-    expect(result.errors).toEqual(['name is required', 'dependent is stale'])
+    expect(result.fouls).toEqual([
+      {
+        field: 'dependent',
+        reason: 'dependent disabled',
+        suggestedValue: undefined,
+      },
+    ])
+    expect(result.errors).toEqual(['name is required', 'dependent disabled'])
   })
 
   test('respects shallow merge semantics', () => {
@@ -281,6 +285,10 @@ describe('checkPatch', () => {
 
     const result = checkPatch(ump, { name: 'Douglas' }, { optional: 'notes' })
 
+    expect(result.ok).toBe(true)
+    expect(result.issues).toEqual([])
+    expect(result.fouls).toEqual([])
+    expect(result.errors).toEqual([])
     expect(result.candidate).toEqual({ name: 'Douglas', optional: 'notes' })
   })
 
@@ -478,6 +486,67 @@ describe('issue derivation', () => {
     ])
   })
 
+  test('accumulates multiple simultaneous issues', () => {
+    const ump = umpire<Pick<WriteFields, 'name' | 'optional'>>({
+      fields: { name: { required: true }, optional: { required: true } },
+      rules: [],
+    })
+
+    const result = checkCreate(ump, {})
+
+    expect(result.ok).toBe(false)
+    expect(result.issues).toEqual([
+      { kind: 'required', field: 'name', message: 'name is required' },
+      { kind: 'required', field: 'optional', message: 'optional is required' },
+    ])
+    expect(result.errors).toEqual(['name is required', 'optional is required'])
+  })
+
+  test('does not issue disabled unsatisfied required fields', () => {
+    const ump = umpire<Pick<WriteFields, 'dependent'>>({
+      fields: { dependent: { required: true } },
+      rules: [
+        enabledWhen('dependent', () => false, { reason: 'currently disabled' }),
+      ],
+    })
+
+    const result = checkCreate(ump, {})
+
+    expect(result.ok).toBe(true)
+    expect(result.availability.dependent.enabled).toBe(false)
+    expect(result.availability.dependent.required).toBe(false)
+    expect(result.availability.dependent.satisfied).toBe(false)
+    expect(result.issues).toEqual([])
+    expect(result.errors).toEqual([])
+  })
+
+  test('does not issue fouls for unsatisfied fields', () => {
+    const ump = umpire<Pick<WriteFields, 'name'>>({
+      fields: { name: { required: true } },
+      rules: [
+        defineRule({
+          type: 'contextualGate',
+          targets: ['name'],
+          sources: [],
+          constraint: 'fair',
+          evaluate() {
+            return new Map([['name', { fair: false, reason: 'reserved' }]])
+          },
+        }),
+      ],
+    })
+
+    const result = checkCreate(ump, {})
+
+    expect(result.availability.name.enabled).toBe(true)
+    expect(result.availability.name.satisfied).toBe(false)
+    expect(result.availability.name.fair).toBe(false)
+    expect(result.issues).toEqual([
+      { kind: 'required', field: 'name', message: 'reserved' },
+    ])
+    expect(result.errors).toEqual(['reserved'])
+  })
+
   test('uses context on patch and keeps transition fouls separate from current-state issues', () => {
     const ump = umpire<
       Pick<WriteFields, 'toggle' | 'dependent'>,
@@ -499,6 +568,44 @@ describe('issue derivation', () => {
     ])
     expect(result.fouls).toEqual([])
     expect(result.ok).toBe(false)
+  })
+
+  test('uses context when evaluating patch transition fouls', () => {
+    const ump = umpire<
+      Pick<WriteFields, 'toggle' | 'dependent'>,
+      { allow: boolean }
+    >({
+      fields: { toggle: {}, dependent: {} },
+      rules: [
+        enabledWhen('dependent', (values, context) => {
+          return values.toggle === true || context.allow
+        }),
+      ],
+    })
+
+    const blocked = checkPatch(
+      ump,
+      { toggle: true, dependent: 'keep me' },
+      { toggle: false },
+      { allow: false },
+    )
+    const allowed = checkPatch(
+      ump,
+      { toggle: true, dependent: 'keep me' },
+      { toggle: false },
+      { allow: true },
+    )
+
+    expect(blocked.fouls).toEqual([
+      {
+        field: 'dependent',
+        reason: 'condition not met',
+        suggestedValue: undefined,
+      },
+    ])
+    expect(allowed.fouls).toEqual([])
+    expect(allowed.issues).toEqual([])
+    expect(allowed.ok).toBe(true)
   })
 
   test('fails enabled required unsatisfied fields even when a UI would block submission', () => {
@@ -625,10 +732,13 @@ describe('exports', () => {
       )
 
     const result: WriteCheckResult<Pick<WriteFields, 'name'>> = buildResult()
+    const candidate: WriteCandidate<Pick<WriteFields, 'name'>> =
+      result.candidate
     const issue: WriteIssue<Pick<WriteFields, 'name'>> | undefined =
       result.issues[0]
     const kind: WriteIssueKind = issue?.kind ?? 'required'
 
+    expect(candidate).toEqual({})
     expect(issue).toEqual({
       kind: 'required',
       field: 'name',
@@ -637,15 +747,9 @@ describe('exports', () => {
     expect(kind).toBe('required')
   })
 
-  test('exports checkCreate and checkPatch only for runtime checking helpers', () => {
+  test('exports only the runtime checking helpers', () => {
+    expect(Object.keys(write).sort()).toEqual(['checkCreate', 'checkPatch'])
     expect(typeof write.checkCreate).toBe('function')
     expect(typeof write.checkPatch).toBe('function')
-    for (const name of [
-      'ValidationResult',
-      'validateCreate',
-      'validatePatch',
-    ]) {
-      expect(Object.hasOwn(write, name)).toBe(false)
-    }
   })
 })

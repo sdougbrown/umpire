@@ -8,9 +8,14 @@ export type WriteIssue<F extends Record<string, FieldDef>> = {
   message: string
 }
 
+export type WriteCandidate<F extends Record<string, FieldDef>> = Partial<
+  Record<keyof F & string, unknown>
+> &
+  Record<string, unknown>
+
 export type WriteCheckResult<F extends Record<string, FieldDef>> = {
   ok: boolean
-  candidate: Record<string, unknown>
+  candidate: WriteCandidate<F>
   availability: AvailabilityMap<F>
   issues: WriteIssue<F>[]
   fouls: Foul<F>[]
@@ -25,7 +30,7 @@ export function checkCreate<
   data: Record<string, unknown>,
   context?: C,
 ): WriteCheckResult<F> {
-  const candidate = { ...ump.init(), ...data }
+  const candidate: WriteCandidate<F> = { ...ump.init(), ...data }
   const availability = ump.check(candidate, context)
   const issues = issuesFromAvailability(availability)
 
@@ -48,7 +53,7 @@ export function checkPatch<
   patch: Record<string, unknown>,
   context?: C,
 ): WriteCheckResult<F> {
-  const candidate = { ...existing, ...patch }
+  const candidate = { ...existing, ...patch } as WriteCandidate<F>
   const availability = ump.check(candidate, context, existing)
   const issues = issuesFromAvailability(availability)
   const fouls = ump.play(
@@ -62,10 +67,7 @@ export function checkPatch<
     availability,
     issues,
     fouls,
-    errors: [
-      ...issues.map((issue) => issue.message),
-      ...fouls.map((foul) => foul.reason),
-    ],
+    errors: issues.map((issue) => issue.message),
   }
 }
 

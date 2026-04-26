@@ -18,6 +18,7 @@ yarn add @umpire/core @umpire/write
 ```ts
 import { checkCreate, checkPatch } from '@umpire/write'
 import type {
+  WriteCandidate,
   WriteCheckResult,
   WriteIssue,
   WriteIssueKind,
@@ -57,17 +58,25 @@ present on `result.candidate`.
 `result.ok` is `true` only when there are no current-state issues and no
 transition fouls.
 
+`result.errors` is a convenience list of current-state issue messages only.
+Transition foul details stay on `result.fouls`.
+
 ## Result Shape
 
 ```ts
 type WriteCheckResult = {
   ok: boolean
-  candidate: Record<string, unknown>
+  candidate: WriteCandidate<F>
   availability: AvailabilityMap<F>
   issues: WriteIssue<F>[]
   fouls: Foul<F>[]
   errors: string[]
 }
+
+type WriteCandidate<F extends Record<string, FieldDef>> = Partial<
+  Record<keyof F & string, unknown>
+> &
+  Record<string, unknown>
 
 type WriteIssue<F extends Record<string, FieldDef>> = {
   kind: 'required' | 'disabled' | 'foul'
