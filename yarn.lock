@@ -1975,6 +1975,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@umpire/write@workspace:packages/write":
+  version: 0.0.0-use.local
+  resolution: "@umpire/write@workspace:packages/write"
+  dependencies:
+    "@umpire/core": "workspace:^"
+  languageName: unknown
+  linkType: soft
+
 "@umpire/zod@workspace:^, @umpire/zod@workspace:packages/zod":
   version: 0.0.0-use.local
   resolution: "@umpire/zod@workspace:packages/zod"
