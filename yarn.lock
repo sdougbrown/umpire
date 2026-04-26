@@ -1980,6 +1980,7 @@ __metadata:
   resolution: "@umpire/write@workspace:packages/write"
   dependencies:
     "@umpire/core": "workspace:^"
+    "@umpire/zod": "workspace:^"
   languageName: unknown
   linkType: soft
 
