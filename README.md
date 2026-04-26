@@ -88,6 +88,7 @@ const fouls = signupUmp.play(
 | [`@umpire/vuex`](./packages/vuex/README.md)                     | Vuex 4 adapter (Vue 3)                                                        |
 | [`@umpire/zod`](./packages/zod/README.md)                       | Availability-aware Zod schemas — disabled fields produce no errors            |
 | [`@umpire/reads`](./packages/reads/README.md)                   | Derived read tables and read-backed rule bridges                              |
+| [`@umpire/write`](./packages/write/README.md)                   | Create/patch write-policy checks against Umpire availability                  |
 | [`@umpire/testing`](./packages/testing/README.md)               | Invariant probes for rule configurations                                      |
 | [`@umpire/devtools`](./packages/devtools/README.md)             | In-app inspector panel — scorecard, traces, foul log, graph view              |
 

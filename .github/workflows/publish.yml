@@ -20,6 +20,7 @@ jobs:
       dsl_changed: ${{ steps.versions.outputs.dsl_changed }}
       json_changed: ${{ steps.versions.outputs.json_changed }}
       reads_changed: ${{ steps.versions.outputs.reads_changed }}
+      write_changed: ${{ steps.versions.outputs.write_changed }}
       devtools_changed: ${{ steps.versions.outputs.devtools_changed }}
       store_changed: ${{ steps.versions.outputs.store_changed }}
       signals_changed: ${{ steps.versions.outputs.signals_changed }}
@@ -70,7 +71,7 @@ jobs:
             }
           })();
           const isZeroSha = !before || /^0+$/.test(before);
-          const packages = ['core', 'dsl', 'json', 'reads', 'devtools', 'store', 'signals', 'react', 'redux', 'pinia', 'tanstack-store', 'vuex', 'zustand', 'zod', 'testing', 'eslint-plugin', 'solid'];
+          const packages = ['core', 'dsl', 'json', 'reads', 'write', 'devtools', 'store', 'signals', 'react', 'redux', 'pinia', 'tanstack-store', 'vuex', 'zustand', 'zod', 'testing', 'eslint-plugin', 'solid'];
 
           const readCurrentVersion = (pkg) => {
             const packageJson = path.join('packages', pkg, 'package.json');
@@ -172,6 +173,16 @@ jobs:
       - name: Publish @umpire/reads
         if: needs.detect-version-changes.outputs.reads_changed == 'true'
         working-directory: packages/reads
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="latest"
+          if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
+          yarn pack -o package.tgz
+          npm publish package.tgz --provenance --access public --tag "$TAG"
+
+      - name: Publish @umpire/write
+        if: needs.detect-version-changes.outputs.write_changed == 'true'
+        working-directory: packages/write
         run: |
           VERSION=$(node -p "require('./package.json').version")
           TAG="latest"
