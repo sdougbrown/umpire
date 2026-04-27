@@ -84,8 +84,8 @@ const fouls = signupUmp.play(
 | [`@umpire/zustand`](./packages/zustand/README.md)               | Zustand adapter (satisfies the store contract natively)                       |
 | [`@umpire/redux`](./packages/redux/README.md)                   | Redux / Redux Toolkit adapter                                                 |
 | [`@umpire/tanstack-store`](./packages/tanstack-store/README.md) | TanStack Store adapter                                                        |
-| [`@umpire/pinia`](./packages/pinia/README.md)                   | Pinia adapter (Vue 3)                                                         |
-| [`@umpire/vuex`](./packages/vuex/README.md)                     | Vuex 4 adapter (Vue 3)                                                        |
+| [`@umpire/pinia`](./packages/pinia/README.md)                   | Pinia adapter                                                                 |
+| [`@umpire/vuex`](./packages/vuex/README.md)                     | Vuex 4 adapter                                                                |
 | [`@umpire/zod`](./packages/zod/README.md)                       | Availability-aware Zod schemas — disabled fields produce no errors            |
 | [`@umpire/reads`](./packages/reads/README.md)                   | Derived read tables and read-backed rule bridges                              |
 | [`@umpire/write`](./packages/write/README.md)                   | Create/patch write-policy checks against Umpire availability                  |
@@ -128,7 +128,7 @@ Each published package ships a tight `AGENTS.md` file for cross-agent discoverab
 
 ## Status
 
-Alpha.
+Stable — v1.0.0
 
 ## License
 
