@@ -11,7 +11,7 @@
 - Updated dependencies [82fdd4b]
 - Updated dependencies [4eecbeb]
 - Updated dependencies [4d8bd6c]
-  - @umpire/store@0.1.0
+  - @umpire/store@1.0.0
 
 ## 0.1.0-alpha.9
 

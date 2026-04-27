@@ -32,9 +32,9 @@
 - Updated dependencies [19fdbfe]
 - Updated dependencies [8eaa826]
 - Updated dependencies [17bd119]
-  - @umpire/core@0.1.0
+  - @umpire/core@1.0.0
 
-## 1.0.0
+## 0.1.0
 
 ### Minor Changes
 
@@ -66,4 +66,4 @@
 - Updated dependencies [19fdbfe]
 - Updated dependencies [8eaa826]
 - Updated dependencies [17bd119]
-  - @umpire/core@0.1.0
+  - @umpire/core@1.0.0

@@ -40,8 +40,8 @@
 - Updated dependencies [19fdbfe]
 - Updated dependencies [8eaa826]
 - Updated dependencies [17bd119]
-  - @umpire/core@0.1.0
-  - @umpire/signals@0.1.0
+  - @umpire/core@1.0.0
+  - @umpire/signals@1.0.0
 
 ## 0.1.0-alpha.10
 
@@ -57,8 +57,8 @@
 - Updated dependencies [73cd485]
 - Updated dependencies [1fcfe46]
 - Updated dependencies [27c5cc4]
-  - @umpire/core@0.1.0
-  - @umpire/signals@0.1.0
+  - @umpire/core@1.0.0
+  - @umpire/signals@1.0.0
 
 ## 0.1.0-alpha.9
 

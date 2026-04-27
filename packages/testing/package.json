@@ -23,7 +23,7 @@
     ".claude"
   ],
   "peerDependencies": {
-    "@umpire/core": "^1.0.0"
+    "@umpire/core": "*"
   },
   "repository": {
     "type": "git",
