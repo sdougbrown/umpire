@@ -5,6 +5,7 @@ on:
     workflows: [CI]
     types: [completed]
     branches: [main]
+  workflow_dispatch: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.workflow_run.head_branch || github.ref }}
@@ -12,7 +13,9 @@ concurrency:
 
 jobs:
   detect-version-changes:
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     outputs:
       any_changed: ${{ steps.versions.outputs.any_changed }}
@@ -37,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
 
       - uses: actions/setup-node@v4
@@ -47,12 +50,24 @@ jobs:
       - name: Detect package version changes
         id: versions
         env:
-          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          MANUAL_DISPATCH: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node <<'NODE' >> "$GITHUB_OUTPUT"
           const { execFileSync } = require('node:child_process');
           const fs = require('node:fs');
           const path = require('node:path');
+
+          const packages = ['core', 'dsl', 'json', 'reads', 'write', 'devtools', 'store', 'signals', 'react', 'redux', 'pinia', 'tanstack-store', 'vuex', 'zustand', 'zod', 'testing', 'eslint-plugin', 'solid'];
+
+          // Manual dispatch: mark everything changed so all packages are published.
+          if (process.env.MANUAL_DISPATCH === 'true') {
+            for (const pkg of packages) {
+              console.log(`${pkg.replace(/-/g, '_')}_changed=true`);
+            }
+            console.log('any_changed=true');
+            process.exit(0);
+          }
 
           const head = process.env.HEAD_SHA;
           const before = (() => {
@@ -71,7 +86,6 @@ jobs:
             }
           })();
           const isZeroSha = !before || /^0+$/.test(before);
-          const packages = ['core', 'dsl', 'json', 'reads', 'write', 'devtools', 'store', 'signals', 'react', 'redux', 'pinia', 'tanstack-store', 'vuex', 'zustand', 'zod', 'testing', 'eslint-plugin', 'solid'];
 
           const readCurrentVersion = (pkg) => {
             const packageJson = path.join('packages', pkg, 'package.json');
@@ -124,7 +138,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Enable Corepack
         run: corepack enable
@@ -148,7 +162,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
@@ -163,7 +177,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
@@ -178,7 +192,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
@@ -193,7 +207,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
@@ -208,7 +222,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
@@ -223,7 +237,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
@@ -238,7 +252,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
@@ -253,7 +267,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
@@ -268,7 +282,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
@@ -283,7 +297,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
@@ -298,7 +312,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
@@ -313,7 +327,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
@@ -328,7 +342,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
@@ -343,7 +357,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
@@ -358,7 +372,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
@@ -373,7 +387,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
@@ -388,7 +402,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
@@ -403,7 +417,7 @@ jobs:
           TAG="latest"
           if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
           PKG=$(node -p "require('./package.json').name")
-          if npm view "$PKG@$VERSION" version 2>/dev/null | grep -qF "$VERSION"; then
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
             echo "$PKG@$VERSION already published, skipping"
           else
             yarn pack -o package.tgz
