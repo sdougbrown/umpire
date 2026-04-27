@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
+    "paths": {
+      "@umpire/core": ["../core/src/index.ts"],
+      "@umpire/core/*": ["../core/src/*"],
+      "@umpire/write": ["./src/index.ts"],
+      "@umpire/write/*": ["./src/*"],
+      "@umpire/zod": ["../zod/src/index.ts"],
+      "@umpire/zod/*": ["../zod/src/*"]
+    }
+  },
+  "include": ["src"],
+  "references": [{ "path": "../core" }, { "path": "../zod" }]
+}

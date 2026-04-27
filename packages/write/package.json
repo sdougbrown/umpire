@@ -1,0 +1,41 @@
+{
+  "name": "@umpire/write",
+  "version": "0.1.0-alpha.10",
+  "description": "Write-policy helpers for syncing Umpire state",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepack": "node ../../scripts/materialize-agent-compat.mjs prepack",
+    "postpack": "node ../../scripts/materialize-agent-compat.mjs postpack",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "files": [
+    "dist",
+    "AGENTS.md",
+    ".claude"
+  ],
+  "dependencies": {
+    "@umpire/core": "workspace:^"
+  },
+  "devDependencies": {
+    "@umpire/zod": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sdougbrown/umpire.git",
+    "directory": "packages/write"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
