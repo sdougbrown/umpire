@@ -139,6 +139,7 @@ export default defineConfig({
             { label: 'Validation', collapsed: false, items: [
               { label: 'Overview', slug: 'adapters/validation' },
               { label: 'Zod', slug: 'adapters/validation/zod' },
+              { label: 'Effect', slug: 'adapters/validation/effect' },
             ] },
           ],
         },

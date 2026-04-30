@@ -78,14 +78,16 @@ Each library's "always-fail with message" primitive:
 | Library  | Expression |
 |----------|-----------|
 | Zod      | `.refine(() => false, { message })` |
+| Effect   | `.pipe(Schema.filter(() => false, { message: () => message }))` |
 | Yup      | `.test('foul', message, () => false)` |
 | Valibot  | `check(() => false, message)` |
 | Joi      | `.custom(() => { throw new Error(message) })` |
 
-`@umpire/zod` is the reference implementation. Future packages like `@umpire/yup` or `@umpire/valibot` would follow the same contract.
+`@umpire/zod` is the reference implementation. `@umpire/effect` follows the same contract for Effect Schema. Future packages like `@umpire/yup` or `@umpire/valibot` would follow the same pattern.
 
 ## See also
 
 - [`@umpire/zod`](/umpire/adapters/validation/zod/) — reference implementation
+- [`@umpire/effect`](/umpire/adapters/validation/effect/) — Effect Schema adapter and SubscriptionRef bridge
 - [Composing with Validation](/umpire/concepts/validation/) — manual patterns and the `check()` bridge
 - [`fairWhen()`](/umpire/api/rules/fair-when/) — the rule that produces `fair: false`
