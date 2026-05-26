@@ -43,7 +43,7 @@
   border-radius: var(--umpire-demo-radius-lg);
   overflow: hidden;
   background:
-    linear-gradient(180deg, rgba(107, 254, 156, 0.035), transparent 18%),
+    linear-gradient(180deg, rgba(55, 234, 157, 0.035), transparent 18%),
     var(--umpire-demo-surface);
   backdrop-filter: blur(18px);
 }
@@ -54,8 +54,8 @@
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.9rem 1rem 0.85rem;
-  border-bottom: 1px solid rgba(107, 254, 156, 0.1);
-  background: rgba(107, 254, 156, 0.045);
+  border-bottom: 1px solid rgba(55, 234, 157, 0.1);
+  background: rgba(55, 234, 157, 0.045);
 }
 
 .c-umpire-demo__eyebrow {
@@ -264,7 +264,7 @@
 
 .c-umpire-demo__status.is-enabled {
   color: var(--umpire-demo-green);
-  border-color: rgba(107, 254, 156, 0.2);
+  border-color: rgba(55, 234, 157, 0.2);
   background: var(--umpire-demo-green-8);
 }
 
@@ -401,7 +401,7 @@
 }
 
 .c-umpire-demo__json-shell {
-  border: 1px solid rgba(107, 254, 156, 0.1);
+  border: 1px solid rgba(55, 234, 157, 0.1);
   border-radius: var(--umpire-demo-radius-md);
   overflow: hidden;
   background: var(--umpire-demo-white-2);
@@ -439,7 +439,7 @@
   padding: 0.9rem 0.95rem 1rem;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent 18%),
-    rgba(10, 10, 10, 0.8);
+    rgba(13, 20, 37, 0.85);
   color: var(--umpire-demo-text);
   font-family: var(--umpire-demo-font-mono);
   font-size: 0.8rem;
@@ -473,7 +473,7 @@
 }
 
 .c-umpire-demo__input:focus {
-  border-color: rgba(107, 254, 156, 0.34);
+  border-color: rgba(55, 234, 157, 0.34);
 }
 
 .c-umpire-demo__input::placeholder {

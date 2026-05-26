@@ -1,22 +1,22 @@
 .c-umpire-demo {
-  --umpire-demo-green: #6bfe9c;
+  --umpire-demo-green: #37EA9D;
   --umpire-demo-yellow: #fed023;
   --umpire-demo-red: #ff716c;
-  --umpire-demo-bg: #0e0e0e;
-  --umpire-demo-surface: rgba(18, 18, 18, 0.96);
-  --umpire-demo-border: rgba(107, 254, 156, 0.12);
-  --umpire-demo-text: #f5f7f4;
+  --umpire-demo-bg: #15203A;
+  --umpire-demo-surface: rgba(21, 32, 58, 0.96);
+  --umpire-demo-border: rgba(55, 234, 157, 0.12);
+  --umpire-demo-text: #e8eff8;
   --umpire-demo-text-dim: rgba(245, 247, 244, 0.52);
   --umpire-demo-text-muted: rgba(245, 247, 244, 0.36);
   --umpire-demo-shadow: rgba(0, 0, 0, 0.28);
   --umpire-demo-root-padding: 1rem;
   --umpire-demo-root-radius: 1.15rem;
-  --umpire-demo-root-border: rgba(107, 254, 156, 0.08);
+  --umpire-demo-root-border: rgba(55, 234, 157, 0.08);
   --umpire-demo-root-accent-primary-position: top left;
-  --umpire-demo-root-accent-primary: rgba(107, 254, 156, 0.13);
+  --umpire-demo-root-accent-primary: rgba(55, 234, 157, 0.13);
   --umpire-demo-root-accent-primary-size: 28%;
   --umpire-demo-root-accent-secondary-position: bottom right;
-  --umpire-demo-root-accent-secondary: rgba(254, 208, 35, 0.09);
+  --umpire-demo-root-accent-secondary: rgba(58, 120, 240, 0.09);
   --umpire-demo-root-accent-secondary-size: 26%;
   --umpire-demo-root-highlight-stop: 30%;
   --umpire-demo-layout-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -87,15 +87,15 @@
   --umpire-demo-white-8: rgba(255, 255, 255, 0.08);
 
   /* Green (brand) at various opacities */
-  --umpire-demo-green-4: rgba(107, 254, 156, 0.04);
-  --umpire-demo-green-8: rgba(107, 254, 156, 0.08);
-  --umpire-demo-green-10: rgba(107, 254, 156, 0.10);
-  --umpire-demo-green-12: rgba(107, 254, 156, 0.12);
-  --umpire-demo-green-14: rgba(107, 254, 156, 0.14);
-  --umpire-demo-green-16: rgba(107, 254, 156, 0.16);
-  --umpire-demo-green-18: rgba(107, 254, 156, 0.18);
-  --umpire-demo-green-24: rgba(107, 254, 156, 0.24);
-  --umpire-demo-green-28: rgba(107, 254, 156, 0.28);
+  --umpire-demo-green-4: rgba(55, 234, 157, 0.04);
+  --umpire-demo-green-8: rgba(55, 234, 157, 0.08);
+  --umpire-demo-green-10: rgba(55, 234, 157, 0.10);
+  --umpire-demo-green-12: rgba(55, 234, 157, 0.12);
+  --umpire-demo-green-14: rgba(55, 234, 157, 0.14);
+  --umpire-demo-green-16: rgba(55, 234, 157, 0.16);
+  --umpire-demo-green-18: rgba(55, 234, 157, 0.18);
+  --umpire-demo-green-24: rgba(55, 234, 157, 0.24);
+  --umpire-demo-green-28: rgba(55, 234, 157, 0.28);
 
   /* Yellow (foul) at various opacities */
   --umpire-demo-yellow-8: rgba(254, 208, 35, 0.08);
