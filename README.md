@@ -1,15 +1,10 @@
-# 🛂 Umpire
+# Umpire • [![CI](https://github.com/umpire-tools/umpire/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/umpire-tools/umpire/actions/workflows/ci.yml) [![Coverage](https://coveralls.io/repos/github/umpire-tools/umpire/badge.svg?branch=main)](https://coveralls.io/github/umpire-tools/umpire?branch=main) [![npm](https://img.shields.io/npm/v/@umpire/core?label=%40umpire%2Fcore)](https://www.npmjs.com/package/@umpire/core) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-> Rule the form. Play the field.
+> Get your app to play by the rules
 
 Umpire is a declarative field-availability engine. Define fields, declare rules between them, and Umpire tells you which fields are in play — and which stale values just fell out. It answers a structural question, not a validation question: given the current values and conditions, what should be enabled right now?
 
 Forms are the most common use case, but Umpire works anywhere state fits a plain object with interdependent options — game boards, config panels, pricing calculators, permission matrices. If it has fields and rules, Umpire can call the game.
-
-[![CI](https://github.com/umpire-tools/umpire/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/umpire-tools/umpire/actions/workflows/ci.yml)
-[![Coverage](https://coveralls.io/repos/github/umpire-tools/umpire/badge.svg?branch=main)](https://coveralls.io/github/umpire-tools/umpire?branch=main)
-[![npm](https://img.shields.io/npm/v/@umpire/core?label=%40umpire%2Fcore)](https://www.npmjs.com/package/@umpire/core)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 [Docs](https://umpire.tools/) • [GitHub](https://github.com/umpire-tools/umpire)
 
@@ -33,7 +28,7 @@ ump.check({ password: 'hunter2', confirmPassword: '' }).confirmPassword
 // { enabled: true, satisfied: false, fair: true, required: false, reason: null, reasons: [] }
 ```
 
-For a larger example with conditions, plan-gated fields, and `play()` transitions, see the [Signup example](https://sdougbrown.github.io/umpire/examples/signup/) in the docs.
+For a larger example with conditions, plan-gated fields, and `play()` transitions, see the [Signup example](https://umpire.tools/examples/signup/) in the docs.
 
 ## Packages
 
