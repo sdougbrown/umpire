@@ -1,6 +1,6 @@
 ---
 title: oneOf()
-description: Only one branch of fields stays enabled at a time.
+description: Mutually exclusive branches — when one branch of fields is active, all other branches are disabled. Use for scheduling strategies, shipping modes, and any pick-one pattern.
 ---
 
 Mutually exclusive branches — when one branch is active, all other branches' fields are disabled. Use for scheduling strategies, shipping modes, handling types, or any "pick one" pattern.

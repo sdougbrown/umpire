@@ -1,6 +1,6 @@
 ---
 title: enabledWhen()
-description: Enable a field only when a predicate returns true.
+description: Enable a field only when a predicate returns true. The go-to rule for condition-driven gating — plan tiers, feature flags, permissions, and environment checks.
 ---
 
 Enables a field only when the predicate returns `true`. The most common rule for condition-driven gating — plan tiers, feature flags, permissions, environment checks.

@@ -1,6 +1,6 @@
 ---
 title: Validator Integrations
-description: How Umpire's availability map connects to schema-based validation libraries like Zod, Yup, and Valibot.
+description: How Umpire's availability map connects to schema-based validation libraries like Zod and Effect — skip disabled fields, respect required/optional, and reject foul values.
 ---
 
 Umpire decides which fields are active. Validation libraries decide whether their values are correct. Validator integrations are the glue between the two: they read the availability map and build a schema that reflects the current shape of your data.

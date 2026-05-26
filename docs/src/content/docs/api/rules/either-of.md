@@ -1,6 +1,6 @@
 ---
 title: eitherOf()
-description: Named OR paths built from ANDed rule groups.
+description: Named OR branches where each branch is a group of rules that must all pass together. Use when paths need labels or each branch has multiple rules — and challenge() should name the match.
 ---
 
 Named OR paths — each branch is a group of rules that must all pass together (AND). If any branch fully satisfies, the outer rule passes (OR). Name your branches when you need to debug which path matched, or when each path is more than one rule.

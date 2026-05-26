@@ -1,6 +1,6 @@
 ---
 title: Rules Overview
-description: The built-in rule helpers for composing field availability.
+description: Reference for all Umpire rule helpers — requires, disables, enabledWhen, fairWhen, oneOf, anyOf, and eitherOf — with signatures and usage guidance.
 ---
 
 Every rule helper returns a `Rule<F, C>` object. Rules are plain values — they can be composed, stored, and combined with `anyOf()` or `eitherOf()`.

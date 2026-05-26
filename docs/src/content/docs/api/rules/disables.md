@@ -1,6 +1,6 @@
 ---
 title: disables()
-description: Disable target fields when a source is active.
+description: Disable one or more target fields when a source field holds a satisfied value. Unlike requires(), disables() only inspects source values, not source availability.
 ---
 
 When the source is active, the targets are disabled. Unlike `requires()`, `disables()` only checks whether the source value is satisfied — it does not check the source's own availability.

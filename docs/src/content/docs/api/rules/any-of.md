@@ -1,6 +1,6 @@
 ---
 title: anyOf()
-description: Pass if any inner rule passes — OR logic for availability.
+description: Pass if any inner rule passes — OR logic for Umpire availability rules. The lightweight alternative to eitherOf() when paths are single rules and don't need names.
 ---
 
 Multiple rules targeting the same field are ANDed by default. Wrap them in `anyOf()` when any one successful path should unlock the target.

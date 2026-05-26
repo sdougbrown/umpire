@@ -1,6 +1,6 @@
 ---
 title: umpire()
-description: Create an Umpire instance from field definitions and rules.
+description: Create an Umpire availability engine from field definitions and rules. The factory that powers ump.check(), ump.play(), and ump.scorecard().
 ---
 
 `umpire()` is the factory that turns field definitions plus rules into a reusable availability engine.
