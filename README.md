@@ -6,9 +6,12 @@ Umpire is a declarative field-availability engine. Define fields, declare rules 
 
 Forms are the most common use case, but Umpire works anywhere state fits a plain object with interdependent options — game boards, config panels, pricing calculators, permission matrices. If it has fields and rules, Umpire can call the game.
 
-[Docs](https://umpire.tools/) • [GitHub](https://github.com/umpire-tools/umpire)
+[![CI](https://github.com/umpire-tools/umpire/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/umpire-tools/umpire/actions/workflows/ci.yml)
+[![Coverage](https://coveralls.io/repos/github/umpire-tools/umpire/badge.svg?branch=main)](https://coveralls.io/github/umpire-tools/umpire?branch=main)
+[![npm](https://img.shields.io/npm/v/@umpire/core?label=%40umpire%2Fcore)](https://www.npmjs.com/package/@umpire/core)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-[![Coverage Status](https://coveralls.io/repos/github/umpire-tools/umpire/badge.svg?branch=main)](https://coveralls.io/github/umpire-tools/umpire?branch=main)
+[Docs](https://umpire.tools/) • [GitHub](https://github.com/umpire-tools/umpire)
 
 ## Quick Example
 
