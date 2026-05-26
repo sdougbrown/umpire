@@ -34,22 +34,27 @@ export default defineConfig({
     preact({ include: ['**/SignalsFineGrainedDemo.*', '**/FreightQuoteDemo.*', '**/LearnDemos.*'] }),
     react({ exclude: ['**/SignalsFineGrainedDemo.*', '**/FreightQuoteDemo.*', '**/LearnDemos.*'] }),
     starlight({
-      title: '🛂 Umpire',
+      title: 'Umpire',
       description: 'Declare rules. Derive availability. Play the field.',
       favicon: '/favicon.svg',
+      logo: {
+        src: './src/assets/umpire-nav-logo.svg',
+        alt: 'Umpire',
+        replacesTitle: true,
+      },
       customCss: ['./src/styles/main.css'],
       expressiveCode: {
         themes: ['github-dark'],
         styleOverrides: {
-          codeBg: 'rgba(18, 18, 18, 0.96)',
-          codeSelectionBg: 'rgba(107, 254, 156, 0.12)',
-          borderColor: 'rgba(107, 254, 156, 0.14)',
+          codeBg: 'rgba(17, 24, 40, 0.96)',
+          codeSelectionBg: 'rgba(55, 234, 157, 0.12)',
+          borderColor: 'rgba(55, 234, 157, 0.12)',
           borderRadius: '0.5rem',
           codeFontFamily: "'JetBrains Mono', monospace",
           codeFontSize: '0.85rem',
           codeLineHeight: '1.7',
-          scrollbarThumbColor: 'rgba(107, 254, 156, 0.2)',
-          scrollbarThumbHoverColor: 'rgba(107, 254, 156, 0.4)',
+          scrollbarThumbColor: 'rgba(55, 234, 157, 0.20)',
+          scrollbarThumbHoverColor: 'rgba(55, 234, 157, 0.40)',
         },
       },
       social: [
@@ -167,7 +172,7 @@ export default defineConfig({
           tag: 'meta',
           attrs: {
             name: 'theme-color',
-            content: '#0e0e0e',
+            content: '#15203A',
           },
         },
         {

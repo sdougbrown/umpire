@@ -1,1 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="0.9em" font-size="80">🛂</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="fav-blue" x1="40.5775" y1="-806.1741" x2="40.5775" y2="-875.6033"
+        gradientTransform="matrix(1,0,0,-1,0,-790)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3a78f0"/>
+      <stop offset="1" stop-color="#3461ef"/>
+    </linearGradient>
+    <linearGradient id="fav-mint" x1="121.7169" y1="-792.3992" x2="121.7169" y2="-884.1551"
+        gradientTransform="matrix(1,0,0,-1,0,-790)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#37ea9d"/>
+      <stop offset="1" stop-color="#1bc5aa"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="18" fill="#15203a"/>
+  <g transform="translate(10,26.3) scale(0.493)">
+    <path fill="url(#fav-blue)" d="M70.4309,47.06a12.24,12.24,0,0,1-5.036-.9912,14.8521,14.8521,0,0,1-7.8206-7.8557,12.669,12.669,0,0,1-1.0221-5.2075V0H0V33.02A69.04,69.04,0,0,0,5.6434,60.6556,70.4381,70.4381,0,0,0,39.1185,96.1317L81.1549,47.06Z"/>
+    <path fill="url(#fav-mint)" d="M123.1909,96.1465a71.4817,71.4817,0,0,0,18.5-13.3442,70.8046,70.8046,0,0,0,14.945-22.1467A69.03,69.03,0,0,0,162.28,33.02V0h-56.538V33.3606a12.4515,12.4515,0,0,1-.977,5.03,13.9908,13.9908,0,0,1-3.052,4.4678A15.4859,15.4859,0,0,1,96.9,46.0391a12.32,12.32,0,0,1-5.037,1.0208H81.1539Z"/>
+  </g>
+</svg>
