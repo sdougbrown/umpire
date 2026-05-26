@@ -15,8 +15,8 @@
   padding: 0.4rem 0.72rem;
   border-radius: var(--umpire-demo-radius-pill);
   border: 1px solid var(--umpire-demo-green-28);
-  background: rgba(14, 14, 14, 0.9);
-  color: var(--umpire-demo-green, #6bfe9c);
+  background: rgba(13, 20, 37, 0.9);
+  color: var(--umpire-demo-green, #37EA9D);
   font-family: var(--umpire-demo-font-mono);
   font-size: 0.68rem;
   font-weight: 700;
@@ -41,7 +41,7 @@
   --umpire-demo-fouls-radius: 1rem;
   --umpire-demo-fouls-bg:
     linear-gradient(90deg, rgba(254, 208, 35, 0.14), rgba(254, 208, 35, 0.05)),
-    rgba(18, 18, 18, 0.92);
+    rgba(17, 24, 40, 0.92);
   --umpire-demo-fouls-shadow: none;
   --umpire-demo-fouls-copy-gap: 0;
   --umpire-demo-fouls-list-direction: row;
@@ -113,7 +113,7 @@
   padding: 0.4rem 0.72rem;
   border-radius: var(--umpire-demo-radius-pill);
   border: 1px solid var(--umpire-demo-green-28);
-  background: rgba(14, 14, 14, 0.9);
+  background: rgba(13, 20, 37, 0.9);
   color: var(--umpire-demo-green);
   font-family: var(--umpire-demo-font-mono);
   font-size: 0.68rem;

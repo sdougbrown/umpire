@@ -160,8 +160,8 @@
 }
 
 .c-minesweeper-demo__new-game {
-  border: 1px solid rgba(107, 254, 156, 0.26);
-  background: rgba(107, 254, 156, 0.1);
+  border: 1px solid rgba(55, 234, 157, 0.26);
+  background: rgba(55, 234, 157, 0.1);
   color: var(--umpire-demo-green);
 }
 

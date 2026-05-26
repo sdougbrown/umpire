@@ -18,7 +18,7 @@
   border-radius: var(--umpire-demo-radius-lg);
   overflow: hidden;
   background:
-    linear-gradient(180deg, rgba(107, 254, 156, 0.035), transparent 18%),
+    linear-gradient(180deg, rgba(55, 234, 157, 0.035), transparent 18%),
     var(--umpire-demo-surface);
   backdrop-filter: blur(18px);
 }
@@ -30,7 +30,7 @@
   border: 1px solid var(--umpire-demo-green-18);
   border-radius: var(--umpire-demo-radius-lg);
   background:
-    linear-gradient(135deg, rgba(107, 254, 156, 0.1), rgba(254, 208, 35, 0.06)),
+    linear-gradient(135deg, rgba(55, 234, 157, 0.1), rgba(254, 208, 35, 0.06)),
     var(--umpire-demo-white-2);
   box-shadow: inset 0 1px 0 var(--umpire-demo-white-4);
 }
@@ -44,7 +44,7 @@
   padding: 0.4rem 0.72rem;
   border-radius: var(--umpire-demo-radius-pill);
   border: 1px solid var(--umpire-demo-green-28);
-  background: rgba(14, 14, 14, 0.9);
+  background: rgba(13, 20, 37, 0.9);
   color: var(--umpire-demo-green);
   font-family: var(--umpire-demo-font-mono);
   font-size: 0.68rem;

@@ -18,7 +18,7 @@
   padding: 0.9rem 1rem;
   border: 1px solid var(--umpire-demo-green-12);
   border-radius: var(--umpire-demo-radius-md);
-  background: rgba(107, 254, 156, 0.05);
+  background: rgba(55, 234, 157, 0.05);
   color: rgba(245, 247, 244, 0.8);
 }
 
@@ -33,7 +33,7 @@
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: var(--umpire-demo-radius-lg);
   background:
-    linear-gradient(180deg, rgba(107, 254, 156, 0.035), transparent 42%),
+    linear-gradient(180deg, rgba(55, 234, 157, 0.035), transparent 42%),
     rgba(255, 255, 255, 0.025);
 }
 
@@ -63,7 +63,7 @@
 .c-account-settings-demo__summary-code {
   font-family: var(--umpire-demo-font-mono);
   font-size: 0.74rem;
-  color: #6bfe9c;
+  color: #37EA9D;
 }
 
 .c-account-settings-demo__field-grid {
@@ -96,8 +96,8 @@
 }
 
 .c-account-settings-demo__chip.is-enabled {
-  color: #6bfe9c;
-  border-color: rgba(107, 254, 156, 0.26);
+  color: #37EA9D;
+  border-color: rgba(55, 234, 157, 0.26);
   background: var(--umpire-demo-green-8);
 }
 
@@ -164,7 +164,7 @@
   font-size: 0.74rem;
   letter-spacing: var(--umpire-demo-tracking);
   text-transform: uppercase;
-  color: #6bfe9c;
+  color: #37EA9D;
 }
 
 .c-account-settings-demo__rule span {

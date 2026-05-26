@@ -8,7 +8,7 @@
   max-width: 24rem;
   background:
     linear-gradient(135deg, var(--umpire-demo-green-8), transparent 45%),
-    linear-gradient(180deg, var(--umpire-demo-white-3), rgba(26, 26, 26, 0.96));
+    linear-gradient(180deg, var(--umpire-demo-white-3), rgba(30, 40, 64, 0.96));
   box-shadow: var(--umpire-glow);
 }
 

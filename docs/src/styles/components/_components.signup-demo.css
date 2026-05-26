@@ -27,7 +27,7 @@
   --umpire-demo-fouls-radius: 1rem;
   --umpire-demo-fouls-bg:
     linear-gradient(90deg, rgba(254, 208, 35, 0.14), rgba(254, 208, 35, 0.05)),
-    rgba(18, 18, 18, 0.92);
+    rgba(17, 24, 40, 0.92);
   --umpire-demo-fouls-shadow: none;
   --umpire-demo-fouls-copy-gap: 0;
   --umpire-demo-fouls-list-direction: row;
@@ -62,7 +62,7 @@
 }
 
 .c-signup-demo__required {
-  color: rgba(107, 254, 156, 0.72);
+  color: rgba(55, 234, 157, 0.72);
 }
 
 .c-signup-demo__reason {
@@ -98,7 +98,7 @@
 
 .c-signup-demo__submit.is-ready {
   background: var(--umpire-demo-green-16);
-  border-color: rgba(107, 254, 156, 0.34);
+  border-color: rgba(55, 234, 157, 0.34);
   color: var(--umpire-demo-green);
 }
 
@@ -120,7 +120,7 @@
   padding: 0.32rem 0.72rem;
   border: 1px solid var(--umpire-demo-green-28);
   border-radius: 2rem;
-  background: rgba(107, 254, 156, 0.1);
+  background: rgba(55, 234, 157, 0.1);
   color: var(--umpire-demo-green);
   font-family: var(--umpire-demo-font-mono);
   font-size: 0.7rem;

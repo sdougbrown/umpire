@@ -9,8 +9,8 @@
 /* Stadium scoreboard syntax highlighting overrides */
 .expressive-code span[style*="--0:#ff7b72"],
 .expressive-code span[style*="--0:#ff7b72;"] {
-  --0: #6bfe9c !important;
-  color: #6bfe9c !important;
+  --0: #37EA9D !important;
+  color: #37EA9D !important;
 }
 
 /* Strings and template literals: foul yellow */

@@ -5,7 +5,7 @@
   border-radius: 1rem;
   background:
     linear-gradient(135deg, var(--umpire-demo-green-4), transparent 40%),
-    rgba(14, 14, 14, 0.96);
+    rgba(13, 20, 37, 0.96);
   box-shadow: var(--umpire-glow);
 }
 
@@ -41,9 +41,9 @@
 }
 
 .c-lineup__toggle--green {
-  background: rgba(107, 254, 156, 0.15);
-  border-color: rgba(107, 254, 156, 0.4);
-  color: #6bfe9c;
+  background: rgba(55, 234, 157, 0.15);
+  border-color: rgba(55, 234, 157, 0.4);
+  color: #37EA9D;
 }
 
 .c-lineup__toggle--yellow {
@@ -78,7 +78,7 @@
   margin-bottom: 1rem;
   background:
     linear-gradient(135deg, var(--umpire-demo-yellow-8), transparent 45%),
-    rgba(18, 18, 18, 0.96);
+    rgba(17, 24, 40, 0.96);
 }
 
 .c-lineup__fouls-title {
@@ -130,12 +130,12 @@
 
 .c-lineup__panel--roster {
   border: 1px solid var(--umpire-demo-green-12);
-  background: rgba(18, 18, 18, 0.96);
+  background: rgba(17, 24, 40, 0.96);
 }
 
 .c-lineup__panel--card {
   border: 1px solid var(--umpire-demo-yellow-12);
-  background: rgba(18, 18, 18, 0.96);
+  background: rgba(17, 24, 40, 0.96);
 }
 
 .c-lineup__panel-header {
@@ -150,7 +150,7 @@
 }
 
 .c-lineup__panel-header--roster {
-  background: rgba(107, 254, 156, 0.06);
+  background: rgba(55, 234, 157, 0.06);
 }
 
 .c-lineup__panel-header--card {
@@ -158,7 +158,7 @@
 }
 
 .c-lineup__panel-accent--green {
-  color: #6bfe9c;
+  color: #37EA9D;
 }
 
 .c-lineup__panel-accent--yellow {
@@ -200,8 +200,8 @@
 }
 
 .c-lineup__dot--green {
-  background: #6bfe9c;
-  box-shadow: 0 0 5px #6bfe9c;
+  background: #37EA9D;
+  box-shadow: 0 0 5px #37EA9D;
 }
 
 .c-lineup__dot--red {
@@ -264,8 +264,8 @@
 }
 
 .c-lineup__badge--in {
-  color: #6bfe9c;
-  background: rgba(107, 254, 156, 0.1);
+  color: #37EA9D;
+  background: rgba(55, 234, 157, 0.1);
 }
 
 /* Injury button */
@@ -310,7 +310,7 @@
 }
 
 .c-lineup__slot-row.is-selecting {
-  background: rgba(107, 254, 156, 0.06);
+  background: rgba(55, 234, 157, 0.06);
 }
 
 .c-lineup__slot-order {
@@ -374,8 +374,8 @@
   padding: 0.15rem 0;
   border-radius: 6px;
   overflow: hidden;
-  border: 1px solid rgba(107, 254, 156, 0.15);
-  background: rgba(26, 26, 26, 0.96);
+  border: 1px solid rgba(55, 234, 157, 0.15);
+  background: rgba(30, 40, 64, 0.96);
 }
 
 .c-lineup__eligible-option {
@@ -396,7 +396,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #6bfe9c;
+  background: #37EA9D;
   flex-shrink: 0;
 }
 

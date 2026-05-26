@@ -1,38 +1,43 @@
 :root {
-  --sl-color-accent-low: #0d3117;
-  --sl-color-accent: #6bfe9c;
-  --sl-color-accent-high: #b8ffd0;
-  --sl-color-white: #f9f9f9;
-  --sl-color-gray-1: #e0e0e0;
-  --sl-color-gray-2: #a0a0a0;
-  --sl-color-gray-3: #505050;
-  --sl-color-gray-4: #262626;
-  --sl-color-gray-5: #1a1a1a;
-  --sl-color-gray-6: #121212;
-  --sl-color-gray-7: #0f0f0f;
-  --sl-color-black: #0e0e0e;
-  --sl-color-text: #e0e0e0;
-  --sl-color-text-accent: #6bfe9c;
-  --sl-color-bg: #0e0e0e;
-  --sl-color-bg-nav: rgba(18, 18, 18, 0.76);
-  --sl-color-bg-sidebar: rgba(15, 15, 15, 0.94);
-  --sl-color-bg-inline-code: #1a1a1a;
-  --sl-color-hairline-shade: rgba(107, 254, 156, 0.14);
+  /* Accent — Mint replaces neon green */
+  --sl-color-accent-low: #0b2a1f;
+  --sl-color-accent: #37EA9D;
+  --sl-color-accent-high: #a8f5d8;
+  /* Neutrals — navy-tinted gray scale */
+  --sl-color-white: #f0f4fc;
+  --sl-color-gray-1: #dce4f0;
+  --sl-color-gray-2: #8e9ec0;
+  --sl-color-gray-3: #3d5070;
+  --sl-color-gray-4: #263250;
+  --sl-color-gray-5: #1e2840;
+  --sl-color-gray-6: #172030;
+  --sl-color-gray-7: #111828;
+  --sl-color-black: #0d1425;
+  /* Text */
+  --sl-color-text: #dce4f0;
+  --sl-color-text-accent: #37EA9D;
+  /* Backgrounds */
+  --sl-color-bg: #15203A;
+  --sl-color-bg-nav: rgba(21, 32, 58, 0.80);
+  --sl-color-bg-sidebar: rgba(17, 24, 40, 0.96);
+  --sl-color-bg-inline-code: #1e2840;
+  /* Hairlines — mint at low opacity */
+  --sl-color-hairline-shade: rgba(55, 234, 157, 0.12);
   --sl-font-system: 'Work Sans', sans-serif;
   --sl-font-system-mono: 'JetBrains Mono', monospace;
-  --umpire-green: #6bfe9c;
+  --umpire-green: #37EA9D;
   --umpire-yellow: #fed023;
   --umpire-red: #ff716c;
-  --umpire-surface: rgba(26, 26, 26, 0.82);
-  --umpire-surface-strong: rgba(38, 38, 38, 0.9);
-  --umpire-glow: 0 0 60px -15px rgba(107, 254, 156, 0.15);
+  --umpire-surface: rgba(21, 32, 58, 0.82);
+  --umpire-surface-strong: rgba(28, 43, 72, 0.92);
+  --umpire-glow: 0 0 60px -15px rgba(55, 234, 157, 0.14);
   --umpire-font-mono: 'JetBrains Mono', monospace;
   --umpire-font-heading: 'Space Grotesk', sans-serif;
   --umpire-font-body: 'Work Sans', sans-serif;
   --umpire-demo-white-2: rgba(255, 255, 255, 0.02);
   --umpire-demo-white-3: rgba(255, 255, 255, 0.03);
-  --umpire-demo-green-8: rgba(107, 254, 156, 0.08);
-  --umpire-demo-green-16: rgba(107, 254, 156, 0.16);
+  --umpire-demo-green-8: rgba(55, 234, 157, 0.08);
+  --umpire-demo-green-16: rgba(55, 234, 157, 0.16);
   --umpire-demo-red-12: rgba(255, 113, 108, 0.12);
   /* Lock aside caution colors to dark values — Starlight's [data-theme='light'] vars are
      inside @layer starlight.base so unlayered :root rules here always win. */

@@ -13,7 +13,7 @@
   border: 1px solid var(--umpire-demo-green-12);
   border-radius: 10px;
   overflow: hidden;
-  background: rgba(18, 18, 18, 0.96);
+  background: rgba(17, 24, 40, 0.96);
 }
 
 .c-captcha-demo__header {
@@ -26,11 +26,11 @@
   letter-spacing: var(--umpire-demo-tracking-wide);
   text-transform: uppercase;
   color: #a0a0a0;
-  background: rgba(107, 254, 156, 0.06);
+  background: rgba(55, 234, 157, 0.06);
 }
 
 .c-captcha-demo__header-accent {
-  color: #6bfe9c;
+  color: #37EA9D;
 }
 
 .c-captcha-demo__body {
@@ -69,7 +69,7 @@
 }
 
 .c-captcha-demo__input:focus {
-  border-color: rgba(107, 254, 156, 0.4);
+  border-color: rgba(55, 234, 157, 0.4);
 }
 
 .c-captcha-demo__input::placeholder {
@@ -96,8 +96,8 @@
 }
 
 .c-captcha-demo__captcha.is-solved {
-  border-color: rgba(107, 254, 156, 0.3);
-  background: rgba(107, 254, 156, 0.06);
+  border-color: rgba(55, 234, 157, 0.3);
+  background: rgba(55, 234, 157, 0.06);
 }
 
 .c-captcha-demo__checkbox {
@@ -113,13 +113,13 @@
 }
 
 .c-captcha-demo__checkbox.is-checked {
-  border-color: #6bfe9c;
-  background: rgba(107, 254, 156, 0.2);
+  border-color: #37EA9D;
+  background: rgba(55, 234, 157, 0.2);
 }
 
 .c-captcha-demo__checkbox-mark {
   font-size: 0.7rem;
-  color: #6bfe9c;
+  color: #37EA9D;
   line-height: 1;
 }
 
@@ -148,13 +148,13 @@
 }
 
 .c-captcha-demo__submit.is-enabled {
-  background: rgba(107, 254, 156, 0.15);
-  border-color: rgba(107, 254, 156, 0.4);
-  color: #6bfe9c;
+  background: rgba(55, 234, 157, 0.15);
+  border-color: rgba(55, 234, 157, 0.4);
+  color: #37EA9D;
 }
 
 .c-captcha-demo__submit.is-enabled:hover {
-  background: rgba(107, 254, 156, 0.25);
+  background: rgba(55, 234, 157, 0.25);
 }
 
 .c-captcha-demo__submit.is-disabled {
@@ -197,7 +197,7 @@
 }
 
 .c-captcha-demo__reason.is-passing {
-  color: #6bfe9c;
+  color: #37EA9D;
   text-decoration: line-through;
   opacity: 0.6;
 }
@@ -219,6 +219,6 @@
 }
 
 .c-captcha-demo__reason-dot.is-passing {
-  background: #6bfe9c;
-  box-shadow: 0 0 5px #6bfe9c;
+  background: #37EA9D;
+  box-shadow: 0 0 5px #37EA9D;
 }

@@ -22,7 +22,7 @@
   --umpire-demo-fouls-radius: 0.85rem;
   --umpire-demo-fouls-bg:
     linear-gradient(90deg, rgba(254, 208, 35, 0.1), rgba(254, 208, 35, 0.04)),
-    rgba(18, 18, 18, 0.92);
+    rgba(17, 24, 40, 0.92);
   --umpire-demo-fouls-copy-display: flex;
   --umpire-demo-fouls-copy-direction: column;
   --umpire-demo-fouls-copy-gap: 0.2rem;
@@ -60,10 +60,10 @@
   flex-direction: column;
   gap: 0.6rem;
   padding: 0.85rem 0.95rem;
-  border: 1px solid rgba(107, 254, 156, 0.18);
+  border: 1px solid rgba(55, 234, 157, 0.18);
   border-radius: var(--umpire-demo-radius-lg);
   background:
-    linear-gradient(180deg, rgba(107, 254, 156, 0.06), transparent 70%),
+    linear-gradient(180deg, rgba(55, 234, 157, 0.06), transparent 70%),
     rgba(16, 16, 16, 0.85);
 }
 
@@ -136,14 +136,14 @@
 }
 
 .c-config-demo__prompt--add {
-  border-color: rgba(107, 254, 156, 0.22);
+  border-color: rgba(55, 234, 157, 0.22);
   background:
-    linear-gradient(135deg, rgba(107, 254, 156, 0.08), transparent 60%),
+    linear-gradient(135deg, rgba(55, 234, 157, 0.08), transparent 60%),
     rgba(255, 255, 255, 0.03);
 }
 
 .c-config-demo__prompt--add:hover:not(:disabled) {
-  border-color: rgba(107, 254, 156, 0.45);
+  border-color: rgba(55, 234, 157, 0.45);
 }
 
 .c-config-demo__prompt--swap {
@@ -223,7 +223,7 @@
 }
 
 .c-config-demo__editor:focus {
-  box-shadow: inset 0 0 0 1px rgba(107, 254, 156, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(55, 234, 157, 0.28);
 }
 
 .c-config-demo__applied {
@@ -263,7 +263,7 @@
 
 .c-config-demo__required {
   margin-left: 0.25rem;
-  color: rgba(107, 254, 156, 0.72);
+  color: rgba(55, 234, 157, 0.72);
 }
 
 .c-config-demo__field-note {
@@ -288,10 +288,10 @@
   gap: 0.5rem;
   margin-top: 0.5rem;
   padding: 0.75rem 0.85rem 0.85rem;
-  border: 1px dashed rgba(107, 254, 156, 0.18);
+  border: 1px dashed rgba(55, 234, 157, 0.18);
   border-radius: var(--umpire-demo-radius-md);
   background:
-    linear-gradient(180deg, rgba(107, 254, 156, 0.03), transparent 60%),
+    linear-gradient(180deg, rgba(55, 234, 157, 0.03), transparent 60%),
     rgba(10, 10, 10, 0.55);
 }
 
@@ -334,7 +334,7 @@
 }
 
 .c-config-demo__call-row--in-play {
-  background: rgba(107, 254, 156, 0.05);
+  background: rgba(55, 234, 157, 0.05);
   color: rgba(245, 247, 244, 0.78);
 }
 
