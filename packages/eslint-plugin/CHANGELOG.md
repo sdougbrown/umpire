@@ -1,5 +1,12 @@
 # @umpire/eslint-plugin
 
+## 1.0.2
+
+### Patch Changes
+
+- 1f036c9: Extends `no-write-owned-fields` rule to cover Drizzle write helpers (`checkDrizzleCreate`, `checkDrizzlePatch`, `checkDrizzleModelCreate`, `checkDrizzleModelPatch`) with correct candidate argument positions.
+- e15a298: internal refactor to reduce function complexity, no user-facing changes
+
 ## 1.0.1
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @umpire/store
 
+## 1.0.1
+
+### Patch Changes
+
+- 6b86de4: Ensure `fromStore().destroy()` immediately suppresses late adapter emissions before calling the underlying unsubscribe.
+- Updated dependencies [7f036c2]
+- Updated dependencies [102318e]
+- Updated dependencies [c52a2e8]
+  - @umpire/core@1.1.0
+
 ## 1.0.0
 
 ### Patch Changes

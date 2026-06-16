@@ -1,6 +1,6 @@
 {
   "name": "@umpire/dsl",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Pure expression DSL and compiler for @umpire",
   "license": "MIT",
   "type": "module",

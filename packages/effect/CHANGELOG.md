@@ -1,5 +1,26 @@
 # @umpire/effect
 
+## 1.2.0
+
+### Minor Changes
+
+- 6b86de4: Effect-native validation with full service/context support: `runEffect` and `runValidate` now use Effect Schema's effectful decode path, supporting service-requiring schemas (R ≠ never) through the Effect `R` channel. Sync APIs (`run`, `validators`) are conditionally available only for context-free schemas via `SyncAdapterMembers`.
+
+  New `decodeEffectSchema` helper for effectful schema decoding and `decodeEffectSchemaSync` for context-free sync decoding. New `availabilityStreamAsync` and `umpireAsyncLayer` for `@umpire/async` instances, plus `toAsyncWriteValidationAdapter` for bridging Effect validation into async write/Drizzle flows. Also includes `UmpireValidationError` tagged error, `availabilityStream`, and `umpireLayer` for `@umpire/core`.
+
+### Patch Changes
+
+- Updated dependencies [7f036c2]
+- Updated dependencies [7f036c2]
+- Updated dependencies [7f036c2]
+- Updated dependencies [102318e]
+- Updated dependencies [c52a2e8]
+- Updated dependencies [6b86de4]
+  - @umpire/async@1.0.0
+  - @umpire/core@1.1.0
+  - @umpire/write@1.2.0
+  - @umpire/store@1.0.1
+
 ## 1.1.1
 
 ### Patch Changes

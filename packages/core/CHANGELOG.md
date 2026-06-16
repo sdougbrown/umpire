@@ -1,5 +1,18 @@
 # @umpire/core
 
+## 1.1.0
+
+### Minor Changes
+
+- 7f036c2: Add `@umpire/async` — async-aware superset of core with async rule predicates, async validators, built-in cancellation (auto-cancel + AbortSignal), and an `onAbort` hook. Core gains a non-public `@umpire/core/internal` subpath for first-party helper access.
+
+### Patch Changes
+
+- 102318e: Improves `check()` and `play()` performance by routing built-in rule evaluation through direct per-target evaluators, including inside composite `anyOf()` and `eitherOf()` rules. Adds memory and leak benchmark modes for core performance investigation.
+- c52a2e8: Propagate `fairWhenRead()` and `enabledWhenRead()` value-input field dependencies into Umpire graph edges.
+
+  Read-backed rules now expose fields touched by their value-input reads as rule sources, so downstream graph consumers can observe upstream dependencies such as `country -> postalCode`. Self-dependencies are excluded, and condition-input or custom-selected reads remain conservative.
+
 ## 1.0.1
 
 ### Patch Changes

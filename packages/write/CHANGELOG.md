@@ -1,5 +1,18 @@
 # @umpire/write
 
+## 1.2.0
+
+### Minor Changes
+
+- 7f036c2: Add async write-policy helpers and async Drizzle policy helpers for use with `@umpire/async`.
+
+### Patch Changes
+
+- Updated dependencies [7f036c2]
+- Updated dependencies [102318e]
+- Updated dependencies [c52a2e8]
+  - @umpire/core@1.1.0
+
 ## 1.1.0
 
 ### Minor Changes

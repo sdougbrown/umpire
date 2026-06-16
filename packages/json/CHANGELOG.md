@@ -1,5 +1,17 @@
 # @umpire/json
 
+## 1.0.1
+
+### Patch Changes
+
+- e15a298: internal refactor to reduce function complexity, no user-facing changes
+- Updated dependencies [7f036c2]
+- Updated dependencies [102318e]
+- Updated dependencies [c52a2e8]
+- Updated dependencies [e15a298]
+  - @umpire/core@1.1.0
+  - @umpire/dsl@1.0.1
+
 ## 1.0.0
 
 ### Minor Changes

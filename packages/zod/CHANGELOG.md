@@ -1,5 +1,22 @@
 # @umpire/zod
 
+## 2.0.0
+
+### Minor Changes
+
+- 7f036c2: Add `@umpire/zod/async`, a small adapter entrypoint for passing Zod schemas as async validators to `@umpire/async`.
+
+### Patch Changes
+
+- Updated dependencies [7f036c2]
+- Updated dependencies [7f036c2]
+- Updated dependencies [7f036c2]
+- Updated dependencies [102318e]
+- Updated dependencies [c52a2e8]
+  - @umpire/async@1.0.0
+  - @umpire/core@1.1.0
+  - @umpire/write@1.2.0
+
 ## 1.0.1
 
 ### Patch Changes

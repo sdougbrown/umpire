@@ -1,6 +1,6 @@
 {
   "name": "@umpire/drizzle",
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0-rc.2",
   "description": "Drizzle table hydration for Umpire availability policies",
   "license": "MIT",
   "type": "module",
