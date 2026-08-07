@@ -6,6 +6,8 @@ import os from 'node:os'
 import childProcess from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
+import { stageDirectoryReplacement } from './lib/replace-directory.mjs'
+
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const PIN_FILE = path.join(ROOT, 'umpire-spec.pin.json')
 const TARGET_DIR = path.join(ROOT, 'packages', 'json', 'conformance')
@@ -47,23 +49,6 @@ async function walk(baseDir, dir, entries) {
       entries.push([rel, hex])
     } else {
       throw new Error(`Unsupported fixture entry: ${rel}`)
-    }
-  }
-}
-
-function copyRecursive(src, dest) {
-  const dirents = fs.readdirSync(src, { withFileTypes: true })
-  for (const dirent of dirents) {
-    if (dirent.name === '.synced-at-version') continue
-    const srcPath = path.join(src, dirent.name)
-    const destPath = path.join(dest, dirent.name)
-    if (dirent.isDirectory()) {
-      fs.mkdirSync(destPath, { recursive: true })
-      copyRecursive(srcPath, destPath)
-    } else if (dirent.isFile()) {
-      fs.copyFileSync(srcPath, destPath)
-    } else {
-      throw new Error(`Unsupported fixture entry: ${srcPath}`)
     }
   }
 }
@@ -194,27 +179,35 @@ async function runSync() {
     process.exit(1)
   }
 
-  // 5. Copy into place
-  if (fs.existsSync(TARGET_DIR)) {
-    fs.rmSync(TARGET_DIR, { recursive: true, force: true })
+  // 5. Stage a complete tree and marker before replacing the current fixtures.
+  const markerContents =
+    JSON.stringify(
+      {
+        version: pin.version,
+        tarballSha256: pin.sha256,
+        fixtureDigest: digest,
+      },
+      null,
+      2,
+    ) + '\n'
+  try {
+    stageDirectoryReplacement({
+      sourceDir: extractedConformance,
+      targetDir: TARGET_DIR,
+      markerContents,
+    })
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true })
   }
-  fs.mkdirSync(TARGET_DIR, { recursive: true })
-  copyRecursive(extractedConformance, TARGET_DIR)
 
-  // 6. Write marker
-  const markerObj = {
-    version: pin.version,
-    tarballSha256: pin.sha256,
-    fixtureDigest: digest,
-  }
-  fs.writeFileSync(MARKER, JSON.stringify(markerObj, null, 2) + '\n', 'utf8')
-
-  // 7. Summary
+  // 6. Summary
   console.log(`✓ Synced umpire-spec ${pin.version}`)
   console.log(`  archive       : ${archive}`)
   console.log(`  target        : ${TARGET_DIR}`)
   console.log(`  fixture digest: ${digest}`)
-  console.log(`  marker written: ${MARKER}`)
+  console.log(
+    `  marker written: ${path.join(TARGET_DIR, '.synced-at-version')}`,
+  )
 }
 
 // ── main ─────────────────────────────────────────────────────────────────────
