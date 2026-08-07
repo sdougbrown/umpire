@@ -524,6 +524,97 @@ describe('validateSchema', () => {
       'required must be a boolean',
     ],
     [
+      'rejects null condition definitions',
+      {
+        version: 1,
+        conditions: { role: null },
+        fields: { target: {} },
+        rules: [],
+      },
+      'condition "role" definition must be an object',
+    ],
+    [
+      'rejects string condition definitions',
+      {
+        version: 1,
+        conditions: { role: 'string' },
+        fields: { target: {} },
+        rules: [],
+      },
+      'condition "role" definition must be an object',
+    ],
+    [
+      'rejects enabledWhen rules with non-string fields',
+      {
+        version: 1,
+        fields: { target: {} },
+        rules: [
+          {
+            type: 'enabledWhen',
+            field: 7,
+            when: { op: 'present', field: 'target' },
+          },
+        ],
+      },
+      'Rule "enabledWhen" field must be a string',
+    ],
+    [
+      'rejects fairWhen rules with non-string fields',
+      {
+        version: 1,
+        fields: { target: {} },
+        rules: [
+          {
+            type: 'fairWhen',
+            field: false,
+            when: { op: 'present', field: 'target' },
+          },
+        ],
+      },
+      'Rule "fairWhen" field must be a string',
+    ],
+    [
+      'rejects check rules with non-string fields',
+      {
+        version: 1,
+        fields: { target: {} },
+        rules: [{ type: 'check', field: null, op: 'email' }],
+      },
+      'Rule "check" field must be a string',
+    ],
+    [
+      'rejects oneOf rules with non-string groups',
+      {
+        version: 1,
+        fields: { target: {} },
+        rules: [{ type: 'oneOf', group: 7, branches: { choice: ['target'] } }],
+      },
+      'Rule "oneOf" group must be a string',
+    ],
+    [
+      'rejects eitherOf rules with non-string groups',
+      {
+        version: 1,
+        fields: { target: {} },
+        rules: [
+          {
+            type: 'eitherOf',
+            group: false,
+            branches: {
+              choice: [
+                {
+                  type: 'enabledWhen',
+                  field: 'target',
+                  when: { op: 'present', field: 'target' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+      'Rule "eitherOf" group must be a string',
+    ],
+    [
       'rejects non-primitive equality values',
       {
         version: 1,
