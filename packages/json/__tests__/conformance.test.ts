@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -50,6 +50,7 @@ type FailureCase = {
   conditions?: Record<string, JsonFixtureValue>
   prev?: Record<string, JsonFixtureValue>
   errorIncludes: string
+  metaSchema?: 'reject'
 }
 
 type FailureFixture = {
@@ -59,38 +60,35 @@ type FailureFixture = {
   failures: FailureCase[]
 }
 
-const fixturesDir = path.resolve(
+const conformanceDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
-  '../conformance/fixtures',
+  '../conformance',
 )
 
-const failureFixturesDir = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  '../conformance/failures',
-)
+const index = JSON.parse(
+  readFileSync(path.join(conformanceDir, 'index.json'), 'utf8'),
+) as {
+  fixtureVersion: number
+  fixtures: { id: string; path: string; description?: string }[]
+  failures: { id: string; path: string; description?: string }[]
+}
 
 function loadFixtures(): ConformanceFixture[] {
-  return readdirSync(fixturesDir)
-    .filter((fileName) => fileName.endsWith('.json'))
-    .sort()
-    .map(
-      (fileName) =>
-        JSON.parse(
-          readFileSync(path.join(fixturesDir, fileName), 'utf8'),
-        ) as ConformanceFixture,
-    )
+  return index.fixtures.map(
+    (entry) =>
+      JSON.parse(
+        readFileSync(path.join(conformanceDir, entry.path), 'utf8'),
+      ) as ConformanceFixture,
+  )
 }
 
 function loadFailureFixtures(): FailureFixture[] {
-  return readdirSync(failureFixturesDir)
-    .filter((fileName) => fileName.endsWith('.json'))
-    .sort()
-    .map(
-      (fileName) =>
-        JSON.parse(
-          readFileSync(path.join(failureFixturesDir, fileName), 'utf8'),
-        ) as FailureFixture,
-    )
+  return index.failures.map(
+    (entry) =>
+      JSON.parse(
+        readFileSync(path.join(conformanceDir, entry.path), 'utf8'),
+      ) as FailureFixture,
+  )
 }
 
 function assertFixtureShape(fixture: ConformanceFixture): void {
