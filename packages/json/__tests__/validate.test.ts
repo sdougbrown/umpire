@@ -517,6 +517,208 @@ describe('validateSchema', () => {
     )
   })
 
+  test.each([
+    [
+      'rejects non-boolean field required flags',
+      { version: 1, fields: { target: { required: 'yes' } }, rules: [] },
+      'required must be a boolean',
+    ],
+    [
+      'rejects non-primitive equality values',
+      {
+        version: 1,
+        fields: { target: {} },
+        rules: [
+          {
+            type: 'enabledWhen',
+            field: 'target',
+            when: { op: 'eq', field: 'target', value: { nested: true } },
+          },
+        ],
+      },
+      'must be a JSON primitive',
+    ],
+    [
+      'rejects non-numeric comparison values',
+      {
+        version: 1,
+        fields: { target: {} },
+        rules: [
+          {
+            type: 'enabledWhen',
+            field: 'target',
+            when: { op: 'gt', field: 'target', value: '1' },
+          },
+        ],
+      },
+      'must be a finite number',
+    ],
+    [
+      'rejects malformed expression field names',
+      {
+        version: 1,
+        fields: { target: {} },
+        rules: [
+          {
+            type: 'enabledWhen',
+            field: 'target',
+            when: { op: 'present', field: 7 },
+          },
+        ],
+      },
+      'field must be a string',
+    ],
+    [
+      'rejects malformed expression value arrays',
+      {
+        version: 1,
+        fields: { target: {} },
+        rules: [
+          {
+            type: 'enabledWhen',
+            field: 'target',
+            when: { op: 'in', field: 'target', values: ['ok', {}] },
+          },
+        ],
+      },
+      'array of JSON primitives',
+    ],
+    [
+      'rejects malformed expression lists',
+      {
+        version: 1,
+        fields: { target: {} },
+        rules: [
+          {
+            type: 'enabledWhen',
+            field: 'target',
+            when: { op: 'and', exprs: {} },
+          },
+        ],
+      },
+      'exprs must be an array',
+    ],
+    [
+      'rejects unknown expression operators',
+      {
+        version: 1,
+        fields: { target: {} },
+        rules: [
+          {
+            type: 'enabledWhen',
+            field: 'target',
+            when: { op: 'mystery', field: 'target' },
+          },
+        ],
+      },
+      'Unknown expression op "mystery"',
+    ],
+    [
+      'rejects non-string rule reasons',
+      {
+        version: 1,
+        fields: { target: {} },
+        rules: [
+          {
+            type: 'enabledWhen',
+            field: 'target',
+            when: { op: 'present', field: 'target' },
+            reason: 7,
+          },
+        ],
+      },
+      'Rule reason must be a string',
+    ],
+    [
+      'rejects malformed disables targets',
+      {
+        version: 1,
+        fields: { source: {}, target: {} },
+        rules: [{ type: 'disables', source: 'source', targets: 'target' }],
+      },
+      'targets must be an array of strings',
+    ],
+    [
+      'rejects malformed oneOf branches',
+      {
+        version: 1,
+        fields: { target: {} },
+        rules: [
+          {
+            type: 'oneOf',
+            group: 'choice',
+            branches: { choice: 'target' },
+          },
+        ],
+      },
+      'branch "choice" must be an array of strings',
+    ],
+    [
+      'rejects malformed eitherOf branches',
+      {
+        version: 1,
+        fields: { target: {} },
+        rules: [
+          {
+            type: 'eitherOf',
+            group: 'choice',
+            branches: { choice: {} },
+          },
+        ],
+      },
+      'branch "choice" must be an array',
+    ],
+    [
+      'rejects malformed anyOf rule lists',
+      {
+        version: 1,
+        fields: { target: {} },
+        rules: [{ type: 'anyOf', rules: {} }],
+      },
+      'rules must be an array',
+    ],
+    [
+      'rejects malformed check patterns',
+      {
+        version: 1,
+        fields: { target: {} },
+        rules: [
+          {
+            type: 'check',
+            field: 'target',
+            op: 'matches',
+            pattern: 7,
+          },
+        ],
+      },
+      'pattern must be a string',
+    ],
+    [
+      'rejects non-object rule entries',
+      { version: 1, fields: { target: {} }, rules: [null] },
+      'Rule must be an object',
+    ],
+    [
+      'rejects non-object excluded entries',
+      { version: 1, fields: { target: {} }, rules: [], excluded: [null] },
+      'Excluded rule must be an object',
+    ],
+  ])('%s', (_label, schema, expectedMessage) => {
+    expect(() => validateSchema(schema as unknown as UmpireJsonSchema)).toThrow(
+      expectedMessage,
+    )
+  })
+
+  test('rejects non-finite JSON numbers supplied as raw objects', () => {
+    expect(() =>
+      validateSchema({
+        version: 1,
+        fields: { target: { default: Number.POSITIVE_INFINITY } },
+        rules: [],
+      }),
+    ).toThrow('non-serializable default value')
+  })
+
   test('accepts canonical condition definitions and reason-less oneOf rules', () => {
     expect(() =>
       validateSchema({

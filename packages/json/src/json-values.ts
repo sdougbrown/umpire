@@ -4,7 +4,7 @@ export function isJsonPrimitive(value: unknown): value is JsonPrimitive {
   return (
     value === null ||
     typeof value === 'string' ||
-    typeof value === 'number' ||
+    (typeof value === 'number' && Number.isFinite(value)) ||
     typeof value === 'boolean'
   )
 }

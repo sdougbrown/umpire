@@ -272,6 +272,11 @@ export function assertValidValidatorSpec(rule: JsonValidatorSpec): void {
     case 'integer':
       return
     case 'matches':
+      if (typeof rule.pattern !== 'string') {
+        throw new Error(
+          '[@umpire/json] Validator "matches" requires a string pattern',
+        )
+      }
       try {
         new RegExp(rule.pattern)
       } catch (error) {
@@ -285,7 +290,7 @@ export function assertValidValidatorSpec(rule: JsonValidatorSpec): void {
     case 'maxLength':
     case 'min':
     case 'max':
-      if (typeof rule.value !== 'number' || Number.isNaN(rule.value)) {
+      if (typeof rule.value !== 'number' || !Number.isFinite(rule.value)) {
         throw new Error(
           `[@umpire/json] Validator "${rule.op}" requires a numeric value`,
         )
@@ -294,9 +299,9 @@ export function assertValidValidatorSpec(rule: JsonValidatorSpec): void {
     case 'range':
       if (
         typeof rule.min !== 'number' ||
-        Number.isNaN(rule.min) ||
+        !Number.isFinite(rule.min) ||
         typeof rule.max !== 'number' ||
-        Number.isNaN(rule.max)
+        !Number.isFinite(rule.max)
       ) {
         throw new Error(
           '[@umpire/json] Validator "range" requires numeric min and max values',
