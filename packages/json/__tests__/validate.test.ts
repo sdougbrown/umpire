@@ -4,6 +4,18 @@ import type { UmpireJsonSchema } from '../src/index.js'
 describe('validateSchema', () => {
   test.each([
     [
+      'rejects unknown top-level members',
+      {
+        version: 1,
+        fields: {
+          email: {},
+        },
+        rules: [],
+        unexpected: true,
+      },
+      'field',
+    ],
+    [
       'rejects unsupported schema versions',
       {
         version: 2,
@@ -11,6 +23,162 @@ describe('validateSchema', () => {
         rules: [],
       },
       'Unsupported schema version "2"',
+    ],
+    [
+      'rejects empty fields',
+      {
+        version: 1,
+        fields: {},
+        rules: [],
+      },
+      'field',
+    ],
+    [
+      'rejects unknown field members',
+      {
+        version: 1,
+        fields: {
+          email: {
+            description: 'not part of v1',
+          },
+        },
+        rules: [],
+      },
+      'field',
+    ],
+    [
+      'rejects unknown condition members',
+      {
+        version: 1,
+        conditions: {
+          role: {
+            type: 'string',
+            unexpected: true,
+          },
+        },
+        fields: {
+          target: {},
+        },
+        rules: [],
+      },
+      'unexpected',
+    ],
+    [
+      'rejects invalid condition types',
+      {
+        version: 1,
+        conditions: {
+          role: {
+            type: 'role-name',
+          },
+        },
+        fields: {
+          email: {},
+        },
+        rules: [],
+      },
+      'condition',
+    ],
+    [
+      'rejects unknown rule members',
+      {
+        version: 1,
+        fields: {
+          target: {},
+        },
+        rules: [
+          {
+            type: 'enabledWhen',
+            field: 'target',
+            when: {
+              op: 'present',
+              field: 'target',
+            },
+            unexpected: true,
+          },
+        ],
+      },
+      'unexpected',
+    ],
+    [
+      'rejects unknown expression members',
+      {
+        version: 1,
+        fields: {
+          target: {},
+        },
+        rules: [
+          {
+            type: 'enabledWhen',
+            field: 'target',
+            when: {
+              op: 'present',
+              field: 'target',
+              unexpected: true,
+            },
+          },
+        ],
+      },
+      'unexpected',
+    ],
+    [
+      'rejects unknown validator members',
+      {
+        version: 1,
+        fields: {
+          email: {},
+        },
+        rules: [],
+        validators: {
+          email: {
+            op: 'email',
+            unexpected: true,
+          },
+        },
+      },
+      'unexpected',
+    ],
+    [
+      'rejects unknown excluded members',
+      {
+        version: 1,
+        fields: {
+          email: {},
+        },
+        rules: [],
+        excluded: [
+          {
+            type: 'legacy',
+            description: 'legacy metadata',
+            unexpected: true,
+          },
+        ],
+      },
+      'unexpected',
+    ],
+    [
+      'rejects unknown validator spec members',
+      {
+        version: 1,
+        fields: {
+          email: {},
+        },
+        rules: [
+          {
+            type: 'enabledWhen',
+            field: 'email',
+            when: {
+              op: 'check',
+              field: 'email',
+              check: {
+                op: 'email',
+                unexpected: true,
+              },
+            },
+          },
+        ],
+      },
+      'unexpected',
     ],
     [
       'rejects non-serializable defaults',
@@ -347,6 +515,34 @@ describe('validateSchema', () => {
     expect(() => validateSchema(schema as unknown as UmpireJsonSchema)).toThrow(
       expectedMessage,
     )
+  })
+
+  test('accepts canonical condition definitions and reason-less oneOf rules', () => {
+    expect(() =>
+      validateSchema({
+        version: 1,
+        conditions: {
+          role: {
+            type: 'string',
+            description: 'Current account role',
+          },
+        },
+        fields: {
+          email: {},
+          phone: {},
+        },
+        rules: [
+          {
+            type: 'oneOf',
+            group: 'contact',
+            branches: {
+              email: ['email'],
+              phone: ['phone'],
+            },
+          },
+        ],
+      }),
+    ).not.toThrow()
   })
 
   test('accepts nested anyOf/eitherOf composites with matching targets and constraints', () => {
