@@ -25,6 +25,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
+    "sync:umpire-spec": "node scripts/sync-umpire-spec.mjs",
+    "sync:umpire-spec:check": "node scripts/sync-umpire-spec.mjs --check",
     "typecheck": "turbo run typecheck",
     "prepare": "husky"
   },

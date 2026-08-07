@@ -1,4 +1,5 @@
-docs/
 .changeset/
+docs/
+packages/json/conformance/
 **/dist/
 **/node_modules/

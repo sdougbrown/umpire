@@ -1,0 +1,277 @@
+{
+  "fixtureVersion": 1,
+  "id": "v1-baseline",
+  "description": "Normative Umpire v1 status behavior: required fields, named validators, defaults, conditions, and previous oneOf values.",
+  "schema": {
+    "version": 1,
+    "conditions": {
+      "allowDestination": {
+        "type": "boolean",
+        "description": "Whether the destination may be edited"
+      }
+    },
+    "fields": {
+      "requiredDestination": {
+        "required": true,
+        "isEmpty": "string"
+      },
+      "defaultedNote": {
+        "default": "not inserted during check"
+      },
+      "email": {
+        "isEmpty": "string"
+      },
+      "phoneRoute": {
+        "isEmpty": "string"
+      },
+      "signalRoute": {
+        "isEmpty": "string"
+      }
+    },
+    "rules": [
+      {
+        "type": "enabledWhen",
+        "field": "requiredDestination",
+        "when": {
+          "op": "cond",
+          "condition": "allowDestination"
+        },
+        "reason": "Destination editing is disabled"
+      },
+      {
+        "type": "oneOf",
+        "group": "routing",
+        "branches": {
+          "phone": ["phoneRoute"],
+          "signal": ["signalRoute"]
+        }
+      }
+    ],
+    "validators": {
+      "email": {
+        "op": "email",
+        "error": "Enter a valid email address"
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "disabled-required-field-reports-required-false",
+      "values": {
+        "requiredDestination": "stale destination",
+        "email": "not-an-email",
+        "ignoredRuntimeKey": "base Umpire ignores this"
+      },
+      "conditions": {
+        "allowDestination": false
+      },
+      "expectedAvailability": {
+        "requiredDestination": {
+          "enabled": false,
+          "satisfied": true,
+          "fair": true,
+          "required": false,
+          "reason": "Destination editing is disabled",
+          "reasons": ["Destination editing is disabled"]
+        },
+        "defaultedNote": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "email": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": [],
+          "valid": false,
+          "error": "Enter a valid email address"
+        },
+        "phoneRoute": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "signalRoute": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        }
+      }
+    },
+    {
+      "id": "enabled-required-field-inherits-required-flag",
+      "values": {
+        "requiredDestination": "new destination",
+        "email": "crew@ballpark.example"
+      },
+      "conditions": {
+        "allowDestination": true
+      },
+      "expectedAvailability": {
+        "requiredDestination": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "defaultedNote": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "email": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": [],
+          "valid": true
+        },
+        "phoneRoute": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "signalRoute": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        }
+      }
+    },
+    {
+      "id": "previous-satisfied-route-wins",
+      "values": {
+        "requiredDestination": "new destination",
+        "phoneRoute": "call",
+        "signalRoute": "wave"
+      },
+      "prev": {
+        "phoneRoute": "call"
+      },
+      "conditions": {
+        "allowDestination": true
+      },
+      "expectedAvailability": {
+        "requiredDestination": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "defaultedNote": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "email": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "phoneRoute": {
+          "enabled": false,
+          "satisfied": true,
+          "fair": true,
+          "required": false,
+          "reason": "conflicts with signal strategy",
+          "reasons": ["conflicts with signal strategy"]
+        },
+        "signalRoute": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        }
+      }
+    },
+    {
+      "id": "explicit-empty-prev-remains-explicit",
+      "values": {
+        "requiredDestination": "new destination",
+        "phoneRoute": "call",
+        "signalRoute": "wave"
+      },
+      "prev": {},
+      "conditions": {
+        "allowDestination": true
+      },
+      "expectedAvailability": {
+        "requiredDestination": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "defaultedNote": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "email": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "phoneRoute": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "signalRoute": {
+          "enabled": false,
+          "satisfied": true,
+          "fair": true,
+          "required": false,
+          "reason": "conflicts with phone strategy",
+          "reasons": ["conflicts with phone strategy"]
+        }
+      }
+    }
+  ]
+}

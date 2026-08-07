@@ -49,6 +49,9 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Verify umpire-spec fixtures match the pinned version
+        run: yarn sync:umpire-spec:check
+
       - name: Test with Istanbul coverage
         run: yarn test:coverage:istanbul
 

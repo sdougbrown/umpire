@@ -1,0 +1,370 @@
+{
+  "fixtureVersion": 1,
+  "id": "v1-baseline-failures",
+  "description": "Normative Umpire v1 rejection contract, including public-schema failures and implementation-level validation failures.",
+  "failures": [
+    {
+      "id": "unknown-top-level-member",
+      "phase": "validate",
+      "metaSchema": "reject",
+      "schema": {
+        "version": 1,
+        "fields": {
+          "email": {}
+        },
+        "rules": [],
+        "unexpected": true
+      },
+      "errorIncludes": "field"
+    },
+    {
+      "id": "missing-version",
+      "phase": "validate",
+      "metaSchema": "reject",
+      "schema": {
+        "fields": {
+          "email": {}
+        },
+        "rules": []
+      },
+      "errorIncludes": "version"
+    },
+    {
+      "id": "wrong-version",
+      "phase": "validate",
+      "metaSchema": "reject",
+      "schema": {
+        "version": 2,
+        "fields": {
+          "email": {}
+        },
+        "rules": []
+      },
+      "errorIncludes": "version"
+    },
+    {
+      "id": "missing-fields",
+      "phase": "validate",
+      "metaSchema": "reject",
+      "schema": {
+        "version": 1,
+        "rules": []
+      },
+      "errorIncludes": "field"
+    },
+    {
+      "id": "empty-fields",
+      "phase": "validate",
+      "metaSchema": "reject",
+      "schema": {
+        "version": 1,
+        "fields": {},
+        "rules": []
+      },
+      "errorIncludes": "field"
+    },
+    {
+      "id": "unknown-field-member",
+      "phase": "validate",
+      "metaSchema": "reject",
+      "schema": {
+        "version": 1,
+        "fields": {
+          "email": {
+            "description": "not part of v1"
+          }
+        },
+        "rules": []
+      },
+      "errorIncludes": "field"
+    },
+    {
+      "id": "non-primitive-default",
+      "phase": "validate",
+      "metaSchema": "reject",
+      "schema": {
+        "version": 1,
+        "fields": {
+          "profile": {
+            "default": {
+              "theme": "night"
+            }
+          }
+        },
+        "rules": []
+      },
+      "errorIncludes": "default"
+    },
+    {
+      "id": "invalid-condition-type",
+      "phase": "validate",
+      "metaSchema": "reject",
+      "schema": {
+        "version": 1,
+        "conditions": {
+          "role": {
+            "type": "role-name"
+          }
+        },
+        "fields": {
+          "email": {}
+        },
+        "rules": []
+      },
+      "errorIncludes": "condition"
+    },
+    {
+      "id": "legacy-internal-array-shape",
+      "phase": "validate",
+      "metaSchema": "reject",
+      "schema": {
+        "fields": [
+          {
+            "name": "email"
+          }
+        ],
+        "conditions": [],
+        "rules": []
+      },
+      "errorIncludes": "field"
+    },
+    {
+      "id": "unknown-field-in-rule",
+      "phase": "validate",
+      "schema": {
+        "version": 1,
+        "fields": {
+          "target": {}
+        },
+        "rules": [
+          {
+            "type": "requires",
+            "field": "target",
+            "dependency": "missing"
+          }
+        ]
+      },
+      "errorIncludes": "field"
+    },
+    {
+      "id": "unknown-condition-member",
+      "phase": "validate",
+      "metaSchema": "reject",
+      "schema": {
+        "version": 1,
+        "conditions": {
+          "role": {
+            "type": "string",
+            "unexpected": true
+          }
+        },
+        "fields": {
+          "target": {}
+        },
+        "rules": []
+      },
+      "errorIncludes": "unexpected"
+    },
+    {
+      "id": "unknown-rule-member",
+      "phase": "validate",
+      "metaSchema": "reject",
+      "schema": {
+        "version": 1,
+        "fields": {
+          "target": {}
+        },
+        "rules": [
+          {
+            "type": "enabledWhen",
+            "field": "target",
+            "when": {
+              "op": "present",
+              "field": "target"
+            },
+            "unexpected": true
+          }
+        ]
+      },
+      "errorIncludes": "unexpected"
+    },
+    {
+      "id": "unknown-expression-member",
+      "phase": "validate",
+      "metaSchema": "reject",
+      "schema": {
+        "version": 1,
+        "fields": {
+          "target": {}
+        },
+        "rules": [
+          {
+            "type": "enabledWhen",
+            "field": "target",
+            "when": {
+              "op": "present",
+              "field": "target",
+              "unexpected": true
+            }
+          }
+        ]
+      },
+      "errorIncludes": "unexpected"
+    },
+    {
+      "id": "unknown-validator-member",
+      "phase": "validate",
+      "metaSchema": "reject",
+      "schema": {
+        "version": 1,
+        "fields": {
+          "email": {}
+        },
+        "rules": [],
+        "validators": {
+          "email": {
+            "op": "email",
+            "unexpected": true
+          }
+        }
+      },
+      "errorIncludes": "unexpected"
+    },
+    {
+      "id": "unknown-excluded-member",
+      "phase": "validate",
+      "metaSchema": "reject",
+      "schema": {
+        "version": 1,
+        "fields": {
+          "email": {}
+        },
+        "rules": [],
+        "excluded": [
+          {
+            "type": "legacy",
+            "description": "legacy metadata",
+            "unexpected": true
+          }
+        ]
+      },
+      "errorIncludes": "unexpected"
+    },
+    {
+      "id": "unknown-validator-spec-member",
+      "phase": "validate",
+      "schema": {
+        "version": 1,
+        "fields": {
+          "email": {}
+        },
+        "rules": [
+          {
+            "type": "enabledWhen",
+            "field": "email",
+            "when": {
+              "op": "check",
+              "field": "email",
+              "check": {
+                "op": "email",
+                "unexpected": true
+              }
+            }
+          }
+        ]
+      },
+      "errorIncludes": "unexpected"
+    },
+    {
+      "id": "empty-requires-dependencies",
+      "phase": "validate",
+      "schema": {
+        "version": 1,
+        "fields": {
+          "target": {},
+          "dependency": {}
+        },
+        "rules": [
+          {
+            "type": "requires",
+            "field": "target",
+            "dependencies": []
+          }
+        ]
+      },
+      "errorIncludes": "dependencies"
+    },
+    {
+      "id": "empty-any-of",
+      "phase": "validate",
+      "schema": {
+        "version": 1,
+        "fields": {
+          "target": {}
+        },
+        "rules": [
+          {
+            "type": "anyOf",
+            "rules": []
+          }
+        ]
+      },
+      "errorIncludes": "anyOf"
+    },
+    {
+      "id": "empty-either-of-branch",
+      "phase": "validate",
+      "schema": {
+        "version": 1,
+        "fields": {
+          "target": {}
+        },
+        "rules": [
+          {
+            "type": "eitherOf",
+            "group": "routes",
+            "branches": {
+              "phone": []
+            }
+          }
+        ]
+      },
+      "errorIncludes": "branch"
+    },
+    {
+      "id": "empty-excluded-metadata",
+      "phase": "validate",
+      "schema": {
+        "version": 1,
+        "fields": {
+          "email": {}
+        },
+        "rules": [],
+        "excluded": [
+          {
+            "type": "",
+            "description": ""
+          }
+        ]
+      },
+      "errorIncludes": "Excluded"
+    },
+    {
+      "id": "validator-references-unknown-field",
+      "phase": "validate",
+      "schema": {
+        "version": 1,
+        "fields": {
+          "email": {}
+        },
+        "rules": [],
+        "validators": {
+          "phone": {
+            "op": "email"
+          }
+        }
+      },
+      "errorIncludes": "validator"
+    }
+  ]
+}

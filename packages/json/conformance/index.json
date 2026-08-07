@@ -2,6 +2,11 @@
   "fixtureVersion": 1,
   "fixtures": [
     {
+      "id": "v1-baseline",
+      "path": "fixtures/v1-baseline.json",
+      "description": "Normative v1 status behavior for disabled and enabled required fields, defaults, named validators, and oneOf previous-value resolution."
+    },
+    {
       "id": "auth-either-of",
       "path": "fixtures/auth-either-of.json",
       "description": "eitherOf() with named auth paths: submit is enabled when any branch's ANDed rules all pass. Covers single-branch pass, multi-branch pass, all-branches-fail, and a three-branch scenario."
@@ -58,6 +63,11 @@
     }
   ],
   "failures": [
+    {
+      "id": "v1-baseline-failures",
+      "path": "failures/v1-baseline-failures.json",
+      "description": "Normative v1 rejection cases for public-schema and implementation-level validation."
+    },
     {
       "id": "bad-call-sheet-failures",
       "path": "failures/bad-call-sheet-failures.json",
