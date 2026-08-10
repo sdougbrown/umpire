@@ -92,7 +92,8 @@ export function checkProfileConsistency(
       const t = ps.type
       const ok = typeof t !== 'string' ? true : (
         t === 'string' ? typeof fd.default === 'string' :
-        t === 'number' || t === 'integer' ? typeof fd.default === 'number' && Number.isFinite(fd.default) :
+        t === 'number' ? typeof fd.default === 'number' && Number.isFinite(fd.default) :
+        t === 'integer' ? typeof fd.default === 'number' && Number.isInteger(fd.default) :
         t === 'boolean' ? typeof fd.default === 'boolean' :
         t === 'array' ? Array.isArray(fd.default) :
         t === 'object' ? typeof fd.default === 'object' && fd.default !== null && !Array.isArray(fd.default) :
@@ -191,23 +192,23 @@ function walk(node: unknown, ptr: string, issues: ProfileDefinitionIssue[], visi
     validateOneOf(node.oneOf as Record<string, unknown>[], ptr, issues)
   }
 
-  // Recurse
+  // Recurse — share visited set for cycle detection across the entire schema
   if (isPlainRecord(node.properties)) {
     for (const k of Object.keys(node.properties)) {
-      walk(node.properties[k], `${ptr}/properties/${k}`, issues, new Set(visited))
+      walk(node.properties[k], `${ptr}/properties/${k}`, issues, visited)
     }
   }
   if (isPlainRecord(node.items)) {
-    walk(node.items, `${ptr}/items`, issues, new Set(visited))
+    walk(node.items, `${ptr}/items`, issues, visited)
   }
   if (isPlainRecord(node.$defs)) {
     for (const k of Object.keys(node.$defs)) {
-      walk(node.$defs[k], `${ptr}/\$defs/${k}`, issues, new Set(visited))
+      walk(node.$defs[k], `${ptr}/\$defs/${k}`, issues, visited)
     }
   }
   if (Array.isArray(node.oneOf)) {
     for (let i = 0; i < node.oneOf.length; i++) {
-      walk(node.oneOf[i], `${ptr}/oneOf/${i}`, issues, new Set(visited))
+      walk(node.oneOf[i], `${ptr}/oneOf/${i}`, issues, visited)
     }
   }
 }
@@ -274,6 +275,7 @@ function validateOneOf(branches: Record<string, unknown>[], ptr: string, issues:
 
 function compat(val: unknown, type: string): boolean {
   return type === 'string' ? typeof val === 'string' :
-    type === 'number' || type === 'integer' ? typeof val === 'number' && Number.isFinite(val) :
+    type === 'number' ? typeof val === 'number' && Number.isFinite(val) :
+    type === 'integer' ? typeof val === 'number' && Number.isInteger(val) :
     type === 'boolean' ? typeof val === 'boolean' : false
 }

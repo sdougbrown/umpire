@@ -536,3 +536,393 @@ describe('Normalized issue contract', () => {
     }
   })
 })
+
+describe('Coverage gaps', () => {
+  test('rejects profile with invalid umpire portion (fromJsonSafe failure)', () => {
+    const result = compileProfile({
+      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      profileVersion: 1,
+      valueSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: 'object',
+        properties: { x: { type: 'string' } },
+        additionalProperties: false,
+      },
+      umpire: {
+        version: 999, // invalid version — fromJsonSafe will fail
+        fields: { x: {} },
+        rules: [],
+      },
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.issues[0].path).toBe('/umpire')
+    }
+  })
+
+  test('rejects profile missing $schema field', () => {
+    const result = compileProfile({
+      profileVersion: 1,
+      valueSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: 'object',
+        properties: { x: { type: 'string' } },
+        additionalProperties: false,
+      },
+      umpire: {
+        version: 1,
+        fields: { x: {} },
+        rules: [],
+      },
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.issues.some((i) => i.path === '/\$schema')).toBe(true)
+    }
+  })
+
+  test('rejects profile with missing valueSchema', () => {
+    const result = compileProfile({
+      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      profileVersion: 1,
+      umpire: { version: 1, fields: { x: {} }, rules: [] },
+    })
+    expect(result.ok).toBe(false)
+  })
+
+  test('rejects profile with missing umpire', () => {
+    const result = compileProfile({
+      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      profileVersion: 1,
+      valueSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: 'object',
+        properties: { x: { type: 'string' } },
+        additionalProperties: false,
+      },
+    })
+    expect(result.ok).toBe(false)
+  })
+
+  test('rejects invalid $ref format', () => {
+    // AJV catches the unresolvable $ref at compile time
+    const result = compileProfile({
+      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      profileVersion: 1,
+      valueSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: 'object',
+        properties: {
+          item: { '$ref': '#/other/path' },
+        },
+        additionalProperties: false,
+      },
+      umpire: {
+        version: 1,
+        fields: { item: {} },
+        rules: [],
+      },
+    })
+    expect(result.ok).toBe(false)
+  })
+
+  test('rejects $ref with sibling keywords', () => {
+    const result = compileProfile({
+      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      profileVersion: 1,
+      valueSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: 'object',
+        properties: {
+          item: { '$ref': '#/$defs/Thing', description: 'sibling not allowed' },
+        },
+        additionalProperties: false,
+        $defs: {
+          Thing: { type: 'string' },
+        },
+      },
+      umpire: {
+        version: 1,
+        fields: { item: {} },
+        rules: [],
+      },
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.issues.some((i) => i.code === 'invalidReference')).toBe(true)
+    }
+  })
+
+  test('rejects circular $ref', () => {
+    const result = compileProfile({
+      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      profileVersion: 1,
+      valueSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: 'object',
+        properties: {
+          a: { '$ref': '#/$defs/A' },
+        },
+        additionalProperties: false,
+        $defs: {
+          A: {
+            type: 'object',
+            properties: {
+              child: { '$ref': '#/$defs/B' },
+            },
+            additionalProperties: false,
+          },
+          B: {
+            type: 'object',
+            properties: {
+              parent: { '$ref': '#/$defs/A' }, // cycle!
+            },
+            additionalProperties: false,
+          },
+        },
+      },
+      umpire: {
+        version: 1,
+        fields: { a: {} },
+        rules: [],
+      },
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.issues.some((i) => i.code === 'referenceCycle')).toBe(true)
+    }
+  })
+
+  test('rejects integer default that is a fraction', () => {
+    const result = compileProfile({
+      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      profileVersion: 1,
+      valueSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: 'object',
+        properties: {
+          count: { type: 'integer' },
+        },
+        additionalProperties: false,
+      },
+      umpire: {
+        version: 1,
+        fields: { count: { default: 1.5 } }, // fraction can't be integer
+        rules: [],
+      },
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.issues.some((i) => i.code === 'invalidDefault')).toBe(true)
+    }
+  })
+
+  test('rejects integer enum value that is a fraction', () => {
+    const result = compileProfile({
+      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      profileVersion: 1,
+      valueSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: 'object',
+        properties: {
+          status: { type: 'integer', enum: [1, 2, 3.5] },
+        },
+        additionalProperties: false,
+      },
+      umpire: {
+        version: 1,
+        fields: { status: {} },
+        rules: [],
+      },
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.issues.some((i) => i.code === 'invalidProfile' && i.message.includes('incompatible'))).toBe(true)
+    }
+  })
+
+  test('oneOf rejects non-object branch schema', () => {
+    const result = compileProfile({
+      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      profileVersion: 1,
+      valueSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: 'object',
+        properties: {
+          action: {
+            oneOf: [
+              { type: 'string' }, // not an object
+            ],
+          },
+        },
+        additionalProperties: false,
+      },
+      umpire: {
+        version: 1,
+        fields: { action: {} },
+        rules: [],
+      },
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.issues.some((i) => i.code === 'invalidDiscriminator')).toBe(true)
+    }
+  })
+
+  test('oneOf rejects branch without discriminator const', () => {
+    const result = compileProfile({
+      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      profileVersion: 1,
+      valueSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: 'object',
+        properties: {
+          action: {
+            oneOf: [
+              {
+                type: 'object',
+                properties: { kind: { type: 'string' } }, // no const
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+        additionalProperties: false,
+      },
+      umpire: {
+        version: 1,
+        fields: { action: {} },
+        rules: [],
+      },
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.issues.some((i) => i.code === 'invalidDiscriminator')).toBe(true)
+    }
+  })
+
+  test('oneOf rejects duplicate discriminator const values', () => {
+    const result = compileProfile({
+      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      profileVersion: 1,
+      valueSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: 'object',
+        properties: {
+          action: {
+            oneOf: [
+              {
+                type: 'object',
+                properties: { kind: { type: 'string', const: 'dupe' } },
+                required: ['kind'],
+                additionalProperties: false,
+              },
+              {
+                type: 'object',
+                properties: { kind: { type: 'string', const: 'dupe' } }, // same const
+                required: ['kind'],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+        additionalProperties: false,
+      },
+      umpire: {
+        version: 1,
+        fields: { action: {} },
+        rules: [],
+      },
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.issues.some((i) => i.code === 'invalidDiscriminator')).toBe(true)
+    }
+  })
+
+  test('oneOf rejects mismatched discriminator property names', () => {
+    const result = compileProfile({
+      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      profileVersion: 1,
+      valueSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: 'object',
+        properties: {
+          action: {
+            oneOf: [
+              {
+                type: 'object',
+                properties: { kind: { type: 'string', const: 'a' } },
+                required: ['kind'],
+                additionalProperties: false,
+              },
+              {
+                type: 'object',
+                properties: { type: { type: 'string', const: 'b' } }, // different prop name
+                required: ['type'],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+        additionalProperties: false,
+      },
+      umpire: {
+        version: 1,
+        fields: { action: {} },
+        rules: [],
+      },
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.issues.some((i) => i.code === 'invalidDiscriminator')).toBe(true)
+    }
+  })
+
+  test('normalizeAjvErrors deduplicates identical source/code/path', () => {
+    const result = compileProfile(simpleProfile)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    // Duplicate violations at the same path produce one issue
+    const structure = result.profile.validateStructure({ })
+    expect(structure.valid).toBe(false)
+
+    // Count issues for path '/name' — there should be exactly one
+    const nameIssues = structure.issues.filter((i) => i.path === '/name')
+    expect(nameIssues).toHaveLength(1)
+  })
+
+  test('normalizeAjvErrors root type error suppresses descendant issues', () => {
+    const result = compileProfile(simpleProfile)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    // A non-object at root suppresses all descendant checks
+    const structure = result.profile.validateStructure('not-an-object')
+    expect(structure.valid).toBe(false)
+
+    // Should only have the root type error, not additional /name or /age issues
+    expect(structure.issues).toHaveLength(1)
+    expect(structure.issues[0].path).toBe('/')
+    expect(structure.issues[0].code).toBe('type')
+  })
+
+  test('RFC 6901 escaped field names are unescaped before filtering', () => {
+    const availability = {
+      'a/b': { enabled: false, satisfied: false, fair: true, required: false, reason: null, reasons: [] },
+    }
+    const issues: StructuralIssue[] = [
+      {
+        source: 'json-schema',
+        code: 'type',
+        path: '/a~1b',
+        message: 'must be string',
+      },
+    ]
+
+    const filtered = filterStructuralIssues(availability, issues)
+    // The issue at escaped path /a~1b should resolve to field 'a/b' which is disabled
+    expect(filtered).toHaveLength(0)
+  })
+})

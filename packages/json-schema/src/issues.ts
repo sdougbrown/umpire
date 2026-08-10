@@ -57,7 +57,9 @@ export function filterStructuralIssues(
     if (issue.path === '/') return true
     const first = issue.path.split('/').filter(Boolean)[0]
     if (!first) return true
-    const st = availability[first]
+    // Unescape RFC 6901 escape sequences: ~0 → ~, ~1 → /
+    const field = first.replace(/~1/g, '/').replace(/~0/g, '~')
+    const st = availability[field]
     return !(st && !st.enabled)
   })
 }
