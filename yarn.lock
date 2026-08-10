@@ -2041,6 +2041,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@umpire/json-schema@workspace:packages/json-schema":
+  version: 0.0.0-use.local
+  resolution: "@umpire/json-schema@workspace:packages/json-schema"
+  dependencies:
+    "@umpire/core": "workspace:^"
+    "@umpire/json": "workspace:^"
+    ajv: "npm:~8.18.0"
+  languageName: unknown
+  linkType: soft
+
 "@umpire/json@workspace:^, @umpire/json@workspace:packages/json":
   version: 0.0.0-use.local
   resolution: "@umpire/json@workspace:packages/json"

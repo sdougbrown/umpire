@@ -1,0 +1,40 @@
+{
+  "name": "@umpire/json-schema",
+  "version": "0.0.0",
+  "description": "JSON Schema composition profile for @umpire/core — portable nested value-shape validation alongside field availability evaluation",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepack": "node ../../scripts/materialize-agent-compat.mjs prepack",
+    "postpack": "node ../../scripts/materialize-agent-compat.mjs postpack",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "files": [
+    "dist",
+    "AGENTS.md",
+    ".claude"
+  ],
+  "dependencies": {
+    "@umpire/core": "workspace:^",
+    "@umpire/json": "workspace:^",
+    "ajv": "~8.18.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/umpire-tools/umpire.git",
+    "directory": "packages/json-schema"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

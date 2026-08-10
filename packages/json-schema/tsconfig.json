@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
+    "paths": {
+      "@umpire/core": ["../core/src/index.ts"],
+      "@umpire/core/*": ["../core/src/*"],
+      "@umpire/json": ["../json/src/index.ts"],
+      "@umpire/json/*": ["../json/src/*"]
+    }
+  },
+  "include": ["src"],
+  "references": [{ "path": "../core" }, { "path": "../json" }]
+}
