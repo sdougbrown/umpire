@@ -35,9 +35,9 @@ const C = DEFINITION_ISSUE_CODES
 /**
  * Parse and compile a canonical inline profile document.
  */
-export function compileProfile<C extends Record<string, unknown> = Record<string, unknown>>(
-  raw: unknown,
-): CompileProfileResult<C> {
+export function compileProfile<
+  C extends Record<string, unknown> = Record<string, unknown>,
+>(raw: unknown): CompileProfileResult<C> {
   // 1. Validate profile document shape
   const profileIssues = validateProfileShape(raw)
   if (profileIssues.length > 0) {
@@ -119,9 +119,9 @@ export function compileProfile<C extends Record<string, unknown> = Record<string
 /**
  * Compile separately-supplied schemas by wrapping them in a canonical profile.
  */
-export function compileSchemas<C extends Record<string, unknown> = Record<string, unknown>>(
-  input: ComposeInput,
-): CompileProfileResult<C> {
+export function compileSchemas<
+  C extends Record<string, unknown> = Record<string, unknown>,
+>(input: ComposeInput): CompileProfileResult<C> {
   if (!isPlainRecord(input.valueSchema)) {
     return {
       ok: false,
@@ -149,7 +149,8 @@ export function compileSchemas<C extends Record<string, unknown> = Record<string
   }
 
   const profile: Record<string, unknown> = {
-    $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+    $schema:
+      'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
     profileVersion: 1,
     valueSchema: input.valueSchema,
     umpire: input.umpire,
@@ -217,9 +218,9 @@ function validateProfileShape(raw: unknown): ProfileDefinitionIssue[] {
 /**
  * Internal implementation of CompiledProfile.
  */
-class InternalCompiledProfile<C extends Record<string, unknown> = Record<string, unknown>>
-  implements CompiledProfile<C>
-{
+class InternalCompiledProfile<
+  C extends Record<string, unknown> = Record<string, unknown>,
+> implements CompiledProfile<C> {
   readonly #ump: ReturnType<typeof umpire>
   readonly #validate: ReturnType<typeof Ajv.prototype.compile>
 

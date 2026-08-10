@@ -9,7 +9,9 @@ export function normalizeAjvErrors(
   const seen = new Set<string>()
 
   // Root type error suppresses all descendant issues
-  const rootTypeErr = errors.some(e => e.keyword === 'type' && e.instancePath === '')
+  const rootTypeErr = errors.some(
+    (e) => e.keyword === 'type' && e.instancePath === '',
+  )
 
   for (const err of errors) {
     const ip = err.instancePath ?? ''
@@ -53,7 +55,7 @@ export function filterStructuralIssues(
   availability: Record<string, FieldStatus>,
   issues: StructuralIssue[],
 ): StructuralIssue[] {
-  return issues.filter(issue => {
+  return issues.filter((issue) => {
     if (issue.path === '/') return true
     const first = issue.path.split('/').filter(Boolean)[0]
     if (!first) return true

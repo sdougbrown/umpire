@@ -1,6 +1,10 @@
 import { describe, test, expect } from 'bun:test'
 
-import { compileProfile, compileSchemas, filterStructuralIssues } from '../src/index.js'
+import {
+  compileProfile,
+  compileSchemas,
+  filterStructuralIssues,
+} from '../src/index.js'
 import type { StructuralIssue } from '../src/schema.js'
 
 import {
@@ -40,7 +44,8 @@ describe('compileProfile', () => {
 
   test('rejects a profile with wrong version', () => {
     const result = compileProfile({
-      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
       profileVersion: 2,
       valueSchema: {},
       umpire: {},
@@ -53,7 +58,8 @@ describe('compileProfile', () => {
 
   test('rejects an unsupported JSON Schema dialect', () => {
     const result = compileProfile({
-      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
       profileVersion: 1,
       valueSchema: {
         $schema: 'https://json-schema.org/draft-07/schema#',
@@ -82,7 +88,8 @@ describe('compileProfile', () => {
   test('rejects unsupported keywords that AJV accepts (closed-vocabulary walk)', () => {
     // 'pattern' is supported by AJV but rejected by profile v1's closed vocabulary
     const result = compileProfile({
-      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
       profileVersion: 1,
       valueSchema: {
         $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -100,23 +107,23 @@ describe('compileProfile', () => {
     })
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.issues.some((i) => i.code === 'unsupportedKeyword')).toBe(true)
+      expect(result.issues.some((i) => i.code === 'unsupportedKeyword')).toBe(
+        true,
+      )
     }
   })
 
   test('rejects anyOf keyword via closed-vocabulary walk', () => {
     const result = compileProfile({
-      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
       profileVersion: 1,
       valueSchema: {
         $schema: 'https://json-schema.org/draft/2020-12/schema',
         type: 'object',
         properties: {
           value: {
-            anyOf: [
-              { type: 'string' },
-              { type: 'number' },
-            ],
+            anyOf: [{ type: 'string' }, { type: 'number' }],
           },
         },
         additionalProperties: false,
@@ -130,7 +137,11 @@ describe('compileProfile', () => {
     expect(result.ok).toBe(false)
     if (!result.ok) {
       // Should catch both anyOf and the fact that anyOf is not in the supported vocabulary
-      expect(result.issues.some((i) => i.code === 'unsupportedKeyword' && i.message.includes('anyOf'))).toBe(true)
+      expect(
+        result.issues.some(
+          (i) => i.code === 'unsupportedKeyword' && i.message.includes('anyOf'),
+        ),
+      ).toBe(true)
     }
   })
 
@@ -240,7 +251,9 @@ describe('CompiledProfile.validateStructure()', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
 
-    const structure = result.profile.validateStructure(unknownNodePropertyInstance)
+    const structure = result.profile.validateStructure(
+      unknownNodePropertyInstance,
+    )
     expect(structure.valid).toBe(false)
 
     const addPropIssue = structure.issues.find(
@@ -255,7 +268,9 @@ describe('CompiledProfile.validateStructure()', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
 
-    const structure = result.profile.validateStructure(invalidDiscriminatorInstance)
+    const structure = result.profile.validateStructure(
+      invalidDiscriminatorInstance,
+    )
     expect(structure.valid).toBe(false)
 
     // Should have issues about the discriminator
@@ -290,7 +305,10 @@ describe('CompiledProfile.validateStructure()', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
 
-    const structure = result.profile.validateStructure({ name: 'Alice', age: 30 })
+    const structure = result.profile.validateStructure({
+      name: 'Alice',
+      age: 30,
+    })
     expect(structure.valid).toBe(true)
 
     const missingName = result.profile.validateStructure({ age: 30 })
@@ -349,7 +367,9 @@ describe('CompiledProfile.evaluate()', () => {
 
     // Structural validation catches the type error
     expect(structure.valid).toBe(false)
-    expect(structure.issues.some((i) => i.code === 'type' && i.path === '/nodes')).toBe(true)
+    expect(
+      structure.issues.some((i) => i.code === 'type' && i.path === '/nodes'),
+    ).toBe(true)
 
     // The issues remain separate - they don't mutate availability
     expect(availability.nodes?.valid).toBeUndefined()
@@ -380,13 +400,19 @@ describe('Validator coexistence (item 8)', () => {
     const badCount = profile.evaluate({ email: 'user@example.com', count: -1 })
     expect(badCount.availability.email?.valid).toBe(true) // Umpire validator passes
     expect(badCount.structure.valid).toBe(false)
-    expect(badCount.structure.issues.some((i) => i.code === 'minimum')).toBe(true) // JSON Schema catches negative
+    expect(badCount.structure.issues.some((i) => i.code === 'minimum')).toBe(
+      true,
+    ) // JSON Schema catches negative
 
     // Both fail independently
     const bothBad = profile.evaluate({ email: 42, count: -1 })
     expect(bothBad.structure.valid).toBe(false)
     // The structural issue for email will be a type error (42 is not a string)
-    expect(bothBad.structure.issues.some((i) => i.path === '/email' && i.code === 'type')).toBe(true)
+    expect(
+      bothBad.structure.issues.some(
+        (i) => i.path === '/email' && i.code === 'type',
+      ),
+    ).toBe(true)
   })
 })
 
@@ -460,16 +486,21 @@ describe('filterStructuralIssues', () => {
 
     // With filtering, node-related issues are suppressed
     const filtered = filterStructuralIssues(availability, structure.issues)
-    const remainingNodesIssues = filtered.filter(
-      (i) => i.path === '/nodes',
-    )
+    const remainingNodesIssues = filtered.filter((i) => i.path === '/nodes')
     expect(remainingNodesIssues).toHaveLength(0)
   })
 
   test('retains root issues regardless of field status', () => {
     // Root-level type errors (path '/') should always be retained
     const availability = {
-      workflowName: { enabled: true, satisfied: true, fair: true, required: true, reason: null, reasons: [] },
+      workflowName: {
+        enabled: true,
+        satisfied: true,
+        fair: true,
+        required: true,
+        reason: null,
+        reasons: [],
+      },
     }
     const issues: StructuralIssue[] = [
       {
@@ -486,7 +517,14 @@ describe('filterStructuralIssues', () => {
 
   test('retains issues for enabled fields', () => {
     const availability = {
-      nodes: { enabled: true, satisfied: true, fair: true, required: true, reason: null, reasons: [] },
+      nodes: {
+        enabled: true,
+        satisfied: true,
+        fair: true,
+        required: true,
+        reason: null,
+        reasons: [],
+      },
     }
     const issues: StructuralIssue[] = [
       {
@@ -503,7 +541,14 @@ describe('filterStructuralIssues', () => {
 
   test('retains nested path issues when the parent field is enabled', () => {
     const availability = {
-      nodes: { enabled: true, satisfied: true, fair: true, required: true, reason: null, reasons: [] },
+      nodes: {
+        enabled: true,
+        satisfied: true,
+        fair: true,
+        required: true,
+        reason: null,
+        reasons: [],
+      },
     }
     const issues: StructuralIssue[] = [
       {
@@ -540,7 +585,8 @@ describe('Normalized issue contract', () => {
 describe('Coverage gaps', () => {
   test('rejects profile with invalid umpire portion (fromJsonSafe failure)', () => {
     const result = compileProfile({
-      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
       profileVersion: 1,
       valueSchema: {
         $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -583,7 +629,8 @@ describe('Coverage gaps', () => {
 
   test('rejects profile with missing valueSchema', () => {
     const result = compileProfile({
-      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
       profileVersion: 1,
       umpire: { version: 1, fields: { x: {} }, rules: [] },
     })
@@ -592,7 +639,8 @@ describe('Coverage gaps', () => {
 
   test('rejects profile with missing umpire', () => {
     const result = compileProfile({
-      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
       profileVersion: 1,
       valueSchema: {
         $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -607,13 +655,14 @@ describe('Coverage gaps', () => {
   test('rejects invalid $ref format', () => {
     // AJV catches the unresolvable $ref at compile time
     const result = compileProfile({
-      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
       profileVersion: 1,
       valueSchema: {
         $schema: 'https://json-schema.org/draft/2020-12/schema',
         type: 'object',
         properties: {
-          item: { '$ref': '#/other/path' },
+          item: { $ref: '#/other/path' },
         },
         additionalProperties: false,
       },
@@ -628,13 +677,14 @@ describe('Coverage gaps', () => {
 
   test('rejects $ref with sibling keywords', () => {
     const result = compileProfile({
-      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
       profileVersion: 1,
       valueSchema: {
         $schema: 'https://json-schema.org/draft/2020-12/schema',
         type: 'object',
         properties: {
-          item: { '$ref': '#/$defs/Thing', description: 'sibling not allowed' },
+          item: { $ref: '#/$defs/Thing', description: 'sibling not allowed' },
         },
         additionalProperties: false,
         $defs: {
@@ -649,33 +699,36 @@ describe('Coverage gaps', () => {
     })
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.issues.some((i) => i.code === 'invalidReference')).toBe(true)
+      expect(result.issues.some((i) => i.code === 'invalidReference')).toBe(
+        true,
+      )
     }
   })
 
   test('rejects circular $ref', () => {
     const result = compileProfile({
-      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
       profileVersion: 1,
       valueSchema: {
         $schema: 'https://json-schema.org/draft/2020-12/schema',
         type: 'object',
         properties: {
-          a: { '$ref': '#/$defs/A' },
+          a: { $ref: '#/$defs/A' },
         },
         additionalProperties: false,
         $defs: {
           A: {
             type: 'object',
             properties: {
-              child: { '$ref': '#/$defs/B' },
+              child: { $ref: '#/$defs/B' },
             },
             additionalProperties: false,
           },
           B: {
             type: 'object',
             properties: {
-              parent: { '$ref': '#/$defs/A' }, // cycle!
+              parent: { $ref: '#/$defs/A' }, // cycle!
             },
             additionalProperties: false,
           },
@@ -695,7 +748,8 @@ describe('Coverage gaps', () => {
 
   test('rejects integer default that is a fraction', () => {
     const result = compileProfile({
-      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
       profileVersion: 1,
       valueSchema: {
         $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -719,7 +773,8 @@ describe('Coverage gaps', () => {
 
   test('rejects integer enum value that is a fraction', () => {
     const result = compileProfile({
-      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
       profileVersion: 1,
       valueSchema: {
         $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -737,13 +792,19 @@ describe('Coverage gaps', () => {
     })
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.issues.some((i) => i.code === 'invalidProfile' && i.message.includes('incompatible'))).toBe(true)
+      expect(
+        result.issues.some(
+          (i) =>
+            i.code === 'invalidProfile' && i.message.includes('incompatible'),
+        ),
+      ).toBe(true)
     }
   })
 
   test('oneOf rejects non-object branch schema', () => {
     const result = compileProfile({
-      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
       profileVersion: 1,
       valueSchema: {
         $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -765,13 +826,16 @@ describe('Coverage gaps', () => {
     })
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.issues.some((i) => i.code === 'invalidDiscriminator')).toBe(true)
+      expect(result.issues.some((i) => i.code === 'invalidDiscriminator')).toBe(
+        true,
+      )
     }
   })
 
   test('oneOf rejects branch without discriminator const', () => {
     const result = compileProfile({
-      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
       profileVersion: 1,
       valueSchema: {
         $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -797,13 +861,16 @@ describe('Coverage gaps', () => {
     })
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.issues.some((i) => i.code === 'invalidDiscriminator')).toBe(true)
+      expect(result.issues.some((i) => i.code === 'invalidDiscriminator')).toBe(
+        true,
+      )
     }
   })
 
   test('oneOf rejects duplicate discriminator const values', () => {
     const result = compileProfile({
-      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
       profileVersion: 1,
       valueSchema: {
         $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -836,13 +903,16 @@ describe('Coverage gaps', () => {
     })
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.issues.some((i) => i.code === 'invalidDiscriminator')).toBe(true)
+      expect(result.issues.some((i) => i.code === 'invalidDiscriminator')).toBe(
+        true,
+      )
     }
   })
 
   test('oneOf rejects mismatched discriminator property names', () => {
     const result = compileProfile({
-      $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
       profileVersion: 1,
       valueSchema: {
         $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -875,7 +945,9 @@ describe('Coverage gaps', () => {
     })
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.issues.some((i) => i.code === 'invalidDiscriminator')).toBe(true)
+      expect(result.issues.some((i) => i.code === 'invalidDiscriminator')).toBe(
+        true,
+      )
     }
   })
 
@@ -885,7 +957,7 @@ describe('Coverage gaps', () => {
     if (!result.ok) return
 
     // Duplicate violations at the same path produce one issue
-    const structure = result.profile.validateStructure({ })
+    const structure = result.profile.validateStructure({})
     expect(structure.valid).toBe(false)
 
     // Count issues for path '/name' — there should be exactly one
@@ -910,7 +982,14 @@ describe('Coverage gaps', () => {
 
   test('RFC 6901 escaped field names are unescaped before filtering', () => {
     const availability = {
-      'a/b': { enabled: false, satisfied: false, fair: true, required: false, reason: null, reasons: [] },
+      'a/b': {
+        enabled: false,
+        satisfied: false,
+        fair: true,
+        required: false,
+        reason: null,
+        reasons: [],
+      },
     }
     const issues: StructuralIssue[] = [
       {

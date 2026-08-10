@@ -32,7 +32,9 @@ export type StructuralResult = {
 /**
  * Combined evaluation result from both authorities.
  */
-export type EvaluateResult<C extends Record<string, unknown> = Record<string, unknown>> = {
+export type EvaluateResult<
+  C extends Record<string, unknown> = Record<string, unknown>,
+> = {
   availability: Record<string, FieldStatus>
   structure: StructuralResult
 }
@@ -50,14 +52,18 @@ export type ProfileDocument = {
 /**
  * Profile compilation result.
  */
-export type CompileProfileResult<C extends Record<string, unknown> = Record<string, unknown>> =
+export type CompileProfileResult<
+  C extends Record<string, unknown> = Record<string, unknown>,
+> =
   | { ok: true; profile: CompiledProfile<C> }
   | { ok: false; issues: ProfileDefinitionIssue[] }
 
 /**
  * Compiled profile interface.
  */
-export interface CompiledProfile<C extends Record<string, unknown> = Record<string, unknown>> {
+export interface CompiledProfile<
+  C extends Record<string, unknown> = Record<string, unknown>,
+> {
   /** Umpire availability check (delegates to hydrated Umpire evaluator). */
   check(
     values: InputValues,

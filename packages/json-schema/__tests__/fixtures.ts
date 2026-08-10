@@ -14,7 +14,8 @@ import type { ProfileDocument } from '../src/schema.js'
  * - discriminators (oneOf for actions)
  */
 export const workflowProfile: ProfileDocument = {
-  $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+  $schema:
+    'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
   profileVersion: 1,
   valueSchema: {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -111,8 +112,14 @@ export const workflowProfile: ProfileDocument = {
       },
     ],
     conditions: {
-      hasNodes: { type: 'boolean', description: 'Whether nodes should be active' },
-      useTags: { type: 'boolean', description: 'Whether tags should be active' },
+      hasNodes: {
+        type: 'boolean',
+        description: 'Whether nodes should be active',
+      },
+      useTags: {
+        type: 'boolean',
+        description: 'Whether tags should be active',
+      },
     },
   },
 }
@@ -248,7 +255,8 @@ export const nullTagsInstance = {
  * Validator-coexistence fixture: Umpire validators alongside JSON Schema.
  */
 export const validatorCoexistenceProfile: ProfileDocument = {
-  $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+  $schema:
+    'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
   profileVersion: 1,
   valueSchema: {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -276,7 +284,8 @@ export const validatorCoexistenceProfile: ProfileDocument = {
  * Simple profile for basic structural checks.
  */
 export const simpleProfile: ProfileDocument = {
-  $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+  $schema:
+    'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
   profileVersion: 1,
   valueSchema: {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -302,7 +311,8 @@ export const simpleProfile: ProfileDocument = {
  * Profile with unsupported keyword (should fail compilation).
  */
 export const unsupportedKeywordProfile: Record<string, unknown> = {
-  $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+  $schema:
+    'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
   profileVersion: 1,
   valueSchema: {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -323,7 +333,8 @@ export const unsupportedKeywordProfile: Record<string, unknown> = {
  * Profile with field/property mismatch (extra Umpire field).
  */
 export const fieldMismatchProfile: Record<string, unknown> = {
-  $schema: 'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+  $schema:
+    'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
   profileVersion: 1,
   valueSchema: {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -339,5 +350,3 @@ export const fieldMismatchProfile: Record<string, unknown> = {
     rules: [],
   },
 }
-
-
