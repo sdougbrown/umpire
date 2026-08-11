@@ -5,6 +5,7 @@ import {
   compileSchemas,
   filterStructuralIssues,
 } from '../src/index.js'
+import { suppressTypeDependents } from '../src/issues.js'
 import type { StructuralIssue } from '../src/schema.js'
 
 import {
@@ -179,6 +180,26 @@ describe('compileSchemas', () => {
     })
     expect(result.ok).toBe(false)
   })
+
+  test('rejects non-record umpire', () => {
+    const result = compileSchemas({
+      valueSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: 'object',
+        properties: { name: { type: 'string' } },
+        additionalProperties: false,
+      },
+      umpire: 'not-an-object',
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.issues).toContainEqual({
+        code: 'invalidProfile',
+        path: '/umpire',
+        message: 'umpire must be an object',
+      })
+    }
+  })
 })
 
 describe('CompiledProfile.check()', () => {
@@ -273,8 +294,7 @@ describe('CompiledProfile.validateStructure()', () => {
     )
     expect(structure.valid).toBe(false)
 
-    // Should have issues about the discriminator
-    expect(structure.issues.length).toBeGreaterThan(0)
+    expect(structure.issues.some((i) => i.code === 'discriminator')).toBe(true)
   })
 
   test('omitted optional property is structurally valid', () => {
@@ -862,6 +882,42 @@ describe('Coverage gaps', () => {
     }
   })
 
+  test('oneOf rejects numeric discriminator const', () => {
+    const result = compileProfile({
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      profileVersion: 1,
+      valueSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: 'object',
+        properties: {
+          action: {
+            oneOf: [
+              {
+                type: 'object',
+                properties: { kind: { type: 'integer', const: 1 } },
+                required: ['kind'],
+                additionalProperties: false,
+              },
+            ],
+          },
+        },
+        additionalProperties: false,
+      },
+      umpire: {
+        version: 1,
+        fields: { action: {} },
+        rules: [],
+      },
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.issues.some((i) => i.code === 'invalidDiscriminator')).toBe(
+        true,
+      )
+    }
+  })
+
   test('oneOf rejects branch without discriminator const', () => {
     const result = compileProfile({
       $schema:
@@ -1008,6 +1064,31 @@ describe('Coverage gaps', () => {
     expect(structure.issues).toHaveLength(1)
     expect(structure.issues[0].path).toBe('/')
     expect(structure.issues[0].code).toBe('type')
+  })
+
+  test('suppressTypeDependents handles nested paths independently', () => {
+    const issues: StructuralIssue[] = [
+      {
+        source: 'json-schema',
+        code: 'type',
+        path: '/nested/inner',
+        message: 'must be string',
+      },
+      {
+        source: 'json-schema',
+        code: 'minLength',
+        path: '/nested/inner',
+        message: 'must NOT have fewer than 1 characters',
+      },
+      {
+        source: 'json-schema',
+        code: 'minimum',
+        path: '/nested/count',
+        message: 'must be >= 0',
+      },
+    ]
+
+    expect(suppressTypeDependents(issues)).toEqual([issues[0], issues[2]])
   })
 
   test('RFC 6901 escaped field names are unescaped before filtering', () => {

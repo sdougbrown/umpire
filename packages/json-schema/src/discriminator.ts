@@ -12,10 +12,12 @@ import { isPlainRecord } from '@umpire/core/guards'
  * with a bare `oneOf`, we derive the discriminator from the branches and inject
  * the keyword into a clone before AJV compilation.
  */
-export function applyDiscriminators<T>(schema: T): T {
+export function applyDiscriminators(
+  schema: Record<string, unknown>,
+): Record<string, unknown> {
   const out = JSON.parse(JSON.stringify(schema)) as Record<string, unknown>
   walk(out)
-  return out as T
+  return out
 }
 
 function walk(node: unknown): void {

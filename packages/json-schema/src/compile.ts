@@ -12,22 +12,10 @@ import type {
   EvaluateResult,
   ComposeInput,
 } from './schema.js'
+import { DEFINITION_ISSUE_CODES } from './schema.js'
 import type { FieldStatus, InputValues } from '@umpire/core'
 import { PROFILE_META_SCHEMA, checkProfileConsistency } from './consistency.js'
 import { applyDiscriminators } from './discriminator.js'
-const DEFINITION_ISSUE_CODES = {
-  INVALID_PROFILE: 'invalidProfile',
-  UNSUPPORTED_KEYWORD: 'unsupportedKeyword',
-  FIELD_MISMATCH: 'fieldMismatch',
-  INCOMPATIBLE_IS_EMPTY: 'incompatibleIsEmpty',
-  INVALID_DEFAULT: 'invalidDefault',
-  INVALID_REFERENCE: 'invalidReference',
-  REFERENCE_CYCLE: 'referenceCycle',
-  INVALID_DISCRIMINATOR: 'invalidDiscriminator',
-  INVALID_NAME: 'invalidName',
-  NAME_COLLISION: 'nameCollision',
-  UNSAFE_NUMBER: 'unsafeNumber',
-} as const
 import { normalizeAjvErrors, suppressTypeDependents } from './issues.js'
 
 const C = DEFINITION_ISSUE_CODES

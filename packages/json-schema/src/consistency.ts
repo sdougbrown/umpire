@@ -1,6 +1,7 @@
 import { isPlainRecord } from '@umpire/core/guards'
 import type { UmpireJsonSchema } from '@umpire/json'
 import type { ProfileDefinitionIssue } from './schema.js'
+import { DEFINITION_ISSUE_CODES } from './schema.js'
 
 export { PROFILE_META_SCHEMA } from './profile-meta.js'
 
@@ -49,16 +50,7 @@ const IS_EMPTY_OK: Record<string, readonly string[]> = {
   present: ['string', 'number', 'integer', 'boolean', 'array', 'object'],
 }
 
-const C = {
-  INVALID_PROFILE: 'invalidProfile',
-  UNSUPPORTED_KEYWORD: 'unsupportedKeyword',
-  FIELD_MISMATCH: 'fieldMismatch',
-  INCOMPATIBLE_IS_EMPTY: 'incompatibleIsEmpty',
-  INVALID_DEFAULT: 'invalidDefault',
-  INVALID_REFERENCE: 'invalidReference',
-  REFERENCE_CYCLE: 'referenceCycle',
-  INVALID_DISCRIMINATOR: 'invalidDiscriminator',
-} as const
+const C = DEFINITION_ISSUE_CODES
 
 function issue(
   code: string,

@@ -81,6 +81,23 @@ export interface CompiledProfile<
 }
 
 /**
+ * Canonical issue codes for profile definition issues.
+ */
+export const DEFINITION_ISSUE_CODES = {
+  INVALID_PROFILE: 'invalidProfile',
+  UNSUPPORTED_KEYWORD: 'unsupportedKeyword',
+  FIELD_MISMATCH: 'fieldMismatch',
+  INCOMPATIBLE_IS_EMPTY: 'incompatibleIsEmpty',
+  INVALID_DEFAULT: 'invalidDefault',
+  INVALID_REFERENCE: 'invalidReference',
+  REFERENCE_CYCLE: 'referenceCycle',
+  INVALID_DISCRIMINATOR: 'invalidDiscriminator',
+  INVALID_NAME: 'invalidName',
+  NAME_COLLISION: 'nameCollision',
+  UNSAFE_NUMBER: 'unsafeNumber',
+} as const
+
+/**
  * A generic JSON object.
  */
 export type JsonObject = Record<string, unknown>
