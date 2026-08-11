@@ -2,32 +2,7 @@ import { isPlainRecord } from '@umpire/core/guards'
 import type { UmpireJsonSchema } from '@umpire/json'
 import type { ProfileDefinitionIssue } from './schema.js'
 
-// ── Provisional profile meta-schema (Stage 4 will use the published URL) ──
-export const PROFILE_META_SCHEMA: Record<string, unknown> = {
-  $schema: 'https://json-schema.org/draft/2020-12/schema',
-  type: 'object',
-  properties: {
-    $schema: {
-      type: 'string',
-      const:
-        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
-    },
-    profileVersion: { type: 'integer', const: 1 },
-    valueSchema: {
-      type: 'object',
-      properties: {
-        $schema: {
-          type: 'string',
-          const: 'https://json-schema.org/draft/2020-12/schema',
-        },
-      },
-      required: ['$schema'],
-    },
-    umpire: { type: 'object' },
-  },
-  required: ['$schema', 'profileVersion', 'valueSchema', 'umpire'],
-  additionalProperties: false,
-}
+export { PROFILE_META_SCHEMA } from './profile-meta.js'
 
 // ── Closed profile v1 vocabulary ──
 const SUPPORTED = new Set([
@@ -94,6 +69,7 @@ function issue(
 }
 
 // ── Entry point ──
+// eslint-disable-next-line complexity -- closed-vocabulary profile checks are a flat chain of independent guard checks over a finite keyword set
 export function checkProfileConsistency(
   vs: Record<string, unknown>,
   umpire: UmpireJsonSchema,
@@ -122,11 +98,7 @@ export function checkProfileConsistency(
   // 2. Root shape
   if (vs.type !== 'object')
     issues.push(
-      issue(
-        C.INVALID_PROFILE,
-        '/valueSchema/type',
-        'Root type must be "object"',
-      ),
+      issue(C.INVALID_PROFILE, '/valueSchema', 'Root type must be "object"'),
     )
   if (
     !isPlainRecord(vs.properties) ||
@@ -135,7 +107,7 @@ export function checkProfileConsistency(
     issues.push(
       issue(
         C.INVALID_PROFILE,
-        '/valueSchema/properties',
+        '/valueSchema',
         'Must include a non-empty properties object',
       ),
     )
@@ -144,7 +116,7 @@ export function checkProfileConsistency(
     issues.push(
       issue(
         C.INVALID_PROFILE,
-        '/valueSchema/additionalProperties',
+        '/valueSchema',
         'Must declare additionalProperties: false at root',
       ),
     )
@@ -162,7 +134,7 @@ export function checkProfileConsistency(
       issues.push(
         issue(
           C.FIELD_MISMATCH,
-          '/valueSchema/properties',
+          '/valueSchema',
           `Umpire field "${f}" has no matching value schema property`,
         ),
       )
@@ -171,46 +143,10 @@ export function checkProfileConsistency(
       issues.push(
         issue(
           C.FIELD_MISMATCH,
-          `/valueSchema/properties/${p}`,
+          '/valueSchema',
           `Value schema property "${p}" has no matching Umpire field`,
         ),
       )
-
-  // 4. Default compatibility
-  if (isPlainRecord(vs.properties)) {
-    for (const [name, fd] of Object.entries(umpire.fields ?? {})) {
-      if (fd.default === undefined) continue
-      const ps = vs.properties[name] as Record<string, unknown> | undefined
-      if (!ps) continue
-      const t = ps.type
-      const ok =
-        typeof t !== 'string'
-          ? true
-          : t === 'string'
-            ? typeof fd.default === 'string'
-            : t === 'number'
-              ? typeof fd.default === 'number' && Number.isFinite(fd.default)
-              : t === 'integer'
-                ? typeof fd.default === 'number' && Number.isInteger(fd.default)
-                : t === 'boolean'
-                  ? typeof fd.default === 'boolean'
-                  : t === 'array'
-                    ? Array.isArray(fd.default)
-                    : t === 'object'
-                      ? typeof fd.default === 'object' &&
-                        fd.default !== null &&
-                        !Array.isArray(fd.default)
-                      : true
-      if (!ok)
-        issues.push(
-          issue(
-            C.INVALID_DEFAULT,
-            `/umpire/fields/${name}/default`,
-            `Default ${JSON.stringify(fd.default)} incompatible with value schema type "${t}"`,
-          ),
-        )
-    }
-  }
 
   // 5. isEmpty compatibility
   if (isPlainRecord(vs.properties)) {
@@ -223,7 +159,7 @@ export function checkProfileConsistency(
         issues.push(
           issue(
             C.INCOMPATIBLE_IS_EMPTY,
-            `/umpire/fields/${name}/isEmpty`,
+            `/umpire/fields/${name}`,
             `isEmpty "${fd.isEmpty}" incompatible with schema type "${ps.type}"`,
           ),
         )
@@ -245,43 +181,58 @@ export function checkProfileConsistency(
       }
   }
 
-  // 7. Closed-vocabulary walk
-  walk(vs, '', issues, new Set())
-  return issues
+  // 7. Closed-vocabulary walk. `activeDefs` tracks the $defs currently being
+  //    expanded from the root. Following references detects cycles at the
+  //    $defs level (the reported path is the definition closing the cycle)
+  //    and expands each referenced definition's vocabulary once.
+  const defs = isPlainRecord(vs.$defs)
+    ? (vs.$defs as Record<string, unknown>)
+    : {}
+  walk(vs, '/valueSchema', issues, [], defs)
+  return dedupeIssues(issues)
+}
+
+// A shared $defs can be expanded via several reference paths, so the same
+// definition issue can be reported more than once. Collapse to one issue per
+// (code, path).
+function dedupeIssues(
+  issues: ProfileDefinitionIssue[],
+): ProfileDefinitionIssue[] {
+  const seen = new Set<string>()
+  const out: ProfileDefinitionIssue[] = []
+  for (const i of issues) {
+    const key = `${i.code}|${i.path}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(i)
+  }
+  return out
 }
 
 // ── Recursive schema walk ──
+// eslint-disable-next-line complexity -- depth-first walk over a closed finite JSON Schema vocabulary with cycle detection
 function walk(
   node: unknown,
   ptr: string,
   issues: ProfileDefinitionIssue[],
-  visited: Set<string>,
+  activeDefs: string[],
+  defs: Record<string, unknown>,
 ): void {
   if (!isPlainRecord(node)) return
 
-  // Cycle detection for $ref
+  // $ref: validate form, then follow the reference to expand its target.
   if (typeof node.$ref === 'string') {
-    if (visited.has(node.$ref)) {
-      issues.push(
-        issue(
-          C.REFERENCE_CYCLE,
-          ptr || '/',
-          `Circular reference "${node.$ref}"`,
-        ),
-      )
-      return
-    }
-    visited.add(node.$ref)
-
-    // Validate $ref format
-    if (!/^#\/\$defs\//.test(node.$ref)) {
+    const ref = node.$ref
+    const isLocalDef = /^#\/\$defs\//.test(ref)
+    if (!isLocalDef) {
       issues.push(
         issue(
           C.INVALID_REFERENCE,
           `${ptr}/\$ref`,
-          `Only #/\$defs/<name> references are supported, got "${node.$ref}"`,
+          `Only #/\$defs/<name> references are supported, got "${ref}"`,
         ),
       )
+      return
     }
     // Reject sibling keywords
     const sk = Object.keys(node).filter((k) => k !== '$ref')
@@ -293,6 +244,36 @@ function walk(
           `$ref must not have sibling keywords: ${sk.join(', ')}`,
         ),
       )
+
+    const name = ref.slice('#/$defs/'.length)
+    if (activeDefs.includes(name)) {
+      issues.push(
+        issue(
+          C.REFERENCE_CYCLE,
+          `/valueSchema/\$defs/${activeDefs[activeDefs.length - 1]}`,
+          `Circular reference "${ref}"`,
+        ),
+      )
+      return
+    }
+    const target = defs[name]
+    if (target === undefined) {
+      issues.push(
+        issue(
+          C.INVALID_REFERENCE,
+          `${ptr}/\$ref`,
+          `Unresolved $defs reference "${ref}"`,
+        ),
+      )
+      return
+    }
+    walk(
+      target,
+      `/valueSchema/\$defs/${name}`,
+      issues,
+      [...activeDefs, name],
+      defs,
+    )
     return
   }
 
@@ -300,7 +281,11 @@ function walk(
   for (const k of Object.keys(node)) {
     if (!SUPPORTED.has(k)) {
       issues.push(
-        issue(C.UNSUPPORTED_KEYWORD, ptr || '/', `Unsupported keyword "${k}"`),
+        issue(
+          C.UNSUPPORTED_KEYWORD,
+          `${ptr}/${k}`,
+          `Unsupported keyword "${k}"`,
+        ),
       )
     }
   }
@@ -385,28 +370,35 @@ function walk(
     validateOneOf(node.oneOf as Record<string, unknown>[], ptr, issues)
   }
 
-  // Recurse — share visited set for cycle detection across the entire schema
+  // Recurse
   if (isPlainRecord(node.properties)) {
     for (const k of Object.keys(node.properties)) {
-      walk(node.properties[k], `${ptr}/properties/${k}`, issues, visited)
+      walk(
+        node.properties[k],
+        `${ptr}/properties/${k}`,
+        issues,
+        activeDefs,
+        defs,
+      )
     }
   }
   if (isPlainRecord(node.items)) {
-    walk(node.items, `${ptr}/items`, issues, visited)
+    walk(node.items, `${ptr}/items`, issues, activeDefs, defs)
   }
   if (isPlainRecord(node.$defs)) {
     for (const k of Object.keys(node.$defs)) {
-      walk(node.$defs[k], `${ptr}/\$defs/${k}`, issues, visited)
+      walk(node.$defs[k], `/valueSchema/\$defs/${k}`, issues, [k], defs)
     }
   }
   if (Array.isArray(node.oneOf)) {
     for (let i = 0; i < node.oneOf.length; i++) {
-      walk(node.oneOf[i], `${ptr}/oneOf/${i}`, issues, visited)
+      walk(node.oneOf[i], `${ptr}/oneOf/${i}`, issues, activeDefs, defs)
     }
   }
 }
 
 // ── Tagged-union validation (single pass) ──
+// eslint-disable-next-line complexity -- single-pass tagged-union shape validation
 function validateOneOf(
   branches: Record<string, unknown>[],
   ptr: string,
@@ -447,6 +439,17 @@ function validateOneOf(
       if (!isPlainRecord(pv as Record<string, unknown>)) continue
       const cv = (pv as Record<string, unknown>).const
       if (cv === undefined) continue
+
+      // Profile v1 tagged unions require a distinct string discriminator const.
+      if (typeof cv !== 'string') {
+        issues.push(
+          issue(
+            C.INVALID_DISCRIMINATOR,
+            `${ptr}/oneOf`,
+            `Discriminator const must be a string (branch ${i}, property "${pk}")`,
+          ),
+        )
+      }
 
       if (discName === null) discName = pk
       if (pk !== discName) continue // skip if this branch uses a different discriminator — caught below

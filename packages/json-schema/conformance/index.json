@@ -1,0 +1,18 @@
+{
+  "fixtureVersion": 1,
+  "description": "Profile v1 conformance: definition acceptance/rejection and structural evaluation cases. This index is separate from the base Umpire conformance index.",
+  "fixtures": [
+    {
+      "id": "avenor-workflow",
+      "path": "fixtures/avenor-workflow.json",
+      "description": "Avenor-shaped workflow: arrays of node objects, nested strict objects, tagged union actions (manual/run/loop), local $defs references, enums, constants, and coexisting Umpire validators."
+    }
+  ],
+  "failures": [
+    {
+      "id": "profile-definition-failures",
+      "path": "failures/profile-definition-failures.json",
+      "description": "Profile definition rejection: excluded JSON Schema keywords, mismatched fields, incompatible isEmpty, invalid defaults, invalid references, invalid discriminators, colliding names, and unsafe numbers."
+    }
+  ]
+}

@@ -8,3 +8,5 @@ JSON Schema composition profile for `@umpire/core`.
 - The package adds AJV 8 (2020-12) for JSON Schema validation. `@umpire/core` and `@umpire/json` have **no** JSON Schema dependency.
 - Structural issues are never merged into `FieldStatus.valid` or `error`. The two authority outputs remain separate.
 - Unsupported JSON Schema keywords fail profile compilation rather than degrading silently.
+- Profile v1 tagged unions use `oneOf` branches sharing a required string-`const` discriminator; `@umpire/json-schema` injects AJV's `discriminator` keyword at compile time.
+- Keep `schemas/` and `conformance/` in sync with the pinned `umpire-spec` release via `node scripts/sync-umpire-spec.mjs` at the repo root.

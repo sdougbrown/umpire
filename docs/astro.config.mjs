@@ -113,6 +113,7 @@ export default defineConfig({
             { label: 'Write', slug: 'extensions/write' },
             { label: 'ESLint Plugin', slug: 'extensions/eslint-plugin' },
             { label: 'JSX', slug: 'extensions/jsx' },
+            { label: 'JSON Schema', slug: 'extensions/json-schema' },
             { label: 'JSON', collapsed: true, items: [
               { label: 'Overview', slug: 'extensions/json' },
               { label: 'Builders & Checks', slug: 'extensions/json/builders' },

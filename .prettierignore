@@ -1,5 +1,7 @@
 .changeset/
 docs/
 packages/json/conformance/
+packages/json-schema/conformance/
+packages/json-schema/schemas/
 **/dist/
 **/node_modules/

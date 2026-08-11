@@ -72,3 +72,32 @@ Pure UI helper: drops structural issues whose first RFC 6901 path segment matche
 - Umpire evaluates field availability, satisfaction, requiredness, fairness, reasons, and transitions.
 - JSON Schema validates structural correctness: types, nested objects, arrays, enums, constants, bounds, strict properties, and tagged unions.
 - The two never mix.
+
+## Summary of the public API
+
+| Export                                                          | Kind      | Purpose                                                                            |
+| --------------------------------------------------------------- | --------- | ---------------------------------------------------------------------------------- |
+| `compileProfile(raw)`                                           | function  | Parse and compile a canonical profile document.                                    |
+| `compileSchemas({ valueSchema, umpire })`                       | function  | Compile separately-supplied authorities by wrapping them in a profile v1 document. |
+| `CompiledProfile`                                               | interface | `check()`, `validateStructure()`, `evaluate()`.                                    |
+| `filterStructuralIssues(availability, issues)`                  | function  | Drop structural issues whose root field is disabled.                               |
+| `ProfileDocument`, `CompileProfileResult`, `StructuralIssue`, … | types     | Public typing.                                                                     |
+
+## Structural issue contract
+
+Structural issues carry `source` (`"json-schema"`), `code`, `path` (RFC 6901 into the instance), an optional `schemaPath`, and a human `message`. `code` is the offending JSON Schema keyword (`type`, `required`, `additionalProperties`, `minItems`, `maxItems`, `minLength`, `maxLength`, `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum`, `enum`, `const`) or a profile runtime code (`discriminator`). Issues are normalized: deduplicated by `(source, code, path)`, sorted by path then code, with tagger union branch noise suppressed and same-path `type` failures suppressing value-dependent keywords.
+
+## Tagged unions
+
+Profile v1 unions use a `oneOf` whose branches share one required discriminator property holding a distinct string `const`. The package injects AJV's `discriminator` keyword at compile time and reports:
+
+- a missing discriminator as `required` at the discriminator path;
+- an unknown discriminator value as `discriminator` at the discriminator path.
+
+## Conditions
+
+Profile availability evaluation reuses base Umpire condition semantics unchanged: `conditions` is passed through to `check()`/`evaluate()` as-is, and an unsupplied condition referenced by a rule fails exactly as it does in `@umpire/json`. No new availability behavior is layered onto the profile wrapper.
+
+## Vendored specification files
+
+The package ships the pinned umpire-spec release under `schemas/` (the canonical profile meta-schema) and `conformance/` (the profile conformance fixtures). Keep them in sync with `node scripts/sync-umpire-spec.mjs` at the repo root; a sync test asserts the inline profile meta-schema matches the shipped file.

@@ -1,0 +1,1290 @@
+{
+  "fixtureVersion": 1,
+  "id": "avenor-workflow",
+  "description": "Avenor-shaped workflow fixture: nodes with tagged-union actions, edges, enums, constants, local $defs, and coexisting Umpire validators.",
+  "profile": {
+    "$schema": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+    "profileVersion": 1,
+    "valueSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          },
+          "minItems": 1
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/edge"
+          }
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "workflowType": {
+          "type": "string",
+          "enum": [
+            "pipeline",
+            "fanout",
+            "loop"
+          ]
+        },
+        "version": {
+          "type": "integer",
+          "const": 1
+        },
+        "status": {
+          "type": "string"
+        },
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        }
+      },
+      "required": [
+        "nodes",
+        "title"
+      ],
+      "additionalProperties": false,
+      "$defs": {
+        "node": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "action": {
+              "$ref": "#/$defs/action"
+            },
+            "label": {
+              "type": "string"
+            },
+            "timeout": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3600
+            },
+            "priority": {
+              "type": "string",
+              "enum": [
+                "low",
+                "normal",
+                "high"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "action"
+          ],
+          "additionalProperties": false
+        },
+        "action": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "manual"
+                },
+                "instructions": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "instructions"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "run"
+                },
+                "command": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeout": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "kind",
+                "command"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "loop"
+                },
+                "maxIterations": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "condition": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "maxIterations",
+                "condition"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "edge": {
+          "type": "object",
+          "properties": {
+            "from": {
+              "type": "string",
+              "minLength": 1
+            },
+            "to": {
+              "type": "string",
+              "minLength": 1
+            },
+            "label": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "from",
+            "to"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "umpire": {
+      "version": 1,
+      "conditions": {
+        "allowEdits": {
+          "type": "boolean"
+        }
+      },
+      "fields": {
+        "nodes": {
+          "isEmpty": "array",
+          "required": true
+        },
+        "edges": {
+          "isEmpty": "array"
+        },
+        "title": {
+          "isEmpty": "string",
+          "required": true
+        },
+        "workflowType": {
+          "isEmpty": "string"
+        },
+        "version": {
+          "isEmpty": "number"
+        },
+        "status": {
+          "isEmpty": "string"
+        },
+        "maxAttempts": {
+          "isEmpty": "number"
+        }
+      },
+      "rules": [
+        {
+          "type": "requires",
+          "field": "edges",
+          "when": {
+            "op": "present",
+            "field": "nodes"
+          },
+          "reason": "Edges must accompany nodes"
+        },
+        {
+          "type": "enabledWhen",
+          "field": "status",
+          "when": {
+            "op": "cond",
+            "condition": "allowEdits"
+          },
+          "reason": "Status editing is disabled"
+        }
+      ],
+      "validators": {
+        "status": {
+          "op": "matches",
+          "pattern": "^(draft|active|archived)$",
+          "error": "Status must be draft, active, or archived"
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "complete-valid-workflow",
+      "description": "A complete Avenor workflow with nodes (various action types), edges, title, workflowType enum, and const version.",
+      "values": {
+        "nodes": [
+          {
+            "id": "start",
+            "action": {
+              "kind": "manual",
+              "instructions": "Review input data"
+            },
+            "priority": "high"
+          },
+          {
+            "id": "process",
+            "action": {
+              "kind": "run",
+              "command": "./process.sh"
+            },
+            "timeout": 300,
+            "priority": "normal"
+          },
+          {
+            "id": "loop-check",
+            "action": {
+              "kind": "loop",
+              "maxIterations": 5,
+              "condition": "retryCount < 5"
+            },
+            "label": "Retry loop"
+          }
+        ],
+        "edges": [
+          {
+            "from": "start",
+            "to": "process"
+          },
+          {
+            "from": "process",
+            "to": "loop-check"
+          }
+        ],
+        "title": "Data processing pipeline",
+        "workflowType": "pipeline",
+        "version": 1,
+        "maxAttempts": 3
+      },
+      "conditions": {
+        "allowEdits": true
+      },
+      "expectedStructure": {
+        "valid": true,
+        "issues": []
+      },
+      "expectedAvailability": {
+        "nodes": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "edges": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "title": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "workflowType": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "version": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "status": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "maxAttempts": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        }
+      }
+    },
+    {
+      "id": "minimal-valid-workflow",
+      "description": "Minimal valid workflow with only required properties.",
+      "values": {
+        "nodes": [
+          {
+            "id": "start",
+            "action": {
+              "kind": "run",
+              "command": "make"
+            }
+          }
+        ],
+        "title": "Build"
+      },
+      "conditions": {
+        "allowEdits": false
+      },
+      "expectedStructure": {
+        "valid": true,
+        "issues": []
+      },
+      "expectedAvailability": {
+        "nodes": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "edges": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "title": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "workflowType": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "version": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "status": {
+          "enabled": false,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": "Status editing is disabled",
+          "reasons": [
+            "Status editing is disabled"
+          ]
+        },
+        "maxAttempts": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        }
+      }
+    },
+    {
+      "id": "wrong-node-type-structural-issue",
+      "description": "Nodes property has wrong type (string instead of array). Structural validation catches this independently. Umpire availability shows nodes as satisfied: false for the string value (non-empty string is a present array-like value).",
+      "values": {
+        "nodes": "not-an-array",
+        "title": "Broken"
+      },
+      "conditions": {
+        "allowEdits": false
+      },
+      "expectedStructure": {
+        "valid": false,
+        "issues": [
+          {
+            "source": "json-schema",
+            "code": "type",
+            "path": "/nodes"
+          }
+        ]
+      },
+      "expectedAvailability": {
+        "nodes": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "edges": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "title": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "workflowType": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "version": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "status": {
+          "enabled": false,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": "Status editing is disabled",
+          "reasons": [
+            "Status editing is disabled"
+          ]
+        },
+        "maxAttempts": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        }
+      }
+    },
+    {
+      "id": "missing-required-title",
+      "description": "Required title is missing. Structural validation reports the missing property.",
+      "values": {
+        "nodes": [
+          {
+            "id": "a",
+            "action": {
+              "kind": "manual",
+              "instructions": "Do it"
+            }
+          }
+        ]
+      },
+      "conditions": {
+        "allowEdits": false
+      },
+      "expectedStructure": {
+        "valid": false,
+        "issues": [
+          {
+            "source": "json-schema",
+            "code": "required",
+            "path": "/title"
+          }
+        ]
+      },
+      "expectedAvailability": {
+        "nodes": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "edges": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "title": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "workflowType": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "version": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "status": {
+          "enabled": false,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": "Status editing is disabled",
+          "reasons": [
+            "Status editing is disabled"
+          ]
+        },
+        "maxAttempts": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        }
+      }
+    },
+    {
+      "id": "unknown-property",
+      "description": "An unknown property at root level is rejected by additionalProperties.",
+      "values": {
+        "nodes": [
+          {
+            "id": "a",
+            "action": {
+              "kind": "manual",
+              "instructions": "Go"
+            }
+          }
+        ],
+        "title": "Test",
+        "unknownField": "should be rejected"
+      },
+      "expectedStructure": {
+        "valid": false,
+        "issues": [
+          {
+            "source": "json-schema",
+            "code": "additionalProperties",
+            "path": "/unknownField"
+          }
+        ]
+      }
+    },
+    {
+      "id": "omitted-optional-property-structurally-valid",
+      "description": "An omitted optional property (workflowType) is structurally valid. Explicit null would fail with code: type.",
+      "values": {
+        "nodes": [
+          {
+            "id": "a",
+            "action": {
+              "kind": "manual",
+              "instructions": "Go"
+            }
+          }
+        ],
+        "title": "Test"
+      },
+      "conditions": {
+        "allowEdits": false
+      },
+      "expectedStructure": {
+        "valid": true,
+        "issues": []
+      },
+      "expectedAvailability": {
+        "nodes": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "edges": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "title": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "workflowType": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "version": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "status": {
+          "enabled": false,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": "Status editing is disabled",
+          "reasons": [
+            "Status editing is disabled"
+          ]
+        },
+        "maxAttempts": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        }
+      }
+    },
+    {
+      "id": "explicit-null-fails-type",
+      "description": "Explicit JSON null value fails type validation. Structural validation catches it even though Umpire would treat it as an absent-like value.",
+      "values": {
+        "nodes": [
+          {
+            "id": "a",
+            "action": {
+              "kind": "manual",
+              "instructions": "Go"
+            }
+          }
+        ],
+        "title": "Test",
+        "workflowType": null
+      },
+      "conditions": {
+        "allowEdits": false
+      },
+      "expectedStructure": {
+        "valid": false,
+        "issues": [
+          {
+            "source": "json-schema",
+            "code": "type",
+            "path": "/workflowType"
+          }
+        ]
+      },
+      "expectedAvailability": {
+        "nodes": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "edges": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "title": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "workflowType": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "version": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "status": {
+          "enabled": false,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": "Status editing is disabled",
+          "reasons": [
+            "Status editing is disabled"
+          ]
+        },
+        "maxAttempts": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        }
+      }
+    },
+    {
+      "id": "missing-discriminator-in-action",
+      "description": "A node action is missing the required discriminator property (kind). Structural validation reports 'required' at the discriminator path.",
+      "values": {
+        "nodes": [
+          {
+            "id": "a",
+            "action": {
+              "instructions": "Missing discriminator"
+            }
+          }
+        ],
+        "title": "Test"
+      },
+      "expectedStructure": {
+        "valid": false,
+        "issues": [
+          {
+            "source": "json-schema",
+            "code": "required",
+            "path": "/nodes/0/action/kind"
+          }
+        ]
+      }
+    },
+    {
+      "id": "unknown-discriminator-value",
+      "description": "The discriminator value does not match any known branch. Structural validation reports 'discriminator' at the discriminator path.",
+      "values": {
+        "nodes": [
+          {
+            "id": "a",
+            "action": {
+              "kind": "automatic",
+              "instructions": "Unknown action type"
+            }
+          }
+        ],
+        "title": "Test"
+      },
+      "expectedStructure": {
+        "valid": false,
+        "issues": [
+          {
+            "source": "json-schema",
+            "code": "discriminator",
+            "path": "/nodes/0/action/kind"
+          }
+        ]
+      }
+    },
+    {
+      "id": "enum-value-outside-allowed-set",
+      "description": "workflowType enum value does not match any allowed variant.",
+      "values": {
+        "nodes": [
+          {
+            "id": "a",
+            "action": {
+              "kind": "manual",
+              "instructions": "Go"
+            }
+          }
+        ],
+        "title": "Test",
+        "workflowType": "unknown"
+      },
+      "expectedStructure": {
+        "valid": false,
+        "issues": [
+          {
+            "source": "json-schema",
+            "code": "enum",
+            "path": "/workflowType"
+          }
+        ]
+      }
+    },
+    {
+      "id": "const-value-mismatch",
+      "description": "version const value does not match the expected literal 1.",
+      "values": {
+        "nodes": [
+          {
+            "id": "a",
+            "action": {
+              "kind": "manual",
+              "instructions": "Go"
+            }
+          }
+        ],
+        "title": "Test",
+        "version": 2
+      },
+      "expectedStructure": {
+        "valid": false,
+        "issues": [
+          {
+            "source": "json-schema",
+            "code": "const",
+            "path": "/version"
+          }
+        ]
+      }
+    },
+    {
+      "id": "array-minItems-violation",
+      "description": "nodes array has fewer items than minItems: 1.",
+      "values": {
+        "nodes": [],
+        "title": "Empty nodes"
+      },
+      "expectedStructure": {
+        "valid": false,
+        "issues": [
+          {
+            "source": "json-schema",
+            "code": "minItems",
+            "path": "/nodes"
+          }
+        ]
+      }
+    },
+    {
+      "id": "integer-maximum-violation",
+      "description": "maxAttempts exceeds the maximum bound of 10.",
+      "values": {
+        "nodes": [
+          {
+            "id": "a",
+            "action": {
+              "kind": "manual",
+              "instructions": "Go"
+            }
+          }
+        ],
+        "title": "Test",
+        "maxAttempts": 100
+      },
+      "expectedStructure": {
+        "valid": false,
+        "issues": [
+          {
+            "source": "json-schema",
+            "code": "maximum",
+            "path": "/maxAttempts"
+          }
+        ]
+      }
+    },
+    {
+      "id": "string-minLength-violation",
+      "description": "title string is empty and below minLength: 1.",
+      "values": {
+        "nodes": [
+          {
+            "id": "a",
+            "action": {
+              "kind": "manual",
+              "instructions": "Go"
+            }
+          }
+        ],
+        "title": ""
+      },
+      "expectedStructure": {
+        "valid": false,
+        "issues": [
+          {
+            "source": "json-schema",
+            "code": "minLength",
+            "path": "/title"
+          }
+        ]
+      }
+    },
+    {
+      "id": "validator-coexistence",
+      "description": "status field passes Umpire validation (matches pattern) and has no structural issues when present with a valid value.",
+      "values": {
+        "nodes": [
+          {
+            "id": "a",
+            "action": {
+              "kind": "manual",
+              "instructions": "Go"
+            }
+          }
+        ],
+        "title": "Test",
+        "status": "draft"
+      },
+      "conditions": {
+        "allowEdits": true
+      },
+      "expectedStructure": {
+        "valid": true,
+        "issues": []
+      },
+      "expectedAvailability": {
+        "nodes": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "edges": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "title": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "workflowType": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "version": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "status": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": [],
+          "valid": true
+        },
+        "maxAttempts": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        }
+      }
+    },
+    {
+      "id": "nested-object-strict-properties",
+      "description": "A node has an unknown property that is rejected by the node's additionalProperties: false.",
+      "values": {
+        "nodes": [
+          {
+            "id": "a",
+            "action": {
+              "kind": "manual",
+              "instructions": "Go"
+            },
+            "unknownNodeProp": "not allowed"
+          }
+        ],
+        "title": "Test"
+      },
+      "expectedStructure": {
+        "valid": false,
+        "issues": [
+          {
+            "source": "json-schema",
+            "code": "additionalProperties",
+            "path": "/nodes/0/unknownNodeProp"
+          }
+        ]
+      }
+    },
+    {
+      "id": "edge-missing-required-to",
+      "description": "Edge object is missing the required 'to' property.",
+      "values": {
+        "nodes": [
+          {
+            "id": "a",
+            "action": {
+              "kind": "manual",
+              "instructions": "Go"
+            }
+          },
+          {
+            "id": "b",
+            "action": {
+              "kind": "run",
+              "command": "./b.sh"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "a"
+          }
+        ],
+        "title": "Test"
+      },
+      "expectedStructure": {
+        "valid": false,
+        "issues": [
+          {
+            "source": "json-schema",
+            "code": "required",
+            "path": "/edges/0/to"
+          }
+        ]
+      }
+    },
+    {
+      "id": "title-exceeds-maxLength",
+      "description": "Title exceeds maxLength: 200 boundary.",
+      "values": {
+        "nodes": [
+          {
+            "id": "a",
+            "action": {
+              "kind": "manual",
+              "instructions": "Do it"
+            }
+          }
+        ],
+        "title": "LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL"
+      },
+      "expectedStructure": {
+        "valid": false,
+        "issues": [
+          {
+            "source": "json-schema",
+            "code": "maxLength",
+            "path": "/title"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-timeout-exceeds-maximum",
+      "description": "Node timeout value exceeds maximum 3600 boundary.",
+      "values": {
+        "nodes": [
+          {
+            "id": "a",
+            "action": {
+              "kind": "run",
+              "command": "./build.sh"
+            },
+            "timeout": 9999
+          }
+        ],
+        "title": "Build"
+      },
+      "expectedStructure": {
+        "valid": false,
+        "issues": [
+          {
+            "source": "json-schema",
+            "code": "maximum",
+            "path": "/nodes/0/timeout"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-timeout-below-minimum",
+      "description": "Node timeout value is below minimum 0 boundary.",
+      "values": {
+        "nodes": [
+          {
+            "id": "a",
+            "action": {
+              "kind": "run",
+              "command": "./build.sh"
+            },
+            "timeout": -1
+          }
+        ],
+        "title": "Build"
+      },
+      "expectedStructure": {
+        "valid": false,
+        "issues": [
+          {
+            "source": "json-schema",
+            "code": "minimum",
+            "path": "/nodes/0/timeout"
+          }
+        ]
+      }
+    },
+    {
+      "id": "empty-nodes-satisfied-false-structural-issue",
+      "description": "nodes is an empty array (fails minItems). Umpire reports satisfied: false for array isEmpty with empty array. Structural validation reports minItems.",
+      "values": {
+        "nodes": [],
+        "title": "Test"
+      },
+      "conditions": {
+        "allowEdits": false
+      },
+      "expectedStructure": {
+        "valid": false,
+        "issues": [
+          {
+            "source": "json-schema",
+            "code": "minItems",
+            "path": "/nodes"
+          }
+        ]
+      },
+      "expectedAvailability": {
+        "nodes": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "edges": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "title": {
+          "enabled": true,
+          "satisfied": true,
+          "fair": true,
+          "required": true,
+          "reason": null,
+          "reasons": []
+        },
+        "workflowType": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "version": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        },
+        "status": {
+          "enabled": false,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": "Status editing is disabled",
+          "reasons": [
+            "Status editing is disabled"
+          ]
+        },
+        "maxAttempts": {
+          "enabled": true,
+          "satisfied": false,
+          "fair": true,
+          "required": false,
+          "reason": null,
+          "reasons": []
+        }
+      }
+    }
+  ]
+}

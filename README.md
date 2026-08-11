@@ -51,6 +51,7 @@ For a larger example with conditions, plan-gated fields, and `play()` transition
 | [`@umpire/drizzle`](./packages/drizzle/README.md)               | Drizzle table hydration for Umpire fields plus write-policy re-exports        |
 | [`@umpire/testing`](./packages/testing/README.md)               | Invariant probes for rule configurations                                      |
 | [`@umpire/devtools`](./packages/devtools/README.md)             | In-app inspector panel — scorecard, traces, foul log, graph view              |
+| [`@umpire/json-schema`](./packages/json-schema/README.md)       | JSON Schema composition profile — independent structural + availability       |
 
 ## Why Umpire?
 

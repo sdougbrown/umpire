@@ -21,6 +21,8 @@
   },
   "files": [
     "dist",
+    "schemas",
+    "conformance",
     "AGENTS.md",
     ".claude"
   ],

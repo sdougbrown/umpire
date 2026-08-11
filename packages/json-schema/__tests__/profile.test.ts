@@ -583,7 +583,7 @@ describe('Normalized issue contract', () => {
 })
 
 describe('Coverage gaps', () => {
-  test('rejects profile with invalid umpire portion (fromJsonSafe failure)', () => {
+  test('rejects profile with invalid umpire portion (meta-schema or hydration failure)', () => {
     const result = compileProfile({
       $schema:
         'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
@@ -595,14 +595,14 @@ describe('Coverage gaps', () => {
         additionalProperties: false,
       },
       umpire: {
-        version: 999, // invalid version — fromJsonSafe will fail
+        version: 999, // invalid version — rejected by the profile meta-schema
         fields: { x: {} },
         rules: [],
       },
     })
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.issues[0].path).toBe('/umpire')
+      expect(result.issues[0].path).toBe('/umpire/version')
     }
   })
 
@@ -798,6 +798,36 @@ describe('Coverage gaps', () => {
             i.code === 'invalidProfile' && i.message.includes('incompatible'),
         ),
       ).toBe(true)
+    }
+  })
+
+  test('reports a shared $defs issue only once (dedup by code+path)', () => {
+    // Two root properties reference the same $defs, which carries an
+    // unsupported keyword. The closed-vocabulary walk expands it via several
+    // paths, so the issue must not be duplicated.
+    const result = compileProfile({
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      profileVersion: 1,
+      valueSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: 'object',
+        properties: {
+          a: { $ref: '#/$defs/Thing' },
+          b: { $ref: '#/$defs/Thing' },
+        },
+        additionalProperties: false,
+        $defs: { Thing: { type: 'string', pattern: '^x$' } },
+      },
+      umpire: { version: 1, fields: { a: {}, b: {} }, rules: [] },
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      const keyed = result.issues.map((i) => `${i.code}|${i.path}`)
+      expect(new Set(keyed).size).toBe(keyed.length)
+      expect(keyed).toContain(
+        'unsupportedKeyword|/valueSchema/$defs/Thing/pattern',
+      )
     }
   })
 

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+  "title": "JSON Schema Composition Profile v1",
+  "description": "Canonical inline profile combining Umpire availability and JSON Schema structural validation. Validates the profile wrapper; the embedded valueSchema and umpire documents are validated separately via AJV 2020 and draft-07 respectively.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "const": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json"
+    },
+    "profileVersion": {
+      "const": 1
+    },
+    "valueSchema": {
+      "type": "object",
+      "description": "JSON Schema 2020-12 document describing structural constraints on the runtime value.",
+      "properties": {
+        "$schema": {
+          "const": "https://json-schema.org/draft/2020-12/schema"
+        }
+      },
+      "required": [
+        "$schema"
+      ]
+    },
+    "umpire": {
+      "type": "object",
+      "description": "Umpire availability document (version 1). Validated against the Umpire draft-07 meta-schema separately.",
+      "properties": {
+        "version": {
+          "const": 1
+        }
+      },
+      "required": [
+        "version"
+      ]
+    }
+  },
+  "required": [
+    "$schema",
+    "profileVersion",
+    "valueSchema",
+    "umpire"
+  ],
+  "additionalProperties": false
+}

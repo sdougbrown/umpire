@@ -1,0 +1,653 @@
+{
+  "fixtureVersion": 1,
+  "id": "profile-definition-failures",
+  "description": "Profile definition rejection cases: unsupported keywords, field mismatches, incompatible isEmpty, invalid defaults, bad references, invalid discriminators, and unsafe numbers.",
+  "failures": [
+    {
+      "id": "excluded-keyword-allOf",
+      "description": "Profile compilation must reject valueSchema using excluded keyword 'allOf'.",
+      "profile": {
+        "$schema": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+        "profileVersion": 1,
+        "valueSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "x": {
+              "allOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "minLength": 1
+                }
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "umpire": {
+          "version": 1,
+          "fields": {
+            "x": {
+              "isEmpty": "string"
+            }
+          },
+          "rules": []
+        }
+      },
+      "expectedDefinitionIssues": [
+        {
+          "code": "unsupportedKeyword",
+          "path": "/valueSchema/properties/x/allOf"
+        }
+      ]
+    },
+    {
+      "id": "excluded-keyword-anyOf",
+      "description": "Profile compilation must reject valueSchema using excluded keyword 'anyOf'.",
+      "profile": {
+        "$schema": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+        "profileVersion": 1,
+        "valueSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "x": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "umpire": {
+          "version": 1,
+          "fields": {
+            "x": {
+              "isEmpty": "string"
+            }
+          },
+          "rules": []
+        }
+      },
+      "expectedDefinitionIssues": [
+        {
+          "code": "unsupportedKeyword",
+          "path": "/valueSchema/properties/x/anyOf"
+        }
+      ]
+    },
+    {
+      "id": "excluded-keyword-not",
+      "description": "Profile compilation must reject valueSchema using excluded keyword 'not'.",
+      "profile": {
+        "$schema": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+        "profileVersion": 1,
+        "valueSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "string",
+              "not": {
+                "pattern": "bad"
+              }
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "umpire": {
+          "version": 1,
+          "fields": {
+            "x": {
+              "isEmpty": "string"
+            }
+          },
+          "rules": []
+        }
+      },
+      "expectedDefinitionIssues": [
+        {
+          "code": "unsupportedKeyword",
+          "path": "/valueSchema/properties/x/not"
+        }
+      ]
+    },
+    {
+      "id": "excluded-keyword-uniqueItems",
+      "description": "Profile compilation must reject valueSchema using excluded keyword 'uniqueItems'.",
+      "profile": {
+        "$schema": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+        "profileVersion": 1,
+        "valueSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "umpire": {
+          "version": 1,
+          "fields": {
+            "tags": {
+              "isEmpty": "array"
+            }
+          },
+          "rules": []
+        }
+      },
+      "expectedDefinitionIssues": [
+        {
+          "code": "unsupportedKeyword",
+          "path": "/valueSchema/properties/tags/uniqueItems"
+        }
+      ]
+    },
+    {
+      "id": "excluded-keyword-pattern",
+      "description": "Profile compilation must reject valueSchema using excluded keyword 'pattern'.",
+      "profile": {
+        "$schema": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+        "profileVersion": 1,
+        "valueSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string",
+              "pattern": "^.+@.+\\..+$"
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "umpire": {
+          "version": 1,
+          "fields": {
+            "email": {
+              "isEmpty": "string"
+            }
+          },
+          "rules": []
+        }
+      },
+      "expectedDefinitionIssues": [
+        {
+          "code": "unsupportedKeyword",
+          "path": "/valueSchema/properties/email/pattern"
+        }
+      ]
+    },
+    {
+      "id": "excluded-keyword-format",
+      "description": "Profile compilation must reject valueSchema using excluded keyword 'format'.",
+      "profile": {
+        "$schema": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+        "profileVersion": 1,
+        "valueSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string",
+              "format": "email"
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "umpire": {
+          "version": 1,
+          "fields": {
+            "email": {
+              "isEmpty": "string"
+            }
+          },
+          "rules": []
+        }
+      },
+      "expectedDefinitionIssues": [
+        {
+          "code": "unsupportedKeyword",
+          "path": "/valueSchema/properties/email/format"
+        }
+      ]
+    },
+    {
+      "id": "field-mismatch-extra",
+      "description": "Umpire fields has a property not present in valueSchema properties.",
+      "profile": {
+        "$schema": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+        "profileVersion": 1,
+        "valueSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "umpire": {
+          "version": 1,
+          "fields": {
+            "title": {
+              "isEmpty": "string"
+            },
+            "extraField": {
+              "isEmpty": "string"
+            }
+          },
+          "rules": []
+        }
+      },
+      "expectedDefinitionIssues": [
+        {
+          "code": "fieldMismatch",
+          "path": "/valueSchema"
+        }
+      ]
+    },
+    {
+      "id": "incompatible-isEmpty-string-vs-integer",
+      "description": "isEmpty strategy 'string' is incompatible with property type 'integer'.",
+      "profile": {
+        "$schema": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+        "profileVersion": 1,
+        "valueSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "integer"
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "umpire": {
+          "version": 1,
+          "fields": {
+            "count": {
+              "isEmpty": "string"
+            }
+          },
+          "rules": []
+        }
+      },
+      "expectedDefinitionIssues": [
+        {
+          "code": "incompatibleIsEmpty",
+          "path": "/umpire/fields/count"
+        }
+      ]
+    },
+    {
+      "id": "incompatible-isEmpty-string-vs-object",
+      "description": "isEmpty strategy 'string' is incompatible with property type 'object'.",
+      "profile": {
+        "$schema": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+        "profileVersion": 1,
+        "valueSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "config": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "umpire": {
+          "version": 1,
+          "fields": {
+            "config": {
+              "isEmpty": "string"
+            }
+          },
+          "rules": []
+        }
+      },
+      "expectedDefinitionIssues": [
+        {
+          "code": "incompatibleIsEmpty",
+          "path": "/umpire/fields/config"
+        }
+      ]
+    },
+    {
+      "id": "invalid-reference-bad-format",
+      "description": "$ref does not have the required format #/$defs/<name>.",
+      "profile": {
+        "$schema": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+        "profileVersion": 1,
+        "valueSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "item": {
+              "$ref": "#/definitions/Item"
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "umpire": {
+          "version": 1,
+          "fields": {
+            "item": {
+              "isEmpty": "present"
+            }
+          },
+          "rules": []
+        }
+      },
+      "expectedDefinitionIssues": [
+        {
+          "code": "invalidReference",
+          "path": "/valueSchema/properties/item/$ref"
+        }
+      ]
+    },
+    {
+      "id": "invalid-reference-remote",
+      "description": "Remote $ref must be rejected.",
+      "profile": {
+        "$schema": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+        "profileVersion": 1,
+        "valueSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "item": {
+              "$ref": "https://example.com/schema#/$defs/Item"
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "umpire": {
+          "version": 1,
+          "fields": {
+            "item": {
+              "isEmpty": "present"
+            }
+          },
+          "rules": []
+        }
+      },
+      "expectedDefinitionIssues": [
+        {
+          "code": "invalidReference",
+          "path": "/valueSchema/properties/item/$ref"
+        }
+      ]
+    },
+    {
+      "id": "invalid-default-fails-schema",
+      "description": "An Umpire default value does not validate against the corresponding valueSchema property.",
+      "profile": {
+        "$schema": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+        "profileVersion": 1,
+        "valueSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "umpire": {
+          "version": 1,
+          "fields": {
+            "count": {
+              "isEmpty": "number",
+              "default": -1
+            }
+          },
+          "rules": []
+        }
+      },
+      "expectedDefinitionIssues": [
+        {
+          "code": "invalidDefault",
+          "path": "/umpire/fields/count/default"
+        }
+      ]
+    },
+    {
+      "id": "value-schema-missing-type-object",
+      "description": "valueSchema root must have type: 'object'.",
+      "profile": {
+        "$schema": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+        "profileVersion": 1,
+        "valueSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "umpire": {
+          "version": 1,
+          "fields": {},
+          "rules": []
+        }
+      },
+      "expectedDefinitionIssues": [
+        {
+          "code": "invalidProfile",
+          "path": "/valueSchema"
+        }
+      ]
+    },
+    {
+      "id": "untagged-oneof-discriminator-not-string-const",
+      "description": "oneOf branches must use a string const discriminator, not a boolean or number.",
+      "profile": {
+        "$schema": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+        "profileVersion": 1,
+        "valueSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "flag": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "const": false
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "umpire": {
+          "version": 1,
+          "fields": {
+            "flag": {
+              "isEmpty": "present"
+            }
+          },
+          "rules": []
+        }
+      },
+      "expectedDefinitionIssues": [
+        {
+          "code": "invalidDiscriminator",
+          "path": "/valueSchema/properties/flag/oneOf"
+        }
+      ]
+    },
+    {
+      "id": "reference-cycle-direct",
+      "description": "A direct $defs reference cycle must be rejected.",
+      "profile": {
+        "$schema": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+        "profileVersion": 1,
+        "valueSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "a": {
+              "$ref": "#/$defs/A"
+            }
+          },
+          "required": [],
+          "additionalProperties": false,
+          "$defs": {
+            "A": {
+              "type": "object",
+              "properties": {
+                "child": {
+                  "$ref": "#/$defs/B"
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            },
+            "B": {
+              "type": "object",
+              "properties": {
+                "parent": {
+                  "$ref": "#/$defs/A"
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            }
+          }
+        },
+        "umpire": {
+          "version": 1,
+          "fields": {
+            "a": {
+              "isEmpty": "present"
+            }
+          },
+          "rules": []
+        }
+      },
+      "expectedDefinitionIssues": [
+        {
+          "code": "referenceCycle",
+          "path": "/valueSchema/$defs/B"
+        }
+      ]
+    },
+    {
+      "id": "malformed-tagged-union-disparate-discriminators",
+      "description": "oneOf branches do not share a common required discriminator property.",
+      "profile": {
+        "$schema": "https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json",
+        "profileVersion": 1,
+        "valueSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "cmd": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "const": "run"
+                    },
+                    "cmd": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "cmd"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "const": "manual"
+                    },
+                    "desc": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "desc"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "umpire": {
+          "version": 1,
+          "fields": {
+            "cmd": {
+              "isEmpty": "present"
+            }
+          },
+          "rules": []
+        }
+      },
+      "expectedDefinitionIssues": [
+        {
+          "code": "invalidDiscriminator",
+          "path": "/valueSchema/properties/cmd/oneOf"
+        }
+      ]
+    }
+  ]
+}

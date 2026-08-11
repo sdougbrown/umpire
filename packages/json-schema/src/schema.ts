@@ -32,9 +32,7 @@ export type StructuralResult = {
 /**
  * Combined evaluation result from both authorities.
  */
-export type EvaluateResult<
-  C extends Record<string, unknown> = Record<string, unknown>,
-> = {
+export type EvaluateResult = {
   availability: Record<string, FieldStatus>
   structure: StructuralResult
 }
@@ -79,8 +77,13 @@ export interface CompiledProfile<
     values: InputValues,
     conditions?: C,
     prev?: InputValues,
-  ): EvaluateResult<C>
+  ): EvaluateResult
 }
+
+/**
+ * A generic JSON object.
+ */
+export type JsonObject = Record<string, unknown>
 
 /**
  * Input for compileSchemas() — separately supplied authorities.
