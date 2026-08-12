@@ -12,10 +12,10 @@ import {
   workflowProfile,
   validWorkflowInstance,
   wrongNodesTypeInstance,
-  // missingRequiredNodePropInstance,
+  missingRequiredNodePropInstance,
   unknownNodePropertyInstance,
   invalidDiscriminatorInstance,
-  // missingDiscriminatorInstance,
+  missingDiscriminatorInstance,
   omittedTagsInstance,
   nullTagsInstance,
   validatorCoexistenceProfile,
@@ -75,14 +75,23 @@ describe('compileProfile', () => {
       },
     })
     expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.issues.some((i) => i.path === '/valueSchema/$schema')).toBe(
+        true,
+      )
+    }
   })
 
   test('rejects unsupported value schema keywords', () => {
     const result = compileProfile(unsupportedKeywordProfile)
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      // AJV catches unknown format during schema compilation
-      expect(result.issues.length).toBeGreaterThan(0)
+      expect(result.issues).toContainEqual(
+        expect.objectContaining({
+          code: 'unsupportedKeyword',
+          path: '/valueSchema/properties/name/format',
+        }),
+      )
     }
   })
 
@@ -251,6 +260,38 @@ describe('CompiledProfile.validateStructure()', () => {
     expect(structure.issues).toHaveLength(0)
   })
 
+  test('missing required node property emits required at /nodes/0/id', () => {
+    const result = compileProfile(workflowProfile)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    const structure = result.profile.validateStructure(
+      missingRequiredNodePropInstance,
+    )
+    expect(structure.valid).toBe(false)
+    expect(
+      structure.issues.some(
+        (i) => i.code === 'required' && i.path === '/nodes/0/id',
+      ),
+    ).toBe(true)
+  })
+
+  test('missing discriminator emits required at /nodes/0/action/type', () => {
+    const result = compileProfile(workflowProfile)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    const structure = result.profile.validateStructure(
+      missingDiscriminatorInstance,
+    )
+    expect(structure.valid).toBe(false)
+    expect(
+      structure.issues.some(
+        (i) => i.code === 'required' && i.path === '/nodes/0/action/type',
+      ),
+    ).toBe(true)
+  })
+
   test('catches wrong type for nodes (proving structural validation independent of availability)', () => {
     const result = compileProfile(workflowProfile)
     expect(result.ok).toBe(true)
@@ -345,13 +386,10 @@ describe('CompiledProfile.validateStructure()', () => {
     const structure = result.profile.validateStructure({ age: -1 })
     expect(structure.valid).toBe(false)
 
-    // Issues should be sorted by path, then code
-    for (let i = 1; i < structure.issues.length; i++) {
-      const prev = structure.issues[i - 1]
-      const curr = structure.issues[i]
-      const pathCmp = prev.path.localeCompare(curr.path)
-      expect(pathCmp <= 0).toBe(true)
-    }
+    expect(structure.issues.map((i) => [i.path, i.code])).toEqual([
+      ['/age', 'minimum'],
+      ['/name', 'required'],
+    ])
   })
 })
 
@@ -789,6 +827,28 @@ describe('Coverage gaps', () => {
     if (!result.ok) {
       expect(result.issues.some((i) => i.code === 'invalidDefault')).toBe(true)
     }
+  })
+
+  test('accepts integer default that matches the property type', () => {
+    const result = compileProfile({
+      $schema:
+        'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
+      profileVersion: 1,
+      valueSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: 'object',
+        properties: {
+          count: { type: 'integer' },
+        },
+        additionalProperties: false,
+      },
+      umpire: {
+        version: 1,
+        fields: { count: { default: 5 } },
+        rules: [],
+      },
+    })
+    expect(result.ok).toBe(true)
   })
 
   test('rejects integer enum value that is a fraction', () => {
