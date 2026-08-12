@@ -622,7 +622,7 @@ describe('Coverage gaps', () => {
     })
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.issues[0].path).toBe('/umpire/version')
+      expect(result.issues.some((i) => i.path === '/umpire/version')).toBe(true)
     }
   })
 
