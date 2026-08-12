@@ -5,7 +5,7 @@ import {
   compileSchemas,
   filterStructuralIssues,
 } from '../src/index.js'
-import { suppressTypeDependents } from '../src/issues.js'
+import { suppressTypeDependents, normalizeAjvErrors } from '../src/issues.js'
 import type { StructuralIssue } from '../src/schema.js'
 
 import {
@@ -603,7 +603,7 @@ describe('Normalized issue contract', () => {
 })
 
 describe('Coverage gaps', () => {
-  test('rejects profile with invalid umpire portion (meta-schema or hydration failure)', () => {
+  test('rejects an invalid Umpire version through meta-schema validation', () => {
     const result = compileProfile({
       $schema:
         'https://spec.umpire.tools/profiles/json-schema/v1/profile.schema.json',
@@ -1089,6 +1089,54 @@ describe('Coverage gaps', () => {
     ]
 
     expect(suppressTypeDependents(issues)).toEqual([issues[0], issues[2]])
+  })
+
+  test('normalizeAjvErrors transforms AJV discriminator errors', () => {
+    // Missing discriminator tag → required
+    const missingTagErrors = normalizeAjvErrors(
+      [
+        {
+          keyword: 'discriminator',
+          instancePath: '/action',
+          schemaPath: '#/oneOf/0/discriminator',
+          params: { error: 'tag' as const, tag: 'kind' },
+          message: 'tag "kind" is not provided',
+        },
+      ],
+      { action: {} },
+    )
+    expect(missingTagErrors).toEqual([
+      {
+        source: 'json-schema',
+        code: 'required',
+        path: '/action/kind',
+        message: 'tag "kind" is not provided',
+        schemaPath: '#/oneOf/0/discriminator',
+      },
+    ])
+
+    // Unknown discriminator tag value → discriminator (prop is present in raw)
+    const unknownTagErrors = normalizeAjvErrors(
+      [
+        {
+          keyword: 'discriminator',
+          instancePath: '/action',
+          schemaPath: '#/oneOf/0/discriminator',
+          params: { error: 'tag' as const, tag: 'kind', tagValue: 'unknown' },
+          message: 'tag value "unknown" is not allowed',
+        },
+      ],
+      { action: { kind: 'unknown' } },
+    )
+    expect(unknownTagErrors).toEqual([
+      {
+        source: 'json-schema',
+        code: 'discriminator',
+        path: '/action/kind',
+        message: 'tag value "unknown" is not allowed',
+        schemaPath: '#/oneOf/0/discriminator',
+      },
+    ])
   })
 
   test('RFC 6901 escaped field names are unescaped before filtering', () => {

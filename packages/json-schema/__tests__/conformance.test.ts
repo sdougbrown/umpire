@@ -142,10 +142,22 @@ describe('profile definition failure fixtures', () => {
 // semantics, so an unsupplied `cond` condition throws instead of being
 // defaulted. This guards against reintroducing a condition-default shim.
 describe('unsupplied conditions throw (base Umpire semantics)', () => {
-  const fixture = loadProfileFixtures().find((f) => f.id === 'avenor-workflow')!
-  const caseValues = fixture.cases.find(
+  const fixture = loadProfileFixtures().find((f) => f.id === 'avenor-workflow')
+  if (!fixture) {
+    throw new Error(
+      'Missing conformance fixture "avenor-workflow" — expected by unsupplied-conditions tests.',
+    )
+  }
+
+  const fixtureCase = fixture.cases.find(
     (c) => c.id === 'minimal-valid-workflow',
-  )!.values
+  )
+  if (!fixtureCase) {
+    throw new Error(
+      `Fixture "avenor-workflow" is missing expected case "minimal-valid-workflow".`,
+    )
+  }
+  const caseValues = fixtureCase.values
 
   test('evaluating a rule with an unsupplied condition throws', () => {
     const result = compileProfile(fixture.profile)
