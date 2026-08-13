@@ -52,30 +52,30 @@ export const workflowProfile: ProfileDocument = {
           {
             type: 'object',
             properties: {
-              type: { type: 'string', const: 'manual' },
+              kind: { type: 'string', const: 'manual' },
               instructions: { type: 'string', minLength: 1 },
             },
-            required: ['type', 'instructions'],
+            required: ['kind', 'instructions'],
             additionalProperties: false,
           },
           {
             type: 'object',
             properties: {
-              type: { type: 'string', const: 'run' },
+              kind: { type: 'string', const: 'run' },
               script: { type: 'string', minLength: 1 },
               timeout: { type: 'integer', minimum: 1, maximum: 3600 },
             },
-            required: ['type', 'script'],
+            required: ['kind', 'script'],
             additionalProperties: false,
           },
           {
             type: 'object',
             properties: {
-              type: { type: 'string', const: 'loop' },
+              kind: { type: 'string', const: 'loop' },
               iterator: { type: 'string', minLength: 1 },
               maxIterations: { type: 'integer', minimum: 1, maximum: 1000 },
             },
-            required: ['type', 'iterator', 'maxIterations'],
+            required: ['kind', 'iterator', 'maxIterations'],
             additionalProperties: false,
           },
         ],
@@ -134,18 +134,18 @@ export const validWorkflowInstance = {
     {
       id: 'build',
       label: 'Build application',
-      action: { type: 'run', script: 'yarn build', timeout: 300 },
+      action: { kind: 'run', script: 'yarn build', timeout: 300 },
     },
     {
       id: 'approve',
       label: 'Manual approval',
-      action: { type: 'manual', instructions: 'Review and approve' },
+      action: { kind: 'manual', instructions: 'Review and approve' },
     },
     {
       id: 'retry-check',
       label: 'Retry check',
       action: {
-        type: 'loop',
+        kind: 'loop',
         iterator: 'attempt',
         maxIterations: 5,
       },
@@ -175,7 +175,7 @@ export const missingRequiredNodePropInstance = {
   nodes: [
     {
       label: 'Missing id',
-      action: { type: 'manual', instructions: 'Fix this' },
+      action: { kind: 'manual', instructions: 'Fix this' },
     },
   ],
 }
@@ -188,7 +188,7 @@ export const unknownNodePropertyInstance = {
     {
       id: 'step1',
       label: 'Step 1',
-      action: { type: 'manual', instructions: 'Do something' },
+      action: { kind: 'manual', instructions: 'Do something' },
       extraProp: 'not-allowed',
     },
   ],
@@ -202,7 +202,7 @@ export const invalidDiscriminatorInstance = {
     {
       id: 'step1',
       label: 'Step 1',
-      action: { type: 'unknown_action' },
+      action: { kind: 'unknown_action' },
     },
   ],
 }
@@ -229,7 +229,7 @@ export const omittedTagsInstance = {
       id: 'step1',
       label: 'Step 1',
       action: {
-        type: 'loop',
+        kind: 'loop',
         iterator: 'i',
         maxIterations: 10,
       },
@@ -245,7 +245,7 @@ export const nullTagsInstance = {
     {
       id: 'step1',
       label: 'Step 1',
-      action: { type: 'manual', instructions: 'Do it' },
+      action: { kind: 'manual', instructions: 'Do it' },
     },
   ],
   tags: null,

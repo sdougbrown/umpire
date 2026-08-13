@@ -276,7 +276,7 @@ describe('CompiledProfile.validateStructure()', () => {
     ).toBe(true)
   })
 
-  test('missing discriminator emits required at /nodes/0/action/type', () => {
+  test('missing discriminator emits required at /nodes/0/action/kind', () => {
     const result = compileProfile(workflowProfile)
     expect(result.ok).toBe(true)
     if (!result.ok) return
@@ -287,7 +287,7 @@ describe('CompiledProfile.validateStructure()', () => {
     expect(structure.valid).toBe(false)
     expect(
       structure.issues.some(
-        (i) => i.code === 'required' && i.path === '/nodes/0/action/type',
+        (i) => i.code === 'required' && i.path === '/nodes/0/action/kind',
       ),
     ).toBe(true)
   })
@@ -875,7 +875,8 @@ describe('Coverage gaps', () => {
       expect(
         result.issues.some(
           (i) =>
-            i.code === 'invalidProfile' && i.message.includes('incompatible'),
+            i.code === 'invalidProfile' &&
+            i.path === '/valueSchema/properties/status/enum',
         ),
       ).toBe(true)
     }

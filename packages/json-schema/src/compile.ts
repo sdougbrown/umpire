@@ -15,7 +15,7 @@ import type {
 import { DEFINITION_ISSUE_CODES } from './schema.js'
 import type { FieldStatus, InputValues } from '@umpire/core'
 import { PROFILE_META_SCHEMA, checkProfileConsistency } from './consistency.js'
-import { applyDiscriminators } from './discriminator.js'
+import { prepareValueSchema } from './discriminator.js'
 import { normalizeAjvErrors, suppressTypeDependents } from './issues.js'
 
 const C = DEFINITION_ISSUE_CODES
@@ -80,10 +80,21 @@ export function compileProfile<
   //    bare `oneOf` without `type: "object"` on the union node itself, which
   //    AJV's strictTypes rule would otherwise flag. Profile-definition
   //    rejection is owned by the closed-vocabulary + consistency checks.
-  const vsAjv = new Ajv({ allErrors: true, discriminator: true, strict: false })
+  const vsAjv = new Ajv({
+    allErrors: true,
+    discriminator: true,
+    strict: false,
+    strictNumbers: true,
+  })
+  vsAjv.addKeyword({
+    keyword: 'safeInteger',
+    type: 'number',
+    schemaType: 'boolean',
+    validate: (_schema: boolean, value: number) => Number.isSafeInteger(value),
+  })
   let valueValidate: ReturnType<typeof vsAjv.compile>
   try {
-    valueValidate = vsAjv.compile(applyDiscriminators(profile.valueSchema))
+    valueValidate = vsAjv.compile(prepareValueSchema(profile.valueSchema))
   } catch (err) {
     return {
       ok: false,
