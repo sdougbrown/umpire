@@ -1195,7 +1195,7 @@ function checkSingleGoName(
   issues: ProfileDefinitionIssue[],
 ): string | null {
   const converted = goFieldName(name)
-  if (!isValidGeneratedGoIdentifier(converted) || GO_KEYWORDS.has(name)) {
+  if (!isValidGeneratedGoIdentifier(converted) || GO_KEYWORDS.has(converted)) {
     issues.push(
       issue(
         C.INVALID_NAME,

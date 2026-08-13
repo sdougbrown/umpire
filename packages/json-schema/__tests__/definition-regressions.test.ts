@@ -346,11 +346,9 @@ describe('deterministic Go generated names', () => {
       'invalidName',
       '/valueSchema/properties/123value',
     )
-    expectDefinitionIssue(
-      profileFor({ type: 'string' }, { name: 'type' }),
-      'invalidName',
-      '/valueSchema/properties/type',
-    )
+    expect(
+      compileProfile(profileFor({ type: 'string' }, { name: 'type' })).ok,
+    ).toBe(true)
 
     const collision = profileFor({ type: 'string' })
     ;(collision.valueSchema as JsonObject).properties = {
@@ -363,14 +361,14 @@ describe('deterministic Go generated names', () => {
     }
     expectDefinitionIssue(collision, 'nameCollision', '/valueSchema/properties')
 
-    expectDefinitionIssue(
-      profileFor(
-        { $ref: '#/$defs/type' },
-        { defs: { type: { type: 'string' } } },
-      ),
-      'invalidName',
-      '/valueSchema/$defs/type',
-    )
+    expect(
+      compileProfile(
+        profileFor(
+          { $ref: '#/$defs/type' },
+          { defs: { type: { type: 'string' } } },
+        ),
+      ).ok,
+    ).toBe(true)
   })
 
   test('audits nested fields, enum constants, variants, conditions, and branch groups', () => {
