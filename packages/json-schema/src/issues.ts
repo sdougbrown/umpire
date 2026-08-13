@@ -66,14 +66,16 @@ export function normalizeAjvErrors(
       const missing =
         params.error === 'tag' && !propertyPresent(rawValue, ip, tagName)
       code = missing ? 'required' : 'discriminator'
-      path = `${ip}/${tagName}`
+      path = `${ip}/${escapePointerToken(tagName)}`
     } else if (err.keyword === 'required') {
       const mp = err.params?.missingProperty as string
-      path = ip ? `${ip}/${mp}` : `/${mp}`
+      const token = escapePointerToken(mp)
+      path = ip ? `${ip}/${token}` : `/${token}`
       code = err.keyword
     } else if (err.keyword === 'additionalProperties') {
       const ap = err.params?.additionalProperty as string
-      path = ip ? `${ip}/${ap}` : `/${ap}`
+      const token = escapePointerToken(ap)
+      path = ip ? `${ip}/${token}` : `/${token}`
       code = err.keyword
     } else {
       path = ip || '/'
@@ -137,10 +139,11 @@ function propertyPresent(
   if (node === null || typeof node !== 'object' || Array.isArray(node)) {
     return false
   }
-  return Object.prototype.hasOwnProperty.call(
-    node,
-    unescapePointerSegment(property),
-  )
+  return Object.prototype.hasOwnProperty.call(node, property)
+}
+
+function escapePointerToken(token: string): string {
+  return token.replace(/~/g, '~0').replace(/\//g, '~1')
 }
 
 /** Drop structural issues whose first path token names a disabled Umpire field. */

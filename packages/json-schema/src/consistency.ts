@@ -213,7 +213,9 @@ function checkFieldCorrespondence(
   const valueProps = isPlainRecord(vs.properties)
     ? Object.keys(vs.properties)
     : []
-  const umpFields = Object.keys(umpire.fields ?? {})
+  const umpFields = isPlainRecord(umpire.fields)
+    ? Object.keys(umpire.fields)
+    : []
   const valueNames = new Set(valueProps)
   const umpireNames = new Set(umpFields)
 
@@ -296,15 +298,6 @@ function walkSchema(
     !('type' in node) &&
     isConstOnlySchema(node)
   ) {
-    if (typeof node.const !== 'string') {
-      issues.push(
-        issue(
-          C.INVALID_DISCRIMINATOR,
-          ptr,
-          'A discriminator const must be a string',
-        ),
-      )
-    }
     return
   }
 
@@ -328,7 +321,7 @@ function walkSchema(
     return
   }
 
-  checkKeywordPlacement(node, node.type, ptr, issues, context.root === true)
+  checkKeywordPlacement(node, node.type, ptr, issues)
   checkEnumAndConst(node, node.type, ptr, issues)
   checkNumericKeywords(node, node.type, ptr, issues)
 
@@ -361,7 +354,7 @@ function checkReference(
 ): void {
   const ref = node.$ref
   const name = typeof ref === 'string' ? localDefinitionName(ref) : null
-  if (name === null || !(name in defs)) {
+  if (name === null || !hasOwn(defs, name)) {
     issues.push(
       issue(
         C.INVALID_REFERENCE,
@@ -383,13 +376,12 @@ function checkKeywordPlacement(
   schemaType: string,
   ptr: string,
   issues: ProfileDefinitionIssue[],
-  root: boolean,
 ): void {
   const typeKeywords = TYPE_KEYWORDS[schemaType]
   for (const key of Object.keys(node)) {
     if (!SUPPORTED.has(key)) continue
     if (COMMON_KEYWORDS.has(key) || typeKeywords.has(key)) continue
-    if (root && (key === '$schema' || key === '$defs')) continue
+    if (key === '$schema' || key === '$defs') continue
     if (key === 'oneOf') continue
     issues.push(
       issue(
@@ -441,7 +433,7 @@ function walkObject(
       Array.isArray(required) &&
       required.every((name) => typeof name === 'string') &&
       new Set(required).size === required.length &&
-      required.every((name) => name in properties)
+      required.every((name) => hasOwn(properties, name))
     if (!valid) {
       issues.push(
         issue(
@@ -551,10 +543,13 @@ function checkTaggedUnion(
     )
   }
 
+  const untypedConstNames =
+    discriminator === null
+      ? collectUnionConstNames(branches)
+      : new Set([discriminator])
   for (let index = 0; index < branches.length; index++) {
     walkSchema(branches[index], `${oneOfPath}/${index}`, issues, defs, {
-      allowUntypedConstNames:
-        discriminator === null ? new Set() : new Set([discriminator]),
+      allowUntypedConstNames: untypedConstNames,
     })
   }
 }
@@ -705,10 +700,10 @@ function checkCrossFieldCompatibility(
 ): void {
   if (!isPlainRecord(vs.properties)) return
 
-  for (const [name, field] of Object.entries(umpire.fields ?? {})) {
+  for (const [name, field] of plainRecordEntries(umpire.fields)) {
     const propertySchema = vs.properties[name]
     const schemaType = resolveSchemaType(propertySchema, defs)
-    if (field.isEmpty) {
+    if (typeof field.isEmpty === 'string') {
       const compatible = IS_EMPTY_OK[field.isEmpty]
       if (schemaType && compatible && !compatible.includes(schemaType)) {
         issues.push(
@@ -739,6 +734,17 @@ function checkCrossFieldCompatibility(
   }
 }
 
+function plainRecordEntries(
+  value: unknown,
+): Array<[string, Record<string, unknown>]> {
+  if (!isPlainRecord(value)) return []
+  const entries: Array<[string, Record<string, unknown>]> = []
+  for (const [name, entry] of Object.entries(value)) {
+    if (isPlainRecord(entry)) entries.push([name, entry])
+  }
+  return entries
+}
+
 function resolveSchemaType(
   raw: unknown,
   defs: Record<string, unknown>,
@@ -746,10 +752,18 @@ function resolveSchemaType(
   const seen = new Set<string>()
   let node = raw
   while (isPlainRecord(node)) {
-    if (typeof node.type === 'string') return node.type
+    if (typeof node.type === 'string' && ALLOWED_TYPES.has(node.type)) {
+      return node.type
+    }
+    if (
+      Array.isArray(node.oneOf) &&
+      deriveTaggedDiscriminator(node.oneOf) !== null
+    ) {
+      return 'object'
+    }
     if (typeof node.$ref !== 'string') return undefined
     const name = localDefinitionName(node.$ref)
-    if (name === null || seen.has(name)) return undefined
+    if (name === null || seen.has(name) || !hasOwn(defs, name)) return undefined
     seen.add(name)
     node = defs[name]
   }
@@ -764,7 +778,7 @@ function checkReferenceCycles(
   for (const name of Object.keys(defs).sort()) {
     graph.set(
       name,
-      collectReferences(defs[name]).filter((ref) => ref in defs),
+      collectReferences(defs[name]).filter((ref) => hasOwn(defs, ref)),
     )
   }
 
@@ -847,6 +861,10 @@ function isConstOnlySchema(node: Record<string, unknown>): boolean {
 
 function escapePointerToken(token: string): string {
   return token.replace(/~/g, '~0').replace(/\//g, '~1')
+}
+
+function hasOwn(record: Record<string, unknown>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(record, key)
 }
 
 function dedupeAndSortIssues(
@@ -957,9 +975,12 @@ function walkGeneratedNames(
   }
 
   if (Array.isArray(node.oneOf)) {
+    const tagged = deriveTaggedDiscriminator(node.oneOf)
+    if (tagged === null) return
+
     const unionType = context.ownerDeclared ? owner : `${owner}Value`
     if (!context.ownerDeclared) symbols.add(unionType, `${ptr}/oneOf`)
-    const values = discriminatorValues(node.oneOf)
+    const values = tagged.values
     checkConvertedValues(values, `${ptr}/oneOf`, issues)
     for (const value of values) {
       symbols.add(`${unionType}${goFieldName(value)}`, `${ptr}/oneOf`)
@@ -1057,8 +1078,15 @@ function deriveTaggedDiscriminator(
   }
 }
 
-function discriminatorValues(branches: unknown[]): string[] {
-  return deriveTaggedDiscriminator(branches)?.values ?? []
+function collectUnionConstNames(branches: unknown[]): ReadonlySet<string> {
+  const names = new Set<string>()
+  for (const branch of branches) {
+    if (!isPlainRecord(branch) || !isPlainRecord(branch.properties)) continue
+    for (const [name, schema] of Object.entries(branch.properties)) {
+      if (isPlainRecord(schema) && isConstOnlySchema(schema)) names.add(name)
+    }
+  }
+  return names
 }
 
 function enumConstantName(value: unknown, index: number): string {
@@ -1068,25 +1096,36 @@ function enumConstantName(value: unknown, index: number): string {
 }
 
 function checkRuleNames(
-  rules: UmpireJsonSchema['rules'],
+  rules: unknown,
   issues: ProfileDefinitionIssue[],
   symbols: GeneratedSymbolTable,
   prefix = '/umpire/rules',
 ): void {
+  if (!Array.isArray(rules)) return
+
   const groups: string[] = []
   for (let index = 0; index < rules.length; index++) {
     const rule = rules[index]
+    if (!isPlainRecord(rule)) continue
+
     const ptr = `${prefix}/${index}`
     if (rule.type === 'oneOf' || rule.type === 'eitherOf') {
+      if (typeof rule.group !== 'string' || !isPlainRecord(rule.branches)) {
+        continue
+      }
       groups.push(rule.group)
       checkSingleGoName(rule.group, `${ptr}/group`, issues)
       const branches = Object.keys(rule.branches)
       checkNameCollection(branches, `${ptr}/branches`, issues)
       const groupType = `Schema${goFieldName(rule.group)}Branch`
       symbols.add(groupType, `${ptr}/group`)
+      const branchSymbols = new Set<string>()
       for (const branch of branches) {
+        const branchSymbol = `${groupType}${goFieldName(branch)}`
+        if (branchSymbols.has(branchSymbol)) continue
+        branchSymbols.add(branchSymbol)
         symbols.add(
-          `${groupType}${goFieldName(branch)}`,
+          branchSymbol,
           `${ptr}/branches/${escapePointerToken(branch)}`,
         )
       }

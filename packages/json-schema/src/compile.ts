@@ -90,7 +90,8 @@ export function compileProfile<
     keyword: 'safeInteger',
     type: 'number',
     schemaType: 'boolean',
-    validate: (_schema: boolean, value: number) => Number.isSafeInteger(value),
+    validate: (_schema: boolean, value: number) =>
+      !Number.isInteger(value) || Number.isSafeInteger(value),
   })
   let valueValidate: ReturnType<typeof vsAjv.compile>
   try {
@@ -195,12 +196,12 @@ function validateDefaults(
     if (ok) continue
     const errs = validate.errors ?? []
     const ownIssue = normalizeAjvErrors(errs, probe).some(
-      (i) => i.path === `/${name}`,
+      (i) => i.path === `/${escapePointerToken(name)}`,
     )
     if (ownIssue) {
       issues.push({
         code: C.INVALID_DEFAULT,
-        path: `/umpire/fields/${name}/default`,
+        path: `/umpire/fields/${escapePointerToken(name)}/default`,
         message: `Default ${JSON.stringify(fd.default)} does not validate against property schema`,
       })
     }
@@ -211,6 +212,10 @@ function validateDefaults(
 /**
  * Validate the basic shape of a profile document before full validation.
  */
+function escapePointerToken(token: string): string {
+  return token.replace(/~/g, '~0').replace(/\//g, '~1')
+}
+
 function validateProfileShape(raw: unknown): ProfileDefinitionIssue[] {
   const issues: ProfileDefinitionIssue[] = []
 

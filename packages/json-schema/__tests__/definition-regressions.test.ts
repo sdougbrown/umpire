@@ -37,11 +37,20 @@ function profileFor(schema: unknown, options: ProfileOptions = {}): JsonObject {
   }
 }
 
-function expectDefinitionIssue(raw: unknown, code: string, path: string): void {
+function expectDefinitionIssues(
+  raw: unknown,
+  expected: Array<[code: string, path: string]>,
+): void {
   const result = compileProfile(raw)
   expect(result.ok).toBe(false)
   if (result.ok) return
-  expect(result.issues).toContainEqual(expect.objectContaining({ code, path }))
+  expect(result.issues.map(({ code, path }) => [code, path]).sort()).toEqual(
+    expected.sort(),
+  )
+}
+
+function expectDefinitionIssue(raw: unknown, code: string, path: string): void {
+  expectDefinitionIssues(raw, [[code, path]])
 }
 
 const strictStringObject = {
@@ -78,6 +87,25 @@ describe('RC3 definition issue paths', () => {
       'invalidProfile',
       '/',
     )
+  })
+
+  test.each([
+    ['non-array rules', null],
+    ['non-object rule', [null]],
+    [
+      'non-object oneOf branches',
+      [{ type: 'oneOf', group: 'choice', branches: null }],
+    ],
+    [
+      'non-array eitherOf branch rules',
+      [{ type: 'eitherOf', group: 'choice', branches: { first: null } }],
+    ],
+    ['non-array anyOf rules', [{ type: 'anyOf', rules: null }]],
+  ])('returns invalidProfile without throwing for malformed %s', (_, rules) => {
+    const raw = profileFor({ type: 'string' })
+    ;(raw.umpire as JsonObject).rules = rules
+    expect(() => compileProfile(raw)).not.toThrow()
+    expectDefinitionIssue(raw, 'invalidProfile', '/umpire')
   })
 
   test('rejects root oneOf while preserving property tagged unions', () => {
@@ -255,6 +283,29 @@ describe('strict schema invariants', () => {
     expectDefinitionIssue(raw, 'invalidProfile', '/valueSchema/required')
   })
 
+  test('does not resolve inherited definition or required-property names', () => {
+    expectDefinitionIssue(
+      profileFor({ $ref: '#/$defs/toString' }),
+      'invalidReference',
+      '/valueSchema/properties/value/$ref',
+    )
+
+    expectDefinitionIssue(
+      profileFor({
+        type: 'object',
+        properties: {},
+        required: ['toString'],
+        additionalProperties: false,
+      }),
+      'invalidProfile',
+      '/valueSchema/properties/value/required',
+    )
+
+    const root = profileFor({ type: 'string' })
+    ;(root.valueSchema as JsonObject).required = ['toString']
+    expectDefinitionIssue(root, 'invalidProfile', '/valueSchema/required')
+  })
+
   test('validates schema shapes reached through $defs and escaped local refs', () => {
     const valid = profileFor(
       { $ref: '#/$defs/A~1B' },
@@ -399,6 +450,41 @@ describe('deterministic Go generated names', () => {
       '/valueSchema/$defs/fields',
     )
   })
+
+  test('detects collisions across generated symbol categories', () => {
+    const enumAndObject = profileFor({ type: 'string' })
+    ;(enumAndObject.valueSchema as JsonObject).properties = {
+      status: { type: 'string', enum: ['ready'] },
+      'status-value-ready': strictStringObject,
+    }
+    ;(enumAndObject.umpire as JsonObject).fields = {
+      status: { isEmpty: 'string' },
+      'status-value-ready': { isEmpty: 'object' },
+    }
+    expectDefinitionIssue(
+      enumAndObject,
+      'nameCollision',
+      '/valueSchema/properties/status-value-ready',
+    )
+
+    expectDefinitionIssue(
+      profileFor(
+        { type: 'string' },
+        {
+          defs: { 'choice-branch': strictStringObject },
+          rules: [
+            {
+              type: 'oneOf',
+              group: 'choice',
+              branches: { first: ['value'], second: ['value'] },
+            },
+          ],
+        },
+      ),
+      'nameCollision',
+      '/umpire/rules/0/group',
+    )
+  })
 })
 
 describe('numeric safety and defaults', () => {
@@ -453,29 +539,78 @@ describe('numeric safety and defaults', () => {
     )
   })
 
-  test('reports runtime unsafe integers and non-finite numbers', () => {
+  test.each([Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER])(
+    'accepts safe integer boundary %d in schemas, defaults, and values',
+    (boundary) => {
+      const result = compileProfile(
+        profileFor(
+          { type: 'integer', const: boundary },
+          { defaultValue: boundary },
+        ),
+      )
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.profile.validateStructure({ value: boundary })).toEqual({
+        valid: true,
+        issues: [],
+      })
+    },
+  )
+
+  test('reports only the applicable runtime numeric issue', () => {
     const integer = compileProfile(profileFor({ type: 'integer' }))
     expect(integer.ok).toBe(true)
     if (integer.ok) {
       expect(
-        integer.profile.validateStructure({
-          value: Number.MAX_SAFE_INTEGER + 1,
-        }).issues,
-      ).toContainEqual(
-        expect.objectContaining({ code: 'safeInteger', path: '/value' }),
-      )
+        integer.profile
+          .validateStructure({ value: 1.5 })
+          .issues.map(({ code, path }) => [code, path]),
+      ).toEqual([['type', '/value']])
+      expect(
+        integer.profile
+          .validateStructure({ value: Number.MAX_SAFE_INTEGER + 1 })
+          .issues.map(({ code, path }) => [code, path]),
+      ).toEqual([['safeInteger', '/value']])
     }
 
     const number = compileProfile(profileFor({ type: 'number' }))
     expect(number.ok).toBe(true)
     if (number.ok) {
       expect(
-        number.profile.validateStructure({ value: Number.POSITIVE_INFINITY })
-          .issues,
-      ).toContainEqual(
-        expect.objectContaining({ code: 'type', path: '/value' }),
-      )
+        number.profile
+          .validateStructure({ value: Number.POSITIVE_INFINITY })
+          .issues.map(({ code, path }) => [code, path]),
+      ).toEqual([['type', '/value']])
     }
+  })
+
+  test.each(['a/b', 'a~b'])(
+    'escapes field %s while matching and reporting an invalid default',
+    (name) => {
+      expectDefinitionIssue(
+        profileFor({ type: 'integer' }, { name, defaultValue: 1.5 }),
+        'invalidDefault',
+        `/umpire/fields/${name.replace(/~/g, '~0').replace(/\//g, '~1')}/default`,
+      )
+    },
+  )
+
+  test('treats tagged unions as objects for isEmpty compatibility', () => {
+    const incompatible = profileFor(taggedUnion)
+    ;((incompatible.umpire as JsonObject).fields as JsonObject).value = {
+      isEmpty: 'string',
+    }
+    expectDefinitionIssue(
+      incompatible,
+      'incompatibleIsEmpty',
+      '/umpire/fields/value',
+    )
+
+    const compatible = profileFor(taggedUnion)
+    ;((compatible.umpire as JsonObject).fields as JsonObject).value = {
+      isEmpty: 'object',
+    }
+    expect(compileProfile(compatible).ok).toBe(true)
   })
 
   test('resolves refs for isEmpty compatibility', () => {
