@@ -23,6 +23,7 @@ jobs:
       dsl_changed: ${{ steps.versions.outputs.dsl_changed }}
       effect_changed: ${{ steps.versions.outputs.effect_changed }}
       json_changed: ${{ steps.versions.outputs.json_changed }}
+      json_schema_changed: ${{ steps.versions.outputs.json_schema_changed }}
       reads_changed: ${{ steps.versions.outputs.reads_changed }}
       write_changed: ${{ steps.versions.outputs.write_changed }}
       drizzle_changed: ${{ steps.versions.outputs.drizzle_changed }}
@@ -63,7 +64,7 @@ jobs:
           const fs = require('node:fs');
           const path = require('node:path');
 
-          const packages = ['async', 'core', 'dsl', 'effect', 'json', 'reads', 'write', 'drizzle', 'devtools', 'store', 'signals', 'react', 'redux', 'pinia', 'tanstack-form', 'tanstack-store', 'vuex', 'zustand', 'zod', 'testing', 'eslint-plugin', 'solid', 'jsx'];
+          const packages = ['async', 'core', 'dsl', 'effect', 'json', 'json-schema', 'reads', 'write', 'drizzle', 'devtools', 'store', 'signals', 'react', 'redux', 'pinia', 'tanstack-form', 'tanstack-store', 'vuex', 'zustand', 'zod', 'testing', 'eslint-plugin', 'solid', 'jsx'];
 
           // Manual dispatch: mark everything changed so all packages are published.
           if (process.env.MANUAL_DISPATCH === 'true') {
@@ -207,6 +208,21 @@ jobs:
       - name: Publish @umpire/json
         if: needs.detect-version-changes.outputs.json_changed == 'true'
         working-directory: packages/json
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="latest"
+          if echo "$VERSION" | grep -q "-"; then TAG="alpha"; fi
+          PKG=$(node -p "require('./package.json').name")
+          if npm show "$PKG@$VERSION" version > /dev/null 2>&1; then
+            echo "$PKG@$VERSION already published, skipping"
+          else
+            yarn pack -o package.tgz
+            npm publish package.tgz --provenance --access public --tag "$TAG"
+          fi
+
+      - name: Publish @umpire/json-schema
+        if: needs.detect-version-changes.outputs.json_schema_changed == 'true'
+        working-directory: packages/json-schema
         run: |
           VERSION=$(node -p "require('./package.json').version")
           TAG="latest"
