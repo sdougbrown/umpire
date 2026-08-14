@@ -1,5 +1,11 @@
 # @umpire/json
 
+## 1.0.2
+
+### Patch Changes
+
+- 705c8c4: Align portable schema validation with the canonical Umpire v1 acceptance contract and ship the pinned v1.0.1 conformance fixtures.
+
 ## 1.0.1
 
 ### Patch Changes

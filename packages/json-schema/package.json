@@ -1,6 +1,6 @@
 {
   "name": "@umpire/json-schema",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "JSON Schema composition profile for @umpire/core — portable nested value-shape validation alongside field availability evaluation",
   "license": "MIT",
   "type": "module",
