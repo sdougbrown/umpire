@@ -434,7 +434,7 @@
     },
     {
       "id": "wrong-node-type-structural-issue",
-      "description": "Nodes property has wrong type (string instead of array). Structural validation catches this independently. Umpire availability shows nodes as satisfied: false for the string value (non-empty string is a present array-like value).",
+      "description": "Nodes property has wrong type (string instead of array). Structural validation catches this independently.",
       "values": {
         "nodes": "not-an-array",
         "title": "Broken"
@@ -451,66 +451,6 @@
             "path": "/nodes"
           }
         ]
-      },
-      "expectedAvailability": {
-        "nodes": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": true,
-          "reason": null,
-          "reasons": []
-        },
-        "edges": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": null,
-          "reasons": []
-        },
-        "title": {
-          "enabled": true,
-          "satisfied": true,
-          "fair": true,
-          "required": true,
-          "reason": null,
-          "reasons": []
-        },
-        "workflowType": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": null,
-          "reasons": []
-        },
-        "version": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": null,
-          "reasons": []
-        },
-        "status": {
-          "enabled": false,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": "Status editing is disabled",
-          "reasons": [
-            "Status editing is disabled"
-          ]
-        },
-        "maxAttempts": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": null,
-          "reasons": []
-        }
       }
     },
     {
@@ -539,66 +479,6 @@
             "path": "/title"
           }
         ]
-      },
-      "expectedAvailability": {
-        "nodes": {
-          "enabled": true,
-          "satisfied": true,
-          "fair": true,
-          "required": true,
-          "reason": null,
-          "reasons": []
-        },
-        "edges": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": null,
-          "reasons": []
-        },
-        "title": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": true,
-          "reason": null,
-          "reasons": []
-        },
-        "workflowType": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": null,
-          "reasons": []
-        },
-        "version": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": null,
-          "reasons": []
-        },
-        "status": {
-          "enabled": false,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": "Status editing is disabled",
-          "reasons": [
-            "Status editing is disabled"
-          ]
-        },
-        "maxAttempts": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": null,
-          "reasons": []
-        }
       }
     },
     {
@@ -713,7 +593,7 @@
     },
     {
       "id": "explicit-null-fails-type",
-      "description": "Explicit JSON null value fails type validation. Structural validation catches it even though Umpire would treat it as an absent-like value.",
+      "description": "Explicit JSON null value fails type validation.",
       "values": {
         "nodes": [
           {
@@ -739,66 +619,6 @@
             "path": "/workflowType"
           }
         ]
-      },
-      "expectedAvailability": {
-        "nodes": {
-          "enabled": true,
-          "satisfied": true,
-          "fair": true,
-          "required": true,
-          "reason": null,
-          "reasons": []
-        },
-        "edges": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": null,
-          "reasons": []
-        },
-        "title": {
-          "enabled": true,
-          "satisfied": true,
-          "fair": true,
-          "required": true,
-          "reason": null,
-          "reasons": []
-        },
-        "workflowType": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": null,
-          "reasons": []
-        },
-        "version": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": null,
-          "reasons": []
-        },
-        "status": {
-          "enabled": false,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": "Status editing is disabled",
-          "reasons": [
-            "Status editing is disabled"
-          ]
-        },
-        "maxAttempts": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": null,
-          "reasons": []
-        }
       }
     },
     {
@@ -1207,7 +1027,7 @@
     },
     {
       "id": "empty-nodes-satisfied-false-structural-issue",
-      "description": "nodes is an empty array (fails minItems). Umpire reports satisfied: false for array isEmpty with empty array. Structural validation reports minItems.",
+      "description": "nodes is an empty array and fails minItems.",
       "values": {
         "nodes": [],
         "title": "Test"
@@ -1224,66 +1044,6 @@
             "path": "/nodes"
           }
         ]
-      },
-      "expectedAvailability": {
-        "nodes": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": true,
-          "reason": null,
-          "reasons": []
-        },
-        "edges": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": null,
-          "reasons": []
-        },
-        "title": {
-          "enabled": true,
-          "satisfied": true,
-          "fair": true,
-          "required": true,
-          "reason": null,
-          "reasons": []
-        },
-        "workflowType": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": null,
-          "reasons": []
-        },
-        "version": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": null,
-          "reasons": []
-        },
-        "status": {
-          "enabled": false,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": "Status editing is disabled",
-          "reasons": [
-            "Status editing is disabled"
-          ]
-        },
-        "maxAttempts": {
-          "enabled": true,
-          "satisfied": false,
-          "fair": true,
-          "required": false,
-          "reason": null,
-          "reasons": []
-        }
       }
     }
   ]
