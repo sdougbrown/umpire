@@ -172,7 +172,7 @@
 
 .c-minesweeper-demo-board {
   display: flex;
-  flex-direction: 'row';
+  flex-direction: row;
 }
 
 .c-minesweeper-demo-board__panel {
@@ -203,10 +203,21 @@
 .c-minesweeper-demo__grid {
   display: grid;
   gap: 1px;
-  width: max-content;
+  width: 100%;
   padding: 1px;
   background: var(--minesweeper-demo-grid-line);
   touch-action: manipulation;
+}
+
+.c-minesweeper-demo__row {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+}
+
+.sl-markdown-content .c-minesweeper-demo__row + .c-minesweeper-demo__row {
+  margin-top: 0;
 }
 
 .c-minesweeper-demo__cell {
@@ -311,6 +322,20 @@
   text-align: right;
 }
 
+.c-minesweeper-demo__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+
+
 @media (hover: hover) and (pointer: fine) {
   .c-minesweeper-demo__cell.is-hidden:not(.c-minesweeper-demo__cell.is-disabled):hover {
     transform: translate(-1px, -1px);
@@ -329,6 +354,27 @@
 }
 
 @media (max-width: 640px) {
+  .c-minesweeper-demo-board {
+    flex-direction: column;
+  }
+
+  .c-minesweeper-demo-board__shell {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.5rem;
+  }
+
+  .c-minesweeper-demo__cell {
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .c-minesweeper-demo__inspector-body {
+    padding-top: 1rem;
+    padding-left: 0;
+  }
+
   .c-minesweeper-demo__status-bar {
     grid-template-columns: minmax(0, 1fr);
   }

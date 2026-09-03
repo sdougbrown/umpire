@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 // useUmpireWithDevtools powers the named instance in the optional panel on this page.
 // Swap back to: import { useUmpire } from '@umpire/react'  (remove leading id arg)
 import { useUmpireWithDevtools } from "@umpire/devtools/react";
@@ -20,6 +20,10 @@ import {
   type GameConditions,
   type Values,
 } from "../lib/minesweeper-engine.js";
+import {
+  moveFocus,
+  type FocusDirection,
+} from "../lib/minesweeper-focus.js";
 
 const BOARD_WIDTH = 8;
 const BOARD_HEIGHT = 8;
@@ -27,6 +31,12 @@ const MINE_COUNT = 10;
 
 const EMPTY_BOARD = createBoard(BOARD_WIDTH, BOARD_HEIGHT);
 const CELL_ORDER = Object.values(EMPTY_BOARD);
+const CELL_ROWS = Array.from({ length: BOARD_HEIGHT }, (_, rowIndex) =>
+  CELL_ORDER.slice(
+    rowIndex * BOARD_WIDTH,
+    (rowIndex + 1) * BOARD_WIDTH,
+  ),
+);
 const MINESWEEPER_READS = createMinesweeperReads(BOARD_WIDTH, BOARD_HEIGHT);
 
 const STATUS_FACE: Record<GameConditions["gameStatus"], string> = {
@@ -143,11 +153,30 @@ export default function MinesweeperDemo({
     gameStatus: "playing",
     flagMode: false,
   });
+  const [activeCell, setActiveCell] = useState({ x: 0, y: 0 });
+  const [announcement, setAnnouncement] = useState("");
+  const announcementTimeoutRef = useRef<number | undefined>(undefined);
+  const cellRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [inspectedCell, setInspectedCell] = useState<CellInspector>({
     key: cellKey(0, 0),
     x: 0,
     y: 0,
   });
+
+  useEffect(() => {
+    announce("Game started");
+
+    return () => window.clearTimeout(announcementTimeoutRef.current);
+  }, []);
+
+  function announce(message: string) {
+    window.clearTimeout(announcementTimeoutRef.current);
+    setAnnouncement("");
+    announcementTimeoutRef.current = window.setTimeout(
+      () => setAnnouncement(message),
+      0,
+    );
+  }
 
   const activeBoard = board ?? EMPTY_BOARD;
   const activeUmp = useMemo(
@@ -222,11 +251,13 @@ export default function MinesweeperDemo({
     setSeed(Date.now());
     setValues({});
     setConditions({ gameStatus: "playing", flagMode: false });
+    setActiveCell({ x: 0, y: 0 });
     setInspectedCell({
       key: cellKey(0, 0),
       x: 0,
       y: 0,
     });
+    announce("Game started");
   }
 
   function toggleFlag(cell: CellMeta) {
@@ -241,6 +272,12 @@ export default function MinesweeperDemo({
     if (values[key] === "revealed") {
       return;
     }
+
+    const wasFlagged = values[key] === "flagged";
+
+    announce(
+      `${wasFlagged ? "Flag removed from" : "Flag placed on"} cell ${cell.x + 1}, ${cell.y + 1}`,
+    );
 
     setValues((current) => ({
       ...current,
@@ -281,16 +318,38 @@ export default function MinesweeperDemo({
 
     if (nextBoard[key].isMine) {
       nextStatus = "lost";
-      nextValues = revealAllMines(nextBoard, { ...values, [key]: "revealed" });
+      nextValues = revealAllMines(nextBoard, {
+        ...values,
+        [key]: "revealed",
+      });
+
+      announce(
+        `Cell ${cell.x + 1}, ${cell.y + 1}: mine hit. Game lost.`,
+      );
     } else {
       nextValues = cascadeReveal(nextBoard, values, cell.x, cell.y);
+
+      const revealedCount = Object.keys(nextValues).filter(
+        (cellKey) =>
+          nextValues[cellKey] === "revealed" &&
+          values[cellKey] !== "revealed",
+      ).length;
 
       if (checkWin(nextBoard, nextValues)) {
         nextStatus = "won";
         nextValues = revealAllMines(nextBoard, nextValues);
+
+        announce(
+          `Cell ${cell.x + 1}, ${cell.y + 1}: revealed ${revealedCount} ${revealedCount === 1 ? "cell" : "cells"
+          }. Game won.`,
+        );
+      } else {
+        announce(
+          `Cell ${cell.x + 1}, ${cell.y + 1}: revealed ${revealedCount} ${revealedCount === 1 ? "cell" : "cells"
+          }.`,
+        );
       }
     }
-
     setBoard(nextBoard);
     setValues(nextValues);
     setConditions((current) => ({
@@ -308,6 +367,40 @@ export default function MinesweeperDemo({
     revealCell(cell);
   }
 
+  function handleCellKeyDown(event: React.KeyboardEvent<HTMLButtonElement>) {
+    const directionMap: Record<string, FocusDirection> = {
+      ArrowUp: "up",
+      ArrowDown: "down",
+      ArrowLeft: "left",
+      ArrowRight: "right",
+      Home: "home",
+      End: "end",
+    };
+
+    const direction = directionMap[event.key];
+
+    if (!direction) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const nextCell = moveFocus(
+      direction,
+      activeCell.x,
+      activeCell.y,
+      BOARD_WIDTH,
+      BOARD_HEIGHT,
+    );
+
+    setActiveCell(nextCell);
+
+    const nextKey = cellKey(nextCell.x, nextCell.y);
+    const nextButton = cellRefs.current[nextKey];
+
+    nextButton?.focus();
+  }
+
   return (
     <div
       className={cls(
@@ -316,6 +409,13 @@ export default function MinesweeperDemo({
         compact && "c-minesweeper-demo--compact",
       )}
     >
+      <div
+        className="c-minesweeper-demo__sr-only"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {announcement}
+      </div>
       <div className={cls("c-minesweeper-demo__layout")}>
         <section
           className={cls(
@@ -337,6 +437,7 @@ export default function MinesweeperDemo({
           <div className="c-umpire-demo__panel-body c-minesweeper-demo__panel-body">
             <div className="c-minesweeper-demo__controls">
               <div
+                role="group"
                 className="c-minesweeper-demo__mode-toggle"
                 aria-label="Interaction mode"
               >
@@ -345,8 +446,7 @@ export default function MinesweeperDemo({
                   aria-pressed={!conditions.flagMode}
                   className={cls(
                     "c-minesweeper-demo__mode-button",
-                    !conditions.flagMode &&
-                      "c-minesweeper-demo__mode-button is-active",
+                    !conditions.flagMode && "is-active",
                   )}
                   onClick={() =>
                     setConditions((current) => ({
@@ -362,8 +462,7 @@ export default function MinesweeperDemo({
                   aria-pressed={conditions.flagMode}
                   className={cls(
                     "c-minesweeper-demo__mode-button",
-                    conditions.flagMode &&
-                      "c-minesweeper-demo__mode-button is-active",
+                    conditions.flagMode && "is-active",
                   )}
                   onClick={() =>
                     setConditions((current) => ({ ...current, flagMode: true }))
@@ -373,7 +472,11 @@ export default function MinesweeperDemo({
                 </button>
               </div>
 
-              <div className="c-minesweeper-demo__status">
+              <div
+                className="c-minesweeper-demo__status"
+                role="group"
+                aria-label="Game status"
+              >
                 <span className="c-minesweeper-demo__status-label c-umpire-demo__eyebrow">
                   {STATUS_LABEL[conditions.gameStatus]}
                 </span>
@@ -409,70 +512,96 @@ export default function MinesweeperDemo({
             <section className="c-minesweeper-demo-board">
               <div className="c-minesweeper-demo-board__shell">
                 <div
+                  role="grid"
+                  aria-label="Minesweeper board"
                   className="c-minesweeper-demo__grid"
-                  style={{
-                    gridTemplateColumns: `repeat(${BOARD_WIDTH}, minmax(44px, 1fr))`,
-                  }}
                 >
-                  {CELL_ORDER.map((cell) => {
-                    const key = cellKey(cell.x, cell.y);
-                    const cellAvailability = availability[key];
-                    const value = values[key];
-                    const display = boardReads[displayReadKey(key)];
-                    const isRevealed =
-                      display.kind === "mine" ||
-                      display.kind === "empty" ||
-                      display.kind === "number";
-                    const isMine = display.kind === "mine";
+                  {CELL_ROWS.map((rowCells, rowIndex) => {
 
                     return (
-                      <button
-                        key={key}
-                        type="button"
-                        aria-disabled={!cellAvailability.enabled}
-                        aria-label={`Cell ${cell.x + 1}, ${cell.y + 1}: ${describeCellValue(value)}`}
-                        className={cls(
-                          "c-minesweeper-demo__cell",
-                          !isRevealed && "c-minesweeper-demo__cell is-hidden",
-                          isRevealed && "c-minesweeper-demo__cell is-revealed",
-                          value === "flagged" &&
-                            "c-minesweeper-demo__cell is-flagged",
-                          isMine && "c-minesweeper-demo__cell--mine",
-                          !cellAvailability.enabled &&
-                            "c-minesweeper-demo__cell is-disabled",
-                        )}
-                        onClick={() => handleCellClick(cell)}
-                        onContextMenu={(event) => {
-                          event.preventDefault();
-                          // Touch devices use the explicit mode toggle instead of long-press hacks.
-                          toggleFlag(cell);
-                        }}
-                        onMouseEnter={() => inspect(cell)}
-                        onFocus={() => inspect(cell)}
+                      <div
+                        role="row"
+                        key={rowIndex}
+                        className="c-minesweeper-demo__row"
                       >
-                        {display.kind === "flagged" && (
-                          <span className="c-minesweeper-demo__flag">⚑</span>
-                        )}
-                        {isMine && (
-                          <span className="c-minesweeper-demo__mine">✺</span>
-                        )}
-                        {display.kind === "number" && (
-                          <span
-                            className={cls(
-                              "c-minesweeper-demo__number",
-                              numberClass(display.count),
-                            )}
-                          >
-                            {display.count}
-                          </span>
-                        )}
-                      </button>
+                        {rowCells.map((cell) => {
+                          const key = cellKey(cell.x, cell.y);
+                          const cellAvailability = availability[key];
+                          const value = values[key];
+                          const display = boardReads[displayReadKey(key)];
+                          const isRevealed =
+                            display.kind === "mine" ||
+                            display.kind === "empty" ||
+                            display.kind === "number";
+                          const isMine = display.kind === "mine";
+
+                          return (
+                            <button
+                              key={key}
+                              ref={(element) => {
+                                cellRefs.current[key] = element;
+                              }}
+                              type="button"
+                              role="gridcell"
+                              tabIndex={
+                                cell.x === activeCell.x && cell.y === activeCell.y ? 0 : -1
+                              }
+                              aria-rowindex={cell.y + 1}
+                              aria-colindex={cell.x + 1}
+                              aria-disabled={
+                                !cellAvailability.enabled &&
+                                !(conditions.flagMode && value === "flagged")
+                              }
+                              aria-label={`Cell ${cell.x + 1}, ${cell.y + 1}: ${describeCellValue(value)}`}
+                              className={cls(
+                                "c-minesweeper-demo__cell",
+                                !isRevealed && "is-hidden",
+                                isRevealed && "is-revealed",
+                                value === "flagged" && "is-flagged",
+                                isMine && "c-minesweeper-demo__cell--mine",
+                                !cellAvailability.enabled && "is-disabled",
+                              )}
+                              onClick={() => handleCellClick(cell)}
+                              onKeyDown={handleCellKeyDown}
+                              onContextMenu={(event) => {
+                                event.preventDefault();
+                                toggleFlag(cell);
+                              }}
+                              onMouseEnter={() => inspect(cell)}
+                              onFocus={() => {
+                                inspect(cell);
+                                setActiveCell({ x: cell.x, y: cell.y });
+                              }}
+                            >
+                              {display.kind === "flagged" && (
+                                <span className="c-minesweeper-demo__flag">⚑</span>
+                              )}
+
+                              {isMine && (
+                                <span className="c-minesweeper-demo__mine">✺</span>
+                              )}
+
+                              {display.kind === "number" && (
+                                <span
+                                  className={cls(
+                                    "c-minesweeper-demo__number",
+                                    numberClass(display.count),
+                                  )}
+                                >
+                                  {display.count}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
                     );
                   })}
                 </div>
               </div>
               {!compact && (
                 <section
+                  aria-label="Cell inspector"
                   className={cls(
                     "c-minesweeper-demo-board__panel",
                     "c-minesweeper-demo__panel",
@@ -506,7 +635,7 @@ export default function MinesweeperDemo({
                             ? boardReads.probeWouldExplode
                               ? "mine"
                               : inspectedAdjacent === null ||
-                                  inspectedAdjacent === 0
+                                inspectedAdjacent === 0
                                 ? "clear"
                                 : `${inspectedAdjacent} adjacent`
                             : "unseeded"}
